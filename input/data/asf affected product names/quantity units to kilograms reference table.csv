@@ -1,0 +1,18 @@
+unit,"est_volume, in liters",est_packing volume,est_kilograms,Notes
+Liters,1,1,1,
+Each,1,1,1,
+Not Specified,1,1,1,
+Cubic Meters,1000,0.7,700,
+Box/Cartons,28.3,0.7,19.81,"Provides that ecommerce and bulk orders are often shipped in 12x12x12: https://www.collinbox.com/15-most-common-shipping-box-sizes-and-how-to-choose-the-right-one/#:~:text=12x9x6%20inches%20%E2%80%93%20Popular%20for%20apparel%2C%20boxed,office%20supplies%2C%20tools%2C%20and%20larger%20e%2Dcommerce%20shipments."
+Barrels,,,90.90909091,https://www.britannica.com/science/barrel-measurement provides a barrel measurement of 200 pounds of pork
+Bags,1274.3,0.7,892.01,"A website has a range of offerings, but the average is somewhere in the 3'x3'x5' range: https://bulkbagreclamation.com/product_category/baffled-bag/"
+Bouquet,,,,Not ASF-related
+Bulk Cargo Containers,867.2,0.7,607.04,Unclear; a quick google search suggests these are frequently shorter than wide and long. 3.5' x 3.5' x 2.5' appears to be the average among the offerings
+Each,1,1,1,
+Flats,,,,Too ambiguous/variable to convert
+Kilograms,1,1,1,
+Pallets,,,,Too ambiguous/variable to convert
+Plant Units,,,,Not ASF-related
+Square Meters,,,,Too ambiguous/variable to convert
+Stems,,,,Not ASF-related
+,1,1,1,

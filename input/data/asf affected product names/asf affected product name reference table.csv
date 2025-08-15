@@ -1,0 +1,317 @@
+entry_type,container,ITEM_TYPE,ITEM,IS_ASF_RISK,IS_CSF_RISK,IS_FMD_RISK,product_pathway,product_subpathway
+passenger,baggage,Animal,Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Meat, Processed",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Paste, Liver",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Pate,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Animal Blood,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Animal Part,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Animal, Carcass",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Animal, Live",HIGH,HIGH,HIGH,live animals,illegal imports
+passenger,baggage,Animal,Manure,HIGH,HIGH,HIGH,fomite,contaminant
+passenger,baggage,Animal,"Meat, Wild Animal",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Pork,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Pork Product,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Pork, Processed",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, and SVD free regions - Meat",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD affected regions - Fresh or frozen Meat",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant or Swine materials from FMD affected regions - Fresh or frozen Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant or Swine materials from FMD free regions - Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant or Swine materials from FMD regions - Fresh or frozen Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant or Swine materials from FMD regions - Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant or Swine materials from FMD regions - Other than meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant or Swine materials from FMD SR regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Swine materials from ASF regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Swine materials from CSF regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Swine materials from CSF SR regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Swine materials from SVD regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Swine materials from SVD SR regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Rawhide,LOW,LOW,LOW,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Semen Container,LOW,LOW,LOW,other products,semen
+passenger,baggage,Animal,"Serum, Biological",LOW,LOW,LOW,other products,plasma
+passenger,baggage,Animal,Animal Food/Feed,LOW,LOW,LOW,fomite,unspecified feed
+passenger,baggage,Animal,Animal Gelatin,LOW,LOW,LOW,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Animal Horn/Antler,LOW,LOW,LOW,fomite,personal effects
+passenger,baggage,Animal,Animal Skull,LOW,LOW,LOW,fomite,personal effects
+passenger,baggage,Animal,Animal Trophy,LOW,LOW,LOW,fomite,personal effects
+passenger,conveyance,Animal,"Hay, straw, and similar materials for animal uses",LOW,LOW,LOW,fomite,plant based feed
+passenger,baggage,Animal,Ruminant and Swine hooves not for trophies or museums,LOW,LOW,LOW,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,fomite,unspecified feed
+passenger,baggage,Animal,"Meat, Bologna",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Meat, Broth",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Meat, Canned",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Meat, Cooked",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Meat, Fat/Lard",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Meat, Hot Dog",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Meat, Minced",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Meat, Preserved",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Meat, Sandwich",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Meat, Tamale",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Mooncake With Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Pepperoni,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Pizza w/ Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Pudding, Blood",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Sandwich, Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Soup, Mix w/ Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Tostado, Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Animal Skin,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Hide, Animal",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Pork, Bacon",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Pork, Chorizo",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Pork, Dried",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Pork, Fat/Lard",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Pork, Ham",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Pork, Salami",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Pork, Sausage",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Pork, Skin",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Processed Animal Proteins: Non-Ruminant Controlled and Undetermined Risk Countries,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Processed Animal Proteins: Non-Ruminant Negligible Risk Countries,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Processed Animal Proteins: Ruminant,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, and SVD free regions - Other than meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD affected regions - Cured or cooked Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD regions - Other than meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant or Swine materials from FMD affected regions - Cured or cooked Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant or Swine materials from FMD affected regions - Other than meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant or Swine materials from FMD free regions - Other than meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant or Swine materials from FMD regions - Cured or cooked Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant and porcine Hides /skins (excluding those from Mexico),MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Ruminant and porcine Hides /skins (from Mexico),MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+commercial,container,Animal,Meat,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,"Meat, Processed",HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,"Paste, Liver",HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Pate,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Animal Blood,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Animal Part,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,"Animal, Carcass",HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,"Animal, Live",HIGH,HIGH,HIGH,live animals,illegal imports
+commercial,container,Animal,Manure,HIGH,HIGH,HIGH,fomite,contaminant
+commercial,container,Animal,"Meat, Wild Animal",HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Pork,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Pork Product,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,"Pork, Processed",HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, and SVD free regions - Meat",HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD affected regions - Fresh or frozen Meat",HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Ruminant or Swine materials from FMD affected regions - Fresh or frozen Meat,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Ruminant or Swine materials from FMD free regions - Meat,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Ruminant or Swine materials from FMD regions - Fresh or frozen Meat,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Ruminant or Swine materials from FMD regions - Meat,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Ruminant or Swine materials from FMD regions - Other than meat,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Ruminant or Swine materials from FMD SR regions,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Swine materials from ASF regions,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Swine materials from CSF regions,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Swine materials from CSF SR regions,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Swine materials from SVD regions,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Swine materials from SVD SR regions,HIGH,HIGH,HIGH,swine products/by-products,commercial
+commercial,container,Animal,Rawhide,LOW,LOW,LOW,swine products/by-products,commercial
+commercial,container,Animal,Semen Container,LOW,LOW,LOW,other products,semen
+commercial,container,Animal,"Serum, Biological",LOW,LOW,LOW,other products,plasma
+commercial,container,Animal,Animal Food/Feed,LOW,LOW,LOW,fomite,unspecified feed
+commercial,container,Animal,Animal Gelatin,LOW,LOW,LOW,swine products/by-products,commercial
+commercial,container,Animal,Animal Horn/Antler,LOW,LOW,LOW,fomite,personal effects
+commercial,container,Animal,Animal Skull,LOW,LOW,LOW,fomite,personal effects
+commercial,container,Animal,Animal Trophy,LOW,LOW,LOW,fomite,personal effects
+commercial,container,Animal,"Hay, straw, and similar materials for animal uses",LOW,LOW,LOW,fomite,plant based feed
+commercial,container,Animal,Ruminant and Swine hooves not for trophies or museums,LOW,LOW,LOW,swine products/by-products,commercial
+commercial,container,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,fomite,unspecified feed
+commercial,container,Animal,"Meat, Bologna",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Meat, Broth",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Meat, Canned",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Meat, Cooked",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Meat, Fat/Lard",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Meat, Hot Dog",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Meat, Minced",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Meat, Preserved",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Meat, Sandwich",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Meat, Tamale",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Mooncake With Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Pepperoni,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Pizza w/ Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Pudding, Blood",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Sandwich, Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Soup, Mix w/ Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Tostado, Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Animal Skin,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Hide, Animal",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Pork, Bacon",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Pork, Chorizo",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Pork, Dried",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Pork, Fat/Lard",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Pork, Ham",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Pork, Salami",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Pork, Sausage",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Pork, Skin",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Processed Animal Proteins: Non-Ruminant Controlled and Undetermined Risk Countries,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Processed Animal Proteins: Non-Ruminant Negligible Risk Countries,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Processed Animal Proteins: Ruminant,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, and SVD free regions - Other than meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD affected regions - Cured or cooked Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD regions - Other than meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Ruminant or Swine materials from FMD affected regions - Cured or cooked Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Ruminant or Swine materials from FMD affected regions - Other than meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Ruminant or Swine materials from FMD free regions - Other than meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Ruminant or Swine materials from FMD regions - Cured or cooked Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Ruminant and porcine Hides /skins (excluding those from Mexico),MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+commercial,container,Animal,Ruminant and porcine Hides /skins (from Mexico),MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
+eco,baggage,Animal,Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Meat, Processed",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Paste, Liver",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Pate,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Animal Blood,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Animal Part,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Animal, Carcass",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Animal, Live",HIGH,HIGH,HIGH,live animals,illegal imports
+eco,baggage,Animal,Manure,HIGH,HIGH,HIGH,fomite,contaminant
+eco,baggage,Animal,"Meat, Wild Animal",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Pork,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Pork Product,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Pork, Processed",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, and SVD free regions - Meat",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD affected regions - Fresh or frozen Meat",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant or Swine materials from FMD affected regions - Fresh or frozen Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant or Swine materials from FMD free regions - Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant or Swine materials from FMD regions - Fresh or frozen Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant or Swine materials from FMD regions - Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant or Swine materials from FMD regions - Other than meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant or Swine materials from FMD SR regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Swine materials from ASF regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Swine materials from CSF regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Swine materials from CSF SR regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Swine materials from SVD regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Swine materials from SVD SR regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Rawhide,LOW,LOW,LOW,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Semen Container,LOW,LOW,LOW,other products,semen
+eco,baggage,Animal,"Serum, Biological",LOW,LOW,LOW,other products,plasma
+eco,baggage,Animal,Animal Food/Feed,LOW,LOW,LOW,fomite,unspecified feed
+eco,baggage,Animal,Animal Gelatin,LOW,LOW,LOW,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Animal Horn/Antler,LOW,LOW,LOW,fomite,personal effects
+eco,baggage,Animal,Animal Skull,LOW,LOW,LOW,fomite,personal effects
+eco,baggage,Animal,Animal Trophy,LOW,LOW,LOW,fomite,personal effects
+eco,baggage,Animal,"Hay, straw, and similar materials for animal uses",LOW,LOW,LOW,fomite,plant based feed
+eco,baggage,Animal,Ruminant and Swine hooves not for trophies or museums,LOW,LOW,LOW,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,fomite,unspecified feed
+eco,baggage,Animal,"Meat, Bologna",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Meat, Broth",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Meat, Canned",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Meat, Cooked",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Meat, Fat/Lard",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Meat, Hot Dog",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Meat, Minced",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Meat, Preserved",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Meat, Sandwich",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Meat, Tamale",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Mooncake With Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Pepperoni,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Pizza w/ Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Pudding, Blood",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Sandwich, Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Soup, Mix w/ Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Tostado, Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Animal Skin,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Hide, Animal",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Pork, Bacon",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Pork, Chorizo",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Pork, Dried",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Pork, Fat/Lard",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Pork, Ham",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Pork, Salami",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Pork, Sausage",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Pork, Skin",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Processed Animal Proteins: Non-Ruminant Controlled and Undetermined Risk Countries,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Processed Animal Proteins: Non-Ruminant Negligible Risk Countries,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Processed Animal Proteins: Ruminant,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, and SVD free regions - Other than meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD affected regions - Cured or cooked Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD regions - Other than meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant or Swine materials from FMD affected regions - Cured or cooked Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant or Swine materials from FMD affected regions - Other than meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant or Swine materials from FMD free regions - Other than meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant or Swine materials from FMD regions - Cured or cooked Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant and porcine Hides /skins (excluding those from Mexico),MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,baggage,Animal,Ruminant and porcine Hides /skins (from Mexico),MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+eco,vehicle,Neutral,"Equipment, Farm",LOW,,,fomite,equipment
+eco,vehicle,Neutral,Vehicle,LOW,,,fomite,vehicle
+eco,package,Animal,Animal Vaccine,LOW,,,other products,vaccine
+commercial,container,Neutral,"Equipment, Farm",LOW,,,fomite,equipment
+commercial,container,Neutral,Vehicle,LOW,,,fomite,vehicle
+commercial,container,Animal,Animal Vaccine,LOW,,,other products,vaccine
+passenger,vehicle,Neutral,"Equipment, Farm",LOW,,,fomite,equipment
+passenger,vehicle,Neutral,Vehicle,LOW,,,fomite,vehicle
+passenger,baggage,Animal,Animal Vaccine,LOW,,,other products,vaccine
+mail,baggage,Animal,Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Meat, Processed",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Paste, Liver",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Pate,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Animal Blood,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Animal Part,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Animal, Carcass",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Animal, Live",HIGH,HIGH,HIGH,live animals,illegal imports
+mail,baggage,Animal,Manure,HIGH,HIGH,HIGH,fomite,contaminant
+mail,baggage,Animal,"Meat, Wild Animal",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Pork,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Pork Product,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Pork, Processed",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, and SVD free regions - Meat",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD affected regions - Fresh or frozen Meat",HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant or Swine materials from FMD affected regions - Fresh or frozen Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant or Swine materials from FMD free regions - Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant or Swine materials from FMD regions - Fresh or frozen Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant or Swine materials from FMD regions - Meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant or Swine materials from FMD regions - Other than meat,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant or Swine materials from FMD SR regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Swine materials from ASF regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Swine materials from CSF regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Swine materials from CSF SR regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Swine materials from SVD regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Swine materials from SVD SR regions,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Rawhide,LOW,LOW,LOW,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Semen Container,LOW,LOW,LOW,other products,semen
+mail,baggage,Animal,"Serum, Biological",LOW,LOW,LOW,other products,plasma
+mail,baggage,Animal,Animal Food/Feed,LOW,LOW,LOW,fomite,unspecified feed
+mail,baggage,Animal,Animal Gelatin,LOW,LOW,LOW,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Animal Horn/Antler,LOW,LOW,LOW,fomite,personal effects
+mail,baggage,Animal,Animal Skull,LOW,LOW,LOW,fomite,personal effects
+mail,baggage,Animal,Animal Trophy,LOW,LOW,LOW,fomite,personal effects
+mail,baggage,Animal,"Hay, straw, and similar materials for animal uses",LOW,LOW,LOW,fomite,plant based feed
+mail,baggage,Animal,Ruminant and Swine hooves not for trophies or museums,LOW,LOW,LOW,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,fomite,unspecified feed
+mail,baggage,Animal,"Meat, Bologna",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Meat, Broth",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Meat, Canned",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Meat, Cooked",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Meat, Fat/Lard",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Meat, Hot Dog",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Meat, Minced",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Meat, Preserved",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Meat, Sandwich",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Meat, Tamale",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Mooncake With Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Pepperoni,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Pizza w/ Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Pudding, Blood",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Sandwich, Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Soup, Mix w/ Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Tostado, Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Animal Skin,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Hide, Animal",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Pork, Bacon",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Pork, Chorizo",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Pork, Dried",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Pork, Fat/Lard",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Pork, Ham",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Pork, Salami",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Pork, Sausage",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Pork, Skin",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Processed Animal Proteins: Non-Ruminant Controlled and Undetermined Risk Countries,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Processed Animal Proteins: Non-Ruminant Negligible Risk Countries,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Processed Animal Proteins: Ruminant,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, and SVD free regions - Other than meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD affected regions - Cured or cooked Meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,"Ruminant or Swine materials from ASF, CSF, FMD, or SVD regions - Other than meat",MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant or Swine materials from FMD affected regions - Cured or cooked Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant or Swine materials from FMD affected regions - Other than meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant or Swine materials from FMD free regions - Other than meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant or Swine materials from FMD regions - Cured or cooked Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant and porcine Hides /skins (excluding those from Mexico),MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,baggage,Animal,Ruminant and porcine Hides /skins (from Mexico),MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
+mail,vehicle,Neutral,"Equipment, Farm",LOW,,,fomite,equipment
+mail,vehicle,Neutral,Vehicle,LOW,,,fomite,vehicle
+mail,package,Animal,Animal Vaccine,LOW,,,other products,vaccine

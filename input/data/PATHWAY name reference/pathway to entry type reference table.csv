@@ -1,0 +1,12 @@
+PATHWAY,how_many,entry_type
+Land Border - Truck - Conveyance - CBP,north and south,passenger
+Airport - Aircraft - Person - CBP,,passenger
+Airport - Aircraft - Cargo - CBP,,commercial
+Airport - Aircraft - Passenger - Predeparture,,passenger
+Maritime Port - Vessel - Cargo - CBP,,commercial
+Land Border - Truck - Cargo - CBP,north and south,commercial
+Express_courier,,eco
+Pedestrian,,passenger
+Cruise_ship,,passenger
+Maritime Port - Vessel - Mail - CBP,,mail
+Airport - Aircraft - Person - Pre-Clearance,,passenger

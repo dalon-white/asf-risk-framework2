@@ -1,0 +1,494 @@
+---
+title: "land border vehicle; personal use"
+author: "Dalon White"
+date: "2025-07-23"
+output: html_document
+
+params:
+  begin_date: 2021-01-01
+  end_date: 2024-12-31
+  pathway: "Land Border - Truck - Conveyance - CBP"
+  affected_country_file: "asf affected countries placeholder.csv"
+---
+
+```{r load packages}
+
+pacman::p_load(tidyverse, magrittr, ggplot2, DT, caret, lubridate, readr)
+pacman::p_load(DBI, odbc)
+pacman::p_load(tidygeocoder, sf, mapview, tigris, raster, spatstat, SpatialKDE)
+pacman::p_load(fitdistrplus)
+
+```
+
+```{r define border state codes}
+NB_state_cd <- c("AK","ID","ME","MN","MT","NH","NY","ND","OH","PA","VT","WA")
+SB_state_cd <- c("CA","AZ","NM","TX")
+```
+
+## Filtering by dates within the dplyr package
+
+Can't just filter by a date because it needs lubridate() to manipulate the date time
+
+```{r convert calendar dates to fiscal}
+# Load necessary libraries
+library(lubridate)
+library(dplyr)
+
+# Assume your data frame is called df and the date column is 'date'
+begin_date <- as.Date(params$begin_date)  # Ensure it's a Date type
+
+# Fiscal year: If month >= 10, fiscal year is year + 1, else year
+begin_year <- as.character(
+  ifelse(format(begin_date, "%m") >= "10",
+                         as.integer(format(begin_date, "%Y")) + 1,
+                         as.integer(format(begin_date, "%Y")))
+)
+
+# Fiscal month: October is 1, November is 2, ..., September is 12
+begin_month <- as.character(
+  (as.integer(format(begin_date, "%m")) - 10) %% 12 + 1
+)
+
+# Assume your data frame is called df and the date column is 'date'
+end_date <- as.Date(params$end_date)  # Ensure it's a Date type
+
+# Fiscal year: If month >= 10, fiscal year is year + 1, else year
+end_year <- as.character(
+  ifelse(format(end_date, "%m") >= "10",
+                         as.integer(format(end_date, "%Y")) + 1,
+                         as.integer(format(end_date, "%Y")))
+)
+
+# Fiscal month: October is 1, November is 2, ..., September is 12
+end_month <- as.character((as.integer(format(end_date, "%m")) - 10) %% 12 + 1)
+
+```
+
+```{r ARM aqim data}
+
+#-- Connect to ARM ---- 
+#ARM data base version 2
+db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+
+inspection_cols <- c(
+  "ID", 
+  "INSPECTION_NUMBER", 
+  "CATEGORY", 
+  "SUBCATEGORY", 
+  "IS_AQIM", 
+  "PATHWAY_ID", 
+  "PATHWAY", 
+  
+  "INSPECTION_DATETIME", 
+  "INSPECTION_DATETIME_FISCAL_YEAR", 
+  "INSPECTION_DATETIME_FISCAL_MONTH",
+  "INSPECTION_LOCATION_ID", 
+  "INSPECTION_LOCATION_NAME", 
+  "INSPECTION_LOCATION_STATE_CODE", 
+  "COUNTRY_OF_ORIGIN_NAME", 
+  "COUNTRY_OF_RESIDENCE_NAME", 
+  
+  "FINAL_DESTINATION_STATE_NAME", 
+  "FINAL_DESTINATION_STATE_ID", 
+  "FINAL_DESTINATION_CITY", 
+  "PASSENGER_DISTANCE_DESTINATION_NAME")
+
+
+commodity_cols <- c(
+  "ID",
+  "INSPECTION_ID",
+  "IS_SMUGGLED",
+  "IS_CONTAMINANT_FOUND",
+  "COMMODITY_CLASSIFICATION",
+  "COUNTRY_OF_ORIGIN_NAME", 
+  "REF_COMMODITY_ID",
+  "COMMODITY_DISPLAY_NAME",
+  "MISC_ANIMAL_COMMODITY_NAME",
+  "QUANTITY",
+  "QUANTITY_UNITS_NAME"
+)
+
+
+#-- Pull AQIM inspection records from ARM  ---- 
+system.time(arm_aqim <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_INSPECTION]"))%>% 
+  dplyr::filter(CATEGORY == "AQIM") %>%
+    count(PATHWAY))
+  dplyr::select(inspection_cols
+                )
+)
+ 
+#-- Load Bridge Commodity dataset ----
+system.time(commodity <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_COMMODITY]")) |> 
+              dplyr::select(commodity_cols) |> 
+              dplyr::rename(COMMODITY_ID = ID,
+                            COMMODITY_COUNTRY_ORIGIN = COUNTRY_OF_ORIGIN_NAME)
+            )
+
+arm_aqim_records <- arm_aqim |> left_join(commodity, by = c("ID" = "INSPECTION_ID"), relationship = "many-to-many")
+
+#filter to pathway of interest
+system.time(arm_aqim_records <- arm_aqim_records |> dplyr::filter(PATHWAY %in% params$pathway)
+)
+
+#filter to on or after begin date
+system.time(arm_aqim_records <- arm_aqim_records  |>
+  filter(INSPECTION_DATETIME_FISCAL_YEAR > begin_year | (INSPECTION_DATETIME_FISCAL_YEAR == begin_year & INSPECTION_DATETIME_FISCAL_MONTH >= begin_month)
+  )
+)
+
+#filter to at or before end date
+system.time(arm_aqim_records <- arm_aqim_records |> 
+  filter(INSPECTION_DATETIME_FISCAL_YEAR < end_year | (INSPECTION_DATETIME_FISCAL_YEAR == end_year & INSPECTION_DATETIME_FISCAL_MONTH <= end_month)
+  )
+)
+
+
+#collect records
+system.time(arm_aqim_records <- arm_aqim_records |> collect()
+            )
+```
+
+## convert state reference ID column to 2-digit state codes
+
+Do it now before splitting the tables
+
+```{r convert state ref ID to 2 digit codes}
+state_code_ref <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[REF_STATE]")) |> 
+  filter(ACTIVE_FL == "Y") |>  
+  dplyr::select(ID, STATE_CD) |> collect()
+
+arm_aqim_records$FINAL_DESTINATION_STATE_ID <- state_code_ref$STATE_CD[match(arm_aqim_records$FINAL_DESTINATION_STATE_ID, state_code_ref$ID)]
+
+
+```
+
+
+## create an inspection only and commodity only table
+This is just so we dont have to collect() both inspection and commodity tables
+
+```{r insp and commod dfs}
+#need to check this function; it should take the commodity-only columns away from arm_aqim_records and reduce to  
+inspections_only_func <- function(data) {
+  df <- data |>
+    dplyr::select(inspection_cols
+                  ) |> 
+    distinct()
+  return(df)
+}
+
+inspections <- inspections_only_func(arm_aqim_records)
+
+
+commodity_only_func <- function(data) {
+  df <- data |>
+    rename("INSPECTION_ID" = "ID") |> 
+    dplyr::select(any_of(commodity_cols),
+                  COMMODITY_ID,
+                  COMMODITY_COUNTRY_ORIGIN) |>
+    #rename("COMMODITY_ID" = "ID") |> 
+    filter(!is.na(COMMODITY_ID))
+  return(df)
+}
+
+commodities <- commodity_only_func(arm_aqim_records)
+```
+
+```{r asf-susceptible-products}
+#use any for now
+
+setwd(here::here("input","data","aqim","at risk product names"))
+ref_at_risk_names <- read.csv("at risk product names.csv")
+
+at_risk_items <- commodities |> filter(COMMODITY_DISPLAY_NAME %in% ref_at_risk_names)
+
+at_risk_items <- commodities %>%
+  filter(
+    sapply(
+      COMMODITY_DISPLAY_NAME,
+      function(x) any(sapply(ref_at_risk_names$Item[ref_at_risk_names$ASF == 1], function(pattern) grepl(pattern, x, fixed = TRUE)))
+    )
+  )
+#create a reference list of inspection IDs that have at-risk products
+at_risk_inspec_id <- at_risk_items |> pull(INSPECTION_ID)
+
+at_risk_inspections <- inspections |> mutate(is_at_risk = case_when(
+  ID %in% at_risk_inspec_id ~ 'at_risk',
+  .default = "not_at_risk")
+  )
+```
+
+
+
+
+```{r split commodities by fomites (contaminants)}
+#split personal use and fomites
+commodities_list <- as.list(commidities |> filter(COMMMODITY_DISPLAY_NAME != "Truck"))
+#Why an error?
+commodities |> count(IS_CONTAMINANT_FOUND)
+#No contaminants found...
+#Can use WADS and the 
+```
+
+## is smuggling reported for AQIM?
+Looks like no.
+```{r is smuggling reported}
+#No smuggled records; need to look for smuggling evidence elsewhere. EANs, probably.
+arm_aqim_records |> count(IS_SMUGGLED)
+```
+No smuggled records; need to look for smuggling evidence elsewhere. EANs, probably.
+
+## Geolocate destinations
+
+look into the geolocator package, it sounds like it would be more useful. Mary may share this code
+
+```{r calculate at risk item rate}
+approach_rates <- inspections |> count(PORT_CD, CALENDAR_YR, is_at_risk) |> 
+  pivot_wider(names_from = is_at_risk, values_from = n) |> 
+    #if 0 found, replace NA with 0
+  mutate(at_risk = replace_na(at_risk, 0),
+         not_at_risk = replace_na(not_at_risk, 0)
+         ) |> 
+  #calculate observed rate
+  mutate(at_risk_rate = at_risk/(at_risk + not_at_risk))
+
+ 
+
+# Check action rates. Should be between 0 and 1
+approach_rates |> filter(at_risk_rate <= 0| at_risk_rate > 1)
+approach_rates |> filter(is.na(at_risk_rate))
+
+
+
+```
+
+
+
+```{r geolocate}
+#see `geolocate place names.Rmd
+
+#read in the file
+setwd(here::here("input","data","place names and geolocation"))
+#read all files within
+files = file.info(list.files(here::here("input","data","place names and geolocation"), full.names = T))
+geolocs = read_csv(base::rownames(files)[which.max(files$mtime)])
+
+#create a destination column for indexing and joining
+inspections <- inspections |>
+  mutate(destination = paste(FINAL_DESTINATION_CITY, FINAL_DESTINATION_STATE_ID, sep = ", ")) |> 
+  #delete blanks
+  filter(!destination %in% c(", "))
+
+#Get state code from state_iD code
+
+
+
+
+#encoding issue
+inspections$destination <- iconv(inspections$destination, from = "Latin1", to = "UTF-8")
+#now to lowercase
+inspections$destination = tolower(inspections$destination)
+
+
+#add known geolocations
+inspections <- inspections |> left_join(geolocs, by = c("destination" = "citystlow"), relationship = "many-to-one")
+```
+## write bayes estimate function for later use
+
+```{r empircal bayes estimate functions}
+## Add empirical Bayes action rate by categories for shipments
+
+### Function for calculating method of moments
+
+beta_mom <- function(x) {
+  
+  m_x <- mean(x, na.rm = TRUE)
+  s_x <- sd(x, na.rm = TRUE)
+  
+  alpha <- m_x*((m_x*(1 - m_x)/s_x^2) - 1)
+  beta <- (1 - m_x)*((m_x*(1 - m_x)/s_x^2) - 1)
+  
+  return(list(alpha = alpha, beta = beta))
+  
+}
+
+fit_plot_beta <- function(x) {
+  
+  # Use starting beta parameters from method-of-moments
+  params <- beta_mom(x[complete.cases(x)])
+  beta_fit <- fitdist(x[complete.cases(x)], "beta", "mme", start = list(shape1 = params$alpha, shape2 = params$beta))
+  plot(beta_fit)
+  return(beta_fit)
+  
+}
+
+### Function to calculate emperical Bayes estimate of action rates.
+calc_eb_rates <- function(actions, inspections, params){
+  
+  alpha <- params[[1]][[1]]
+  beta <- params[[1]][[2]]
+  # Keep NaN values where applicable (0/0), and compute EB rates
+  eb_rates <- ifelse(actions == 0 & inspections == 0, NaN, ((actions + alpha) / (inspections + alpha + beta)))
+  return(eb_rates)
+  
+}
+
+check_sample_size <- function(x){length(x[complete.cases(x)])}
+
+```
+
+
+# Find the rate of non-Mex/Can (1) entries, (2) products
+
+```{r non-border origin entries}
+northern_border_states <- c("WA", "ID", "MT", "ND", "MN", "MI", "NY", "VT", "NH", "ME")
+
+southern_border_states <- c("CA", "AZ", "NM", "TX")
+
+inspections <- inspections |> 
+  #create a ref column that identifies the border
+  mutate(border = case_when(
+    INSPECTION_LOCATION_STATE_CODE %in% northern_border_states ~ "Canada",
+    INSPECTION_LOCATION_STATE_CODE %in% southern_border_states ~ "Mexico")
+    )
+
+
+
+## The below is an unnecessary way of doing it - just compare directly to a list of country names and years
+# diff_country_entry_cnts <- inspections |> 
+#   #create a ref column that identifies the border
+#   mutate(border = case_when(
+#     INSPECTION_LOCATION_STATE_CODE %in% northern_border_states ~ "Canada",
+#     INSPECTION_LOCATION_STATE_CODE %in% southern_border_states ~ "Mexico")
+#     ) |> 
+#   #convert whether entry is at the appropraite border based on state codes
+#   mutate(diff_country = case_when(
+#   border == COUNTRY_OF_ORIGIN_NAME ~ 'same',
+#   # border == "Mexico" & INSPECTION_LOCATION_STATE_CODE %in% southern_border_states ~ 'same',
+#   .default = 'different'
+# )) |> 
+#   group_by(year(INSPECTION_DATETIME)) |> 
+#   count(border, diff_country) |> 
+#   #pivot to get separate columns for same and different country
+#   pivot_wider(names_from = diff_country,
+#               values_from = n) |> 
+#   mutate(total_obs = same + diff) |> 
+#   mutate(at_risk_rate = (diff)/(same+diff))
+
+#Apply ASF country by year knowledge to observations
+setwd(here::here("input", "data", "asf affected countries by year"))
+affected_countries <- read.csv(params$affected_country_file) |> dplyr::filter(Disease == "ASF")
+
+asf_affected_country_entry <- inspections |> 
+  mutate(Year = year(INSPECTION_DATETIME)) |>
+  left_join(affected_countries , by = c("Year", "COUNTRY_OF_ORIGIN_NAME" = "Country_name"))
+
+asf_affected_country_entry_cnts <- asf_affected_country_entry |> count(Year,Disease)
+asf_affected_country_entry_cnts$Disease <- replace_na(asf_affected_country_entry_cnts$Disease, "None")
+
+asf_affected_country_entry_cnts <- asf_affected_country_entry_cnts |> 
+#pivot to get separate columns for same and different country
+  pivot_wider(names_from = Disease,
+              values_from = n) |>
+  mutate(ASF = replace_na(ASF, 0)) |> 
+  mutate(total_obs = ASF + None) |>
+  mutate(at_risk_rate = (ASF)/(ASF + None))
+
+#find the column number of at_risk_rate
+col_num <- which(colnames(asf_affected_country_entry_cnts) == "at_risk_rate")
+#find the fitted distribution
+fitted_dists <- apply(asf_affected_country_entry_cnts[, col_num], fit_plot_beta, MARGIN = 2)
+
+fit_plot_beta(asf_affected_country_entry_cnts$at_risk_rate)
+
+diff_country_passenger_approach_rates <- asf_affected_country_entry_cnts |>  
+  mutate(
+    ## without weighted action count
+    eb_at_risk_rate = calc_eb_rates(
+      actions = ASF, inspections = total_obs, params =  fitted_dists$at_risk_rate
+    )
+  )
+
+diff_country_passenger_approach_rates
+
+
+```
+It may be worth testing the rate of items on these passengers vs the rate of those from CAN/MEX
+
+## What is the interception rate of commodities from ASF countries
+
+```{r country inspection vs country commodity}
+# #Are COUNTRY_OF_ORIGIN_NAME the same between inspection and commodity tables?
+# test = tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_INSPECTION]"))%>% 
+#   dplyr::filter(CATEGORY == "AQIM") %>%
+#   dplyr::select(inspection_cols
+#                 ) |> 
+#   left_join(tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_COMMODITY]")) |> 
+#               dplyr::select(commodity_cols,
+#                             COUNTRY_OF_ORIGIN_NAME) |> 
+#               dplyr::rename(COMMODITY_ID = ID,
+#                             COMMODITY_COUNTRY_ORIGIN = COUNTRY_OF_ORIGIN_NAME
+#             ),
+#             by = c("ID" = "INSPECTION_ID")) |> collect()
+# test.tmp <- test |> filter(!is.na(COMMODITY_COUNTRY_ORIGIN)) |>  dplyr::select(COUNTRY_OF_ORIGIN_NAME,COMMODITY_COUNTRY_ORIGIN) |> 
+#   mutate(matching = case_when(COUNTRY_OF_ORIGIN_NAME == COMMODITY_COUNTRY_ORIGIN ~ 'match',
+#                               .default = 'not match')) 
+# 
+# test.tmp |> 
+#   count(matching)
+# view(test.tmp |>  filter(matching == 'not match'))
+# 
+# 
+# ```
+#Figure this out with items
+diff_country_item_approach_rates #need the item origin column
+```
+
+```{r approach rates of ASF-at risk items}
+asf_affected_country_item <- arm_aqim_records |> dplyr::select(INSPECTION_DATETIME,
+                                                               any_of(colnames(commodities))) |> filter(!is.na(COMMODITY_ID)) |>
+  #get year
+  mutate(Year = year(INSPECTION_DATETIME)) |>
+  left_join(affected_countries , by = c("Year", "COMMODITY_COUNTRY_ORIGIN" = "Country_name"))
+
+asf_affected_country_item_cnts <- asf_affected_country_item |> count(Year,Disease)
+asf_affected_country_item_cnts$Disease <- replace_na(asf_affected_country_item_cnts$Disease, "None")
+
+asf_affected_country_item_cnts <- asf_affected_country_item_cnts |> 
+#pivot to get separate columns for same and different country
+  pivot_wider(names_from = Disease,
+              values_from = n) |>
+  mutate(ASF = replace_na(ASF, 0)) |> 
+  mutate(total_obs = ASF + None) |>
+  mutate(at_risk_rate = (ASF)/(ASF + None))
+
+#find the column number of at_risk_rate
+col_num <- which(colnames(asf_affected_country_item_cnts) == "at_risk_rate")
+#find the fitted distribution
+fitted_dists <- apply(asf_affected_country_item_cnts[, col_num], fit_plot_beta, MARGIN = 2)
+
+fit_plot_beta(asf_affected_country_item_cnts$at_risk_rate)
+
+asf_risk_item_approach_rates <- asf_affected_country_item_cnts |>  
+  mutate(
+    ## without weighted action count
+    eb_at_risk_rate = calc_eb_rates(
+      actions = ASF, inspections = total_obs, params =  fitted_dists$at_risk_rate
+    )
+  )
+
+asf_risk_item_approach_rates
+```
+
+
+use kable to write the table
+Need to still find the rate of items that are not from the countries because that is more important
+
+
+## Estimate contaminants
+
+
+## Estimate products

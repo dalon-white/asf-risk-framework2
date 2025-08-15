@@ -1,0 +1,941 @@
+---
+title: "aqim pathway approach rates"
+author: "Dalon White"
+date: "2025-07-27"
+output: html_document
+
+params:
+  begin_date: 2023-01-01
+  end_date: 2024-12-31
+  affected_country_file: "asf affected countries.csv"
+  affected_product_file: "asf affected product name reference table.csv"
+---
+
+-   \% estimate of each pathway type for each AQIM-conveyance/pathway
+
+<!-- -->
+
+-   Only use 2022-2024 data
+
+    -   Use the reference table (at risk product names.csv) to assign every commodity intercepted to a pathway & subpathway
+
+    -   Further modify the reference table that identifies every product with additional columns for PoE, Conveyance, Subconveyance, Edge as possible
+
+    -   For each PoE, Conveyance, Subconveyance, Edge, Subpathway, Pathway, estimate the rate of entry
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse)
+pacman::p_load(odbc, DBI)
+pacman::p_load(countrycode)
+```
+### chunk only runs in VSCode - does nothing in R
+```{r params for vscode}
+if(!exists("params")) {
+  params <- list(
+    begin_date = "2021-01-01",
+    end_date = "2024-12-31",
+    affected_product_file = "asf affected product name reference table.csv",
+    affected_country_file = "asf affected countries.csv",
+    quantity_units_to_kg = "quantity units to kilograms reference table.csv"
+
+  )
+}
+```
+
+```{r define border state codes}
+NB_state_cd <- c("AK","ID","ME","MI","MN","MT","NH","NY","ND","OH","PA","VT","WA")
+SB_state_cd <- c("CA","AZ","NM","TX")
+```
+
+## Filtering by dates within the dplyr package
+
+Can't just filter by the datetime because it needs lubridate() to manipulate the datetime. Instead, can filter by fiscal month and year, which are reported, but the needed datetimes need to be converted first
+
+```{r convert calendar dates to fiscal}
+# Load necessary libraries
+library(lubridate)
+library(dplyr)
+
+fiscal_date_to_calendar_month <- function(fiscal_date) {
+  tryCatch({
+    if(is.na(fiscal_date)) return(NA)
+    
+    # Ensure we're working with a Date object
+    if(!inherits(fiscal_date, c("Date", "POSIXct", "POSIXlt"))) {
+      fiscal_date <- as.Date(fiscal_date)
+    }
+    
+    as.character((as.integer(format(fiscal_date, "%m")) - 10) %% 12 + 1)
+  }, error = function(e) {
+    NA  # Return NA if conversion fails
+  })
+}
+
+fiscal_date_to_calendar_year <- function(fiscal_date) {
+  tryCatch({
+    if(is.na(fiscal_date)) return(NA)
+    
+    # Ensure we're working with a Date object
+    if(!inherits(fiscal_date, c("Date", "POSIXct", "POSIXlt"))) {
+      fiscal_date <- as.Date(fiscal_date)
+    }
+    
+    as.character(
+      ifelse(as.integer(format(fiscal_date, "%m")) >= 10,
+             as.integer(format(fiscal_date, "%Y")) + 1,
+             as.integer(format(fiscal_date, "%Y")))
+    )
+  }, error = function(e) {
+    NA  # Return NA if conversion fails
+  })
+}
+
+# Assume your data frame is called df and the date column is 'date'
+begin_date <- as.Date(params$begin_date)  # Ensure it's a Date type
+
+# Fiscal year: If month >= 10, fiscal year is year + 1, else year
+begin_year <- fiscal_date_to_calendar_year(begin_date)
+
+# Fiscal month: October is 1, November is 2, ..., September is 12
+begin_month <- fiscal_date_to_calendar_month(begin_date)
+
+# Assume your data frame is called df and the date column is 'date'
+end_date <- as.Date(params$end_date)  # Ensure it's a Date type
+
+# Fiscal year: If month >= 10, fiscal year is year + 1, else year
+end_year <- fiscal_date_to_calendar_year(end_date)
+
+# Fiscal month: October is 1, November is 2, ..., September is 12
+end_month <- fiscal_date_to_calendar_month(end_date)
+
+```
+
+```{r create environmental params}
+
+# Load ASF affected country name reference table
+setwd(here::here('input', 'data', 'asf affected countries by year'))
+asf_country_ref <- read.csv(params$affected_country_file, stringsAsFactors = FALSE)
+
+
+# Load ASF affected product name reference table
+setwd(here::here('input', 'data', 'asf affected product names'))
+asf_product_ref <- read.csv(params$affected_product_file, stringsAsFactors = FALSE)
+quantity_units_to_kg <- read.csv(params$quantity_units_to_kg, stringsAsFactors = FALSE)
+
+```
+
+## ARM AQIM data
+
+get arm data
+
+```{r ARM AQIM data}
+
+db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+
+inspection_cols <- c(
+  "ID", 
+  "INSPECTION_NUMBER", 
+  "CATEGORY", 
+  "SUBCATEGORY", 
+  "IS_AQIM", 
+  "PATHWAY_ID", 
+  "PATHWAY",
+  "PORT_OF_ENTRY_ID",
+  
+  "INSPECTION_DATETIME", 
+  "INSPECTION_DATETIME_FISCAL_YEAR", 
+  "INSPECTION_DATETIME_FISCAL_MONTH",
+  "INSPECTION_LOCATION_ID", 
+  "INSPECTION_LOCATION_NAME", 
+  "INSPECTION_LOCATION_STATE_CODE", 
+  "COUNTRY_OF_ORIGIN_NAME", 
+ # "COUNTRY_OF_RESIDENCE_NAME", 
+  
+ # "FINAL_DESTINATION_STATE_NAME", 
+ # "FINAL_DESTINATION_STATE_ID", 
+ # "FINAL_DESTINATION_CITY", 
+ # "PASSENGER_DISTANCE_DESTINATION_NAME",
+  "NUMBER_OF_PASSENGERS")
+
+
+commodity_cols <- c(
+  "ID",
+  "INSPECTION_ID",
+  "IS_SMUGGLED",
+  "IS_CONTAMINANT_FOUND",
+  "COMMODITY_CLASSIFICATION",
+  "COUNTRY_OF_ORIGIN_NAME", 
+  "REF_COMMODITY_ID",
+  "COMMODITY_DISPLAY_NAME",
+  "MISC_ANIMAL_COMMODITY_NAME",
+  "QUANTITY",
+  "QUANTITY_UNITS_NAME"
+)
+
+
+#-- Pull AQIM inspection records from ARM  ---- 
+system.time(arm_aqim <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_INSPECTION]")) |> 
+              dplyr::filter(CATEGORY == "AQIM") |>
+              dplyr::select(inspection_cols) |> 
+              #rename to fit AQAS data structure
+              rename(edge_origin = COUNTRY_OF_ORIGIN_NAME,
+                      group_size = NUMBER_OF_PASSENGERS
+           )
+)
+ 
+#-- Load Bridge Commodity dataset ----
+system.time(commodity <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_COMMODITY]")) |> 
+              dplyr::select(commodity_cols) |> 
+              dplyr::rename(COMMODITY_ID = ID,
+              #rename to match AQAS data structure
+                            product_origin = COUNTRY_OF_ORIGIN_NAME)
+            )
+
+arm_aqim_records <- arm_aqim |> left_join(commodity, by = c("ID" = "INSPECTION_ID"), relationship = "many-to-many")
+
+# #filter to pathway of interest
+# system.time(arm_aqim_records <- arm_aqim_records |> dplyr::filter(PATHWAY %in% params$pathway)
+# )
+
+#filter to on or after begin date
+system.time(arm_aqim_records <- arm_aqim_records  |>
+  filter(INSPECTION_DATETIME_FISCAL_YEAR > begin_year | (INSPECTION_DATETIME_FISCAL_YEAR == begin_year & INSPECTION_DATETIME_FISCAL_MONTH >= begin_month)
+  )
+)
+
+#filter to at or before end date
+system.time(arm_aqim_records <- arm_aqim_records |> 
+  filter(INSPECTION_DATETIME_FISCAL_YEAR < end_year | (INSPECTION_DATETIME_FISCAL_YEAR == end_year & INSPECTION_DATETIME_FISCAL_MONTH <= end_month)
+  )
+)
+
+
+#collect records
+system.time(arm_aqim_records <- arm_aqim_records |> collect()
+            )
+```
+
+```{r get month and year from datetime}
+
+system.time(arm_aqim_records <- arm_aqim_records %>%
+  mutate(
+    CALENDAR_MONTH = lubridate::month(INSPECTION_DATETIME),
+    CALENDAR_YEAR = lubridate::year(INSPECTION_DATETIME )
+  )
+)
+```
+
+```{r separate land border to NB-SB}
+arm_aqim_records <- arm_aqim_records %>%
+  mutate(
+    PATHWAY = case_when(
+      INSPECTION_LOCATION_STATE_CODE %in% NB_state_cd & grepl("Land Border", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " NB"),
+      INSPECTION_LOCATION_STATE_CODE %in% SB_state_cd & grepl("Land Border", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " SB"),
+      TRUE ~ PATHWAY
+    )
+  )
+```
+
+# Convert non-kg quantities to kg units
+
+```{r correct quantity}
+setwd(here::here("input","data","asf affected product names"))
+quantity_units_reference_table <- read.csv("quantity units to kilograms reference table.csv")
+arm_aqim_records <- arm_aqim_records %>% 
+  mutate(QUANTITY = abs(QUANTITY)) %>%
+  left_join(
+    quantity_units_reference_table, 
+    by = c("QUANTITY_UNITS_NAME" = "unit"),
+    relationship = "many-to-many"
+  ) %>%
+  mutate(
+    TOTAL_KG = QUANTITY * `est_kilograms`
+  )
+```
+
+
+```{r convert arm countries to iso codes}
+arm_aqim_records <- arm_aqim_records %>% 
+  mutate(
+    edge_origin = countrycode(edge_origin, 
+                                  origin = "country.name", 
+                                  destination = "iso3c"),
+    product_origin = countrycode(product_origin, 
+                                    origin = "country.name", 
+                                    destination = "iso3c")
+  )
+
+```
+
+
+# AQAS AQIM data
+
+Will have to get old AQAS data as well, and make sure it matches naming structures
+
+```{r connect to AQAS framework}
+db_conn = DBI::dbConnect(
+  odbc::odbc(),
+  .connection_string =
+    "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_AQAS_DW;
+                        trusted_connection=yes"
+  )
+
+
+```
+
+# Function to collect AQAS data for each pathway
+
+This function will collect the AQAS data for each pathway, and then join it with the commodity data. It will also rename the columns to match the ARM AQIM data structure. It will also filter the data to only include the relevant columns and add a PATHWAY column to identify the pathway type. It will also convert the quantity units to kilograms if they are labeled "Each" and calculate the total kilograms for each commodity on the assumption that "Each" weights 0.5kg (the instructions given for labeling kg if a fruit).
+
+```{r AQAS data collection function}
+
+aqas_aqim_func <- function(insp_data, commod_data, pathway_name, 
+                           month, year, group_size, action_count, qmi_count, clean_treat_count,
+                           passenger_origin, item_origin) {
+  # First check if the group_size column exists in the data
+  avail_cols <- colnames(insp_data)
+  
+  # Create a select_cols vector with columns that definitely exist
+  select_cols <- c("AQIM_FORM_ID", "LOCATION", "PORT_CD", "STATE_CD", month, year, action_count)
+  
+  # Conditionally add columns that may or may not exist
+  if(group_size %in% avail_cols) {
+    select_cols <- c(select_cols, group_size)
+  }
+  if("LOCATION_ID" %in% avail_cols) {
+    select_cols <- c(select_cols, "LOCATION_ID")
+  }
+  if(qmi_count %in% avail_cols) {
+    select_cols <- c(select_cols, qmi_count)
+  }
+  if(clean_treat_count %in% avail_cols) {
+    select_cols <- c(select_cols, clean_treat_count)
+  }
+  if(passenger_origin %in% avail_cols) {
+    select_cols <- c(select_cols, passenger_origin)
+  }
+  if(item_origin %in% avail_cols) {
+    select_cols <- c(select_cols, item_origin)
+  }
+
+  
+  # Now select only the columns that actually exist
+  insp_df <- insp_data %>% 
+    dplyr::select(all_of(select_cols)) %>%
+    mutate(PATHWAY = pathway_name) %>%
+    relocate(PATHWAY, .after = AQIM_FORM_ID)
+  
+  # Create a list of rename mappings, including only those that exist
+  rename_list <- list(
+    "CALENDAR_MONTH" = month,
+    "CALENDAR_YEAR" = year,
+    "INSPECTION_LOCATION_NAME" = "LOCATION",
+    "INSPECTION_LOCATION_STATE_CODE" = "STATE_CD"
+  )
+  
+  # Add conditional renames
+  if(group_size %in% avail_cols) {
+    rename_list[["group_size"]] <- group_size
+  }
+  if("LOCATION_ID" %in% avail_cols) {
+    rename_list[["INSPECTION_LOCATION_ID"]] <- "LOCATION_ID"
+  }
+  if(action_count %in% avail_cols) {
+    rename_list[["actions"]] <- action_count
+  }
+  if(qmi_count %in% avail_cols) {
+    rename_list[["qmis"]] <- qmi_count
+  }
+  if(clean_treat_count %in% avail_cols) {
+    rename_list[["ct_count"]] <- clean_treat_count
+  }
+  if(passenger_origin %in% avail_cols) {
+    rename_list[["edge_origin"]] <- passenger_origin
+  }
+  if(item_origin %in% avail_cols) {
+    rename_list[["product_origin"]] <- item_origin
+  }
+  
+  # Apply the renames that are applicable
+  insp_df <- insp_df %>% rename(!!!rename_list)
+  
+  # Process commodity data as before
+  commod_df <- commod_data %>% 
+    select(AQIM_FORM_ID, ITEM, QUANTITY, UNIT, ACTN_TAKEN) %>%
+    filter(!ACTN_TAKEN == "Inspected and Released")
+  
+  # Join the data as before
+  df <- insp_df %>%
+    left_join(commod_df, by = "AQIM_FORM_ID", relationship = "many-to-many") %>%
+    rename("ID" = "AQIM_FORM_ID")
+  
+  return(df)
+}
+
+
+
+  correct_units_func <- function(data) {
+    data |> mutate(
+      TOTAL_KG = case_when(
+      UNIT == "Kilogram" ~ QUANTITY,
+      UNIT == "Each" ~ 2 * QUANTITY,
+      UNIT == "Grams" ~ QUANTITY / 1000
+      )
+      )
+  }
+
+
+
+```
+
+```{r AQAS pedestrian - separated by NB-SB aqim}
+
+insp_data <- tbl(db_conn,sql('SELECT
+                      *
+                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_PEDESTRIAN_MV]'))
+
+commod_data <- tbl(db_conn,sql('SELECT
+                      *
+                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_PEDESTRIAN_ITEM_MV]'))
+
+ped <- aqas_aqim_func(insp_data,
+                      commod_data,
+                      pathway_name = "Pedestrian",
+                      month = "MON",
+                      year = "CALENDAR_YR",
+                      group_size = "NUM_GRP",
+                      action_count = "ACTION_CNT",
+                      qmi_count = "QMI_CNT",
+                      clean_treat_count = "CT_CNT",
+                      passenger_origin = "PAX_ORIGIN_CD",
+                      item_origin = "ITEM_ORIGIN_CD") %>%
+  correct_units_func()
+
+ped <- collect(ped)
+
+#NB pedestrian does not exist
+#View(ped %>% count(INSPECTION_LOCATION_STATE_CODE))
+```
+
+```{r AQAS express carrier}
+
+insp_data <- tbl(db_conn,sql('SELECT
+                      *
+                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_EXP_CARRIER_MV]'))
+                     
+commod_data <- tbl(db_conn,sql('SELECT
+                      *
+                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_EXP_CARRIER_ITEM_MV]'))
+
+eco <- aqas_aqim_func(insp_data,
+                      commod_data,
+                      pathway_name = "Express_courier",
+                      month = "MON",
+                      year = "CALENDAR_YR",
+                      group_size = "NUM_GRP",
+                      action_count = "ACTION_CNT",
+                      qmi_count = "QMI_CNT",
+                      clean_treat_count = "CT_CNT",
+                      passenger_origin = "COUNTRY_CD",
+                      item_origin = "PARCEL_ORIGIN_CD") %>%
+  correct_units_func()
+
+eco <- collect(eco)
+
+```
+
+```{r AQAS ship}
+insp_data <- tbl(db_conn,sql('SELECT
+                      *
+                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_SHIP_MV]'))
+                     
+commod_data <- tbl(db_conn,sql('SELECT
+                      *
+                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_SHIP_ITEM_MV]'))
+
+ship <- aqas_aqim_func(insp_data,
+                      commod_data,
+                      pathway_name = "Cruise_ship",
+                      month = "MON",
+                      year = "CALENDAR_YR",
+                      group_size = "NUM_PAX",
+                      action_count = "ACTION_CNT",
+                      qmi_count = "QMI_CNT",
+                      clean_treat_count = "CT_CNT",
+                      passenger_origin = "COUNTRY_CD",
+                      item_origin = "PARCEL_ORIGIN_CD") %>%
+  correct_units_func()
+
+ship <- collect(ship)
+```
+
+## Bind aqas aqim data together
+
+```{r combined aqas}
+aqas_aqim <- dplyr::bind_rows(ped, eco, ship)
+
+# change ITEM name to fit ARM data structure
+aqas_aqim <- aqas_aqim %>%
+  rename(COMMODITY_DISPLAY_NAME = ITEM)
+
+```
+
+```{r filter low observation years}
+# Count observations by year and pathway, then filter out low-count combinations
+low_data_combinations <- aqas_aqim %>%
+  count(PATHWAY, CALENDAR_YEAR) %>%
+  filter(n < 500)
+
+# Apply the filter to remove low-observation year-pathway combinations
+aqas_aqim <- aqas_aqim %>%
+  anti_join(low_data_combinations, by = c("PATHWAY", "CALENDAR_YEAR"))
+
+# Quick summary of records removed
+records_before <- nrow(aqas_aqim)
+records_after <- nrow(aqas_aqim_filtered)
+percent_kept <- round(records_after / records_before * 100, 1)
+
+cat(sprintf("Filtered out %d observations (%.1f%% data retained)\n", 
+            records_before - records_after,
+            percent_kept))
+```
+
+## Separate land border to NB-SB
+
+This will separate the land border pathway into NB and SB pathways based on the STATE_CD of the inspection location. It will append "NB" or "SB" to the PATHWAY name.
+
+```{r separate land border to NB-SB}
+aqas_aqim <- aqas_aqim %>%
+  mutate(
+    PATHWAY = case_when(
+      INSPECTION_LOCATION_STATE_CODE %in% NB_state_cd & grepl("Pedestrian", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " NB"),
+      INSPECTION_LOCATION_STATE_CODE %in% SB_state_cd & grepl("Pedestrian", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " SB"),
+      TRUE ~ PATHWAY
+    )
+  )
+  
+```
+
+```{r combine aqas and arm aqim data}
+# Find matching columns between the two dataframes
+matching_columns <- intersect(names(aqas_aqim), names(arm_aqim_records))
+
+# See which columns are unique to each dataframe
+aqas_only_columns <- setdiff(names(aqas_aqim), names(arm_aqim_records))
+arm_only_columns <- setdiff(names(arm_aqim_records), names(aqas_aqim))
+
+# Print the results for inspection
+print("Common columns between both datasets:")
+print(matching_columns)
+
+print("Columns only in AQAS data:")
+print(aqas_only_columns)
+
+print("Columns only in ARM data:")
+print(arm_only_columns)
+
+column_types <- data.frame(
+  column_name = matching_columns,
+  aqas_type = sapply(matching_columns, function(col) class(aqas_aqim[[col]])[1]),
+  arm_type = sapply(matching_columns, function(col) class(arm_aqim_records[[col]])[1]),
+  stringsAsFactors = FALSE
+)
+
+# Identify columns with mismatched types
+mismatched_columns <- column_types[column_types$aqas_type != column_types$arm_type, ]
+print("Columns with mismatched types:")
+print(mismatched_columns)
+
+# Fix mismatched columns
+for (i in 1:nrow(mismatched_columns)) {
+  col <- mismatched_columns$column_name[i]
+  aqas_type <- mismatched_columns$aqas_type[i]
+  arm_type <- mismatched_columns$arm_type[i]
+  
+  # Choose the most appropriate type based on data needs
+  if (aqas_type == "character" && arm_type == "integer64") {
+    arm_aqim_records[[col]] <- as.character(arm_aqim_records[[col]])
+  } else if (aqas_type == "factor" && arm_type == "character") {
+    aqas_aqim[[col]] <- as.character(aqas_aqim[[col]])
+  } else if (aqas_type == "numeric" && arm_type == "integer64") {
+    arm_aqim_records[[col]] <- as.numeric(arm_aqim_records[[col]])
+  } else if (aqas_type == "integer" && arm_type == "numeric") {
+    aqas_aqim[[col]] <- as.integer(aqas_aqim[[col]])
+  } else if (aqas_type == "character" && arm_type == "double") {
+    aqas_aqim[[col]] <- as.character(aqas_aqim[[col]])
+  } else if (inherits(aqas_aqim[[col]], "Date") && !inherits(arm_aqim_records[[col]], "Date")) {
+    arm_aqim_records[[col]] <- as.Date(arm_aqim_records[[col]])
+  } else if (!inherits(aqas_aqim[[col]], "Date") && inherits(arm_aqim_records[[col]], "Date")) {
+    aqas_aqim[[col]] <- as.Date(aqas_aqim[[col]])
+  }
+  # Add more conversions as needed
+}
+
+# Now bind the dataframes with consistent types
+aqim_data <- dplyr::bind_rows(aqas_aqim, arm_aqim_records)
+
+```
+
+# Create a reference table that identifies what entry type each PATHWAY is associated with
+
+```{r}
+
+setwd(here::here('input', 'data', 'PATHWAY name reference'))
+# Load the pathway reference table
+pathway_ref <- read.csv("pathway to entry type reference table.csv", stringsAsFactors = FALSE)
+aqim_data <- aqim_data %>%
+  left_join(pathway_ref, by = "PATHWAY", relationship = "many-to-one")
+
+get_entry_type <- function(pathway_str) {
+  for (i in 1:nrow(pathway_ref)) {
+    ref_pathway <- pathway_ref$PATHWAY[i]
+    if (grepl(ref_pathway, pathway_str, fixed = TRUE)) {
+      return(pathway_ref$entry_type[i])
+    }
+  }
+  return(NA_character_)
+}
+
+
+
+
+
+# Apply the function to each pathway in arm_aqim_records
+system.time(aqim_data <- aqim_data %>%
+  rowwise() %>%
+  mutate(entry_type = get_entry_type(PATHWAY)) %>%
+  ungroup()
+)
+
+
+# Apply the function to each pathway in arm_aqim_records
+system.time(aqas_aqim <- aqas_aqim %>%
+  rowwise() %>%
+  mutate(entry_type = get_entry_type(PATHWAY)) %>%
+  ungroup()
+)
+
+
+system.time(arm_aqim_records <- arm_aqim_records %>%
+  rowwise() %>%
+  mutate(entry_type = get_entry_type(PATHWAY)) %>%
+  ungroup()
+)
+#print(aqim_data |> count(entry_type, PATHWAY))
+
+
+
+```
+
+# Assign location 
+```{r}
+db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+
+inspection_cols <- c(
+    "ID", 
+    "NAME", 
+    "PARENT_LOCATION_ID", 
+    "SITE", 
+    "LOCATION_STATE_CD", 
+    "PATHWAY_ID", 
+    "PATH
+)
+
+
+#-- Pull AQIM inspection records from ARM  ---- 
+system.time(arm_aqim <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_LOCATION]")) |> 
+              dplyr::filter(CATEGORY == "AQIM") |>
+              dplyr::select(inspection_cols) |> 
+              #rename to fit AQAS data structure
+              rename(edge_origin = COUNTRY_OF_ORIGIN_NAME,
+                      group_size = NUMBER_OF_PASSENGERS
+           )
+)
+ 
+
+```
+
+
+
+# save data
+```{r save aqim data}
+write.csv(aqim_data, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv", row.names = FALSE)
+
+```
+
+
+
+
+
+
+
+
+
+# if needed, look into saving separately
+Not sure if needed downstream yet
+
+
+```{r apply entry type to each data set}
+# Apply the function to each pathway in arm_aqim_records
+system.time(aqas_aqim <- aqas_aqim %>%
+  rowwise() %>%
+  mutate(entry_type = get_entry_type(PATHWAY)) %>%
+  ungroup()
+)
+
+
+system.time(arm_aqim_records <- arm_aqim_records %>%
+  rowwise() %>%
+  mutate(entry_type = get_entry_type(PATHWAY)) %>%
+  ungroup()
+)
+#print(aqim_data |> count(entry_type, PATHWAY))
+
+```
+
+```{r }
+# Function to match commodities with ASF reference table
+match_asf_risk <- function(data, reference_table) {
+  # Try matching on COMMODITY_DISPLAY_NAME
+  asf_product_match <- data %>%
+    inner_join(reference_table, 
+               by = c("COMMODITY_DISPLAY_NAME" = "ITEM", "entry_type" = "entry_type"), 
+               relationship = "many-to-one")
+  
+  # Combine matches and remove duplicates
+  asf_matches <- asf_product_match %>%
+    distinct(ID, COMMODITY_ID, .keep_all = TRUE)
+  
+  # Return the matches for further processing
+  return(asf_matches)
+}
+
+# Apply to both datasets
+asf_matches_aqim <- match_asf_risk(aqim_data, asf_product_ref)
+asf_matches_arm <- match_asf_risk(arm_aqim_records, asf_product_ref)
+
+# Combine all matches from both sources
+asf_matches <- bind_rows(asf_matches_aqim, asf_matches_arm) %>%
+  distinct(ID, COMMODITY_ID, .keep_all = TRUE)
+
+# Apply risk classification to the full dataset
+dat <- aqim_data %>% 
+  left_join(asf_matches, by = c("ID", "COMMODITY_ID"), relationship = "many-to-many") %>%
+  mutate(IS_ASF_RISK = ifelse(is.na(IS_ASF_RISK), "NO", IS_ASF_RISK))
+
+# Apply risk classification to ARM records separately
+dat_arm <- arm_aqim_records %>% 
+  left_join(asf_matches, by = c("ID", "COMMODITY_ID"), relationship = "many-to-many") %>%
+  mutate(IS_ASF_RISK = ifelse(is.na(IS_ASF_RISK), "NO", IS_ASF_RISK))
+
+```
+# Convert the entry_type to commercial if size is large
+
+```{r convert entry_type to commercial}
+#Use the reference table to convert entry_type to commercial if the size is large
+setwd(here::here('input', 'data', 'product pathway by volume key'))
+size_ref <- read.csv("product pathway by volume reference table.csv", stringsAsFactors = FALSE)
+
+size_ref_func <- function(data, reference_table){
+    data %>%
+  left_join(reference_table, by = c("entry_type" = "entry_type_ref"), relationship = "many-to-one") %>%
+  mutate(
+    entry_type = ifelse(!is.na(size_threshold_kg
+) & !is.na(TOTAL_KG) & TOTAL_KG >= size_threshold_kg
+, subpathway, entry_type)
+  ) }
+
+dat <- size_ref_func(data = dat, reference_table = size_ref)
+
+dat_arm <- size_ref_func(data = dat_arm, reference_table = size_ref)
+```
+# save arm and aqas data separtely
+```{r save aqas aqim data}
+write.csv(dat, "aqas_aqim_combined.csv", row.names = FALSE)
+
+```
+```{r save arm aqim data}
+write.csv(dat_arm, "arm_aqim_combined.csv", row.names = FALSE)  
+```
+
+
+
+# model how much of each product type and name is coming in via each pathway
+
+# Left off here 8/8
+
+```{r just checking}
+
+aqim_data |> count(PATHWAY) |> View()
+
+##What kind of matches do we have?
+##i went through the thousands of records and the matches are appropriate
+#aqim_data |> left_join(asf_matches, relationship = "many-to-many") |> 
+#  count(IS_ASF_RISK, COMMODITY_DISPLAY_NAME) |> 
+#  arrange(desc(n)) |> 
+#  View()
+
+#aqim_data |> left_join(asf_matches, relationship = "many-to-many") |> 
+#  count(IS_ASF_RISK, COMMODITY_DISPLAY_NAME, PATHWAY) |> 
+#  arrange(desc(n)) |> 
+#  View()
+
+## maritime -mail was an issue because of 2 reference tables not matching.
+## Can continue to Check what entry_type is assigned to this pathway
+#aqim_data %>% 
+#  filter(PATHWAY == "Maritime Port - Vessel - Mail - CBP") %>%
+#  select(PATHWAY, entry_type) %>%
+#  distinct()
+
+## Check if these commodities exist in the reference table
+#missing_matches <- aqim_data %>% 
+#  filter(PATHWAY == "Maritime Port - Vessel - Mail - CBP") %>%
+#  anti_join(asf_matches, by = c("ID", "COMMODITY_ID")) %>%
+#  count(COMMODITY_DISPLAY_NAME, entry_type) %>%
+#  arrange(desc(n))
+
+## Check what entry types exist in the reference table for these commodities
+#asf_product_ref %>%
+#  filter(ITEM %in% missing_matches$COMMODITY_DISPLAY_NAME) %>%
+#  select(ITEM, entry_type) %>%
+#  distinct()
+
+```
+
+
+```{r step two}
+# Step 2: Get unique inspections
+inspections <- aqim_data %>%
+  select(ID, PATHWAY, INSPECTION_LOCATION_ID, INSPECTION_LOCATION_NAME, edge_origin, product_origin) %>%
+  distinct()
+
+```
+
+```{r step three}
+# Step 3: For each inspection, determine if it has any commodities with ASF risk
+inspection_asf_risk <- inspections %>%
+  left_join(
+    asf_matches %>%
+      group_by(ID, entry_type, container, product_pathway, product_subpathway) %>%
+      summarize(
+        highest_asf_risk = case_when(
+          any(IS_ASF_RISK == "HIGH") ~ "HIGH",
+          any(IS_ASF_RISK == "MEDIUM") ~ "MEDIUM",
+          any(IS_ASF_RISK == "LOW") ~ "LOW",
+          TRUE ~ NA_character_
+        )
+      ),
+    by = "ID"
+  ) %>%
+  # Create binary indicator for ASF risk
+  mutate(has_asf_risk = !is.na(highest_asf_risk)) %>% 
+  ungroup()
+
+```
+
+```{r step four}
+
+# Step 4: Calculate fractions
+inspection_asf_risk %>% 
+  group_by(
+    PATHWAY,INSPECTION_LOCATION_ID,COUNTRY_OF_ORIGIN_NAME,product_pathway,product_subpathway
+  )
+
+
+
+
+
+
+# Step 4: Calculate fractions by PATHWAY
+pathway_risk <- inspection_asf_risk %>%
+  group_by(PATHWAY,
+  INSPECTION_LOCATION_ID,
+  ) %>%
+  summarize(
+    total_inspections = n(),
+    risk_inspections = sum(has_asf_risk, na.rm = TRUE),
+    fraction = risk_inspections / total_inspections
+  ) %>%
+  arrange(desc(fraction))
+
+# Calculate fractions by INSPECTION_LOCATION_ID
+location_risk <- inspection_asf_risk %>%
+  group_by(INSPECTION_LOCATION_ID, INSPECTION_LOCATION_NAME) %>%
+  summarize(
+    total_inspections = n(),
+    risk_inspections = sum(has_asf_risk, na.rm = TRUE),
+    fraction = risk_inspections / total_inspections
+  ) %>%
+  arrange(desc(fraction))
+
+# Calculate fractions by COUNTRY_OF_ORIGIN_NAME
+country_risk <- inspection_asf_risk %>%
+  group_by(COUNTRY_OF_ORIGIN_NAME) %>%
+  summarize(
+    total_inspections = n(),
+    risk_inspections = sum(has_asf_risk, na.rm = TRUE),
+    fraction = risk_inspections / total_inspections
+  ) %>%
+  arrange(desc(fraction))
+
+# Display top results from each category
+print("Top pathways by ASF risk:")
+print(pathway_risk)
+
+print("Top 10 locations by ASF risk:")
+print(head(location_risk, 10))
+
+print("Top 10 countries of origin by ASF risk:")
+print(head(country_risk, 10))
+
+```
+
+# TO DO:
+
+## I want to change this to amount of material intercepted, not just the number of inspections.
+
+## I want to calculate the amount of material intercepted by each pathway, subpathway, and entry type, as well as container in the product reference table.
+
+## create an inspection only and commodity only table
+
+probably not needed, but keeping it here for now.
+
+This is just so we dont have to collect() both inspection and commodity tables
+
+```{r insp and commod dfs}
+
+#need to check this function; it should take the commodity-only columns away from arm_aqim_records and reduce to  
+inspections_only_func <- function(data) {
+  df <- data |>
+    dplyr::select(inspection_cols
+                  ) |> 
+    distinct()
+  return(df)
+}
+
+inspections <- inspections_only_func(arm_aqim_records)
+
+
+commodity_only_func <- function(data) {
+  df <- data |>
+    rename("INSPECTION_ID" = "ID") |> 
+    dplyr::select(any_of(commodity_cols),
+                  COMMODITY_ID,
+                  COMMODITY_COUNTRY_ORIGIN) |>
+    #rename("COMMODITY_ID" = "ID") |> 
+    filter(!is.na(COMMODITY_ID))
+  return(df)
+}
+
+commodities <- commodity_only_func(arm_aqim_records)
+```

@@ -1,0 +1,136 @@
+---
+title: "geolocate place names"
+author: "Dalon White"
+date: "2025-07-18"
+output: html_document
+---
+## Geolocate place names
+
+```{r packages}
+pacman::p_load(tidyverse, dplyr)
+```
+
+```{r get known locations}
+#read in the file
+setwd(here::here("input","data","place names and geolocation"))
+#read all files within
+files = file.info(list.files(here::here("input","data","place names and geolocation"), full.names = T))
+geolocs = read_csv("city state geolocations.csv")
+```
+
+
+```{r get unknown locations}
+
+#get locations
+setwd(here::here("output","geoplaces",'unknown locations'))
+unknown_destinations <- read.csv("unknown locations.csv") 
+
+```
+
+Correct names with fuzzy matching
+
+Still under construction -- need to fix the fuzzy matching function
+```{r correct names and re-geolocate}
+
+# Reference table of cities and states (e.g., us_cities)
+# us_cities <- data.frame(city = ..., state = ..., lat = ..., lon = ...)
+setwd(here::here('input',"data",'place names and geolocation','US places'))
+files = file.info(list.files(here::here("input","data","place names and geolocation",'US places'), full.names = T))
+gazetteer <- read.delim(base::rownames(files)[which.max(files$mtime)], sep = "\t", header = TRUE)
+
+
+#### Fix below function ####
+# Fuzzy match function
+correct_city <- function(city, state, ref_table, max_dist = 2) {
+  state <- toupper(state)
+  city <- tools::toTitleCase(tolower(city))
+  candidates <- ref_table %>%
+    mutate(city = tools::toTitleCase(tolower(city)),
+           state = toupper(state)) %>%
+    filter(state == state)
+  if (nrow(candidates) == 0 || is.na(city) || is.na(state)) {
+    return(NA_character_)
+  }
+  # Calculate string distances
+  dists <- stringdist::stringdist(city, candidates$city, method = "jw")
+  min_idx <- which.min(dists)
+  # Only correct if distance is below threshold
+  if (length(min_idx) == 0 || dists[min_idx] > max_dist) {
+    return(NA_character_)
+  }
+  candidates$city[min_idx]
+}
+
+test<- unknown_destinations[1:100,]
+
+#### Fix below function ####
+
+
+# Apply correction
+# Currently doesnt work, it just changes the letter case
+test$corrected_city <- mapply(correct_city, test$CITY_DEST_NAME, test$STATE_DEST_CD, MoreArgs = list(ref_table = gazetteer, max_dist = 0.2))
+
+
+
+# Apply correction
+test$corrected_city <- mapply(correct_city, test$CITY_DEST_NAME, test$STATE_DEST_CD, MoreArgs = list(ref_table = gazetteer))
+
+
+
+
+
+
+
+# Apply correction
+unknown_destinations$corrected_city <- mapply(correct_city, unknown_destinations$CITY_DEST_NAME, unknown_destinations$STATE_DEST_CD, MoreArgs = list(ref_table = gazetteer))
+
+# Geocode using corrected names
+unknown_destinations <- tidygeocoder::geocode(unknown_destinations, city = corrected_city, state = state, method = "osm")
+```
+
+## once the above is fixed to correctly identify corrected_city, replace `city = CITY_DEST_NAME` with `city = corrected_city` below
+
+```{r identify unknown locations}
+
+#identify how many records to pass at a time
+number = 100
+
+#write function to pass and save those combinations
+save_destinations_func <- function(number, unknowns) for(i in seq(1, nrow(unknowns), by=number)) {
+  setwd(here::here('output','data','geoplaces'))
+  destinations <- tidygeocoder::geocode(
+  unknowns[i:(i+number-1),],
+  method = 'osm', state = STATE_DEST_CD, city = CITY_DEST_NAME)
+  write.csv(destinations,
+            paste("destinations", i, "to", (i+number)-1, ".csv",
+                  sep = " "))
+}
+
+save_destinations_func(number = number, unknowns = unknown_destinations)
+```
+
+
+
+## Combine files, replace input file, then delete
+
+```{r compile geolocation data and integrate in knowns}
+
+files = file.info(list.files(here::here("output","data","geoplaces"), full.names = T))
+
+all_data <- do.call(rbind, lapply(rownames(files), read.csv))
+
+known_places <- all_data |> mutate(x = long,
+                   y = lat) |> 
+  #filter out unidentified places
+  filter(!(is.na(x) | is.na(y))) |> 
+  mutate(citystlow = tolower(
+    paste(CITY_DEST_NAME, STATE_DEST_CD, sep = ", "))
+    ) |> 
+  mutate(UniqueID = paste("osm-",row_number())) |> 
+  dplyr::select(citystlow, UniqueID, x, y)
+
+here::here("input","data","place names and geolocation")
+known_places <- rbind(geolocs, known_places)
+write.csv(known_places, "city state geolocations.csv")
+
+```

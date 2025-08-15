@@ -1,0 +1,77 @@
+Item,ASF,potential changes,pathway,subpathway
+Animal Blood,1,,swine products/by-products,personal use or consumption
+Animal Food/Feed,1,,fomite,unspecified feed
+Animal Gelatin,1,,swine products/by-products,personal use or consumption
+Animal Horn/Antler,0,,swine products/by-products,personal use or consumption
+Animal Part,1,,swine products/by-products,personal use or consumption
+Animal Skin,1,,swine products/by-products,personal use or consumption
+Animal Skull,0,,swine products/by-products,personal use or consumption
+Animal Trophy,1,,swine products/by-products,personal use or consumption
+"Animal, Carcass",1,,swine products/by-products,personal use or consumption
+"Animal, Live",0,,swine products/by-products,personal use or consumption
+Beef,0,,swine products/by-products,personal use or consumption
+"Beef, Chorizo",0,,swine products/by-products,personal use or consumption
+"Beef, Dry",0,,swine products/by-products,personal use or consumption
+"Beef, Fat/Lard",0,,swine products/by-products,personal use or consumption
+"Beef, Flake",0,,swine products/by-products,personal use or consumption
+"Beef, Jerky",0,,swine products/by-products,personal use or consumption
+"Beef, Processed",0,,swine products/by-products,personal use or consumption
+"Beef, Sausage",0,,swine products/by-products,personal use or consumption
+"Beef, Shredded",0,,swine products/by-products,personal use or consumption
+"Cheese, Goat",0,,swine products/by-products,personal use or consumption
+"Goat, Meat",0,,swine products/by-products,personal use or consumption
+Lamb,0,,swine products/by-products,personal use or consumption
+"Lamb, Processed",0,,swine products/by-products,personal use or consumption
+Manure,0,1,fomite,contaminant
+Meat,1,,swine products/by-products,personal use or consumption
+"Meat, Bologna",0,1,swine products/by-products,personal use or consumption
+"Meat, Broth",0,,swine products/by-products,personal use or consumption
+"Meat, Canned",0,,swine products/by-products,personal use or consumption
+"Meat, Cooked",1,,swine products/by-products,personal use or consumption
+"Meat, Fat/Lard",1,,swine products/by-products,personal use or consumption
+"Meat, Hamburger",0,,swine products/by-products,personal use or consumption
+"Meat, Hot Dog",1,,swine products/by-products,personal use or consumption
+"Meat, Minced",1,,swine products/by-products,personal use or consumption
+"Meat, Preserved",1,,swine products/by-products,personal use or consumption
+"Meat, Processed",1,,swine products/by-products,personal use or consumption
+"Meat, Sandwich",1,,swine products/by-products,personal use or consumption
+"Meat, Tamale",1,,swine products/by-products,personal use or consumption
+"Meat, Wild Animal",1,,swine products/by-products,personal use or consumption
+Milk,0,,swine products/by-products,personal use or consumption
+"Milk, Sweeten",0,,swine products/by-products,personal use or consumption
+Mooncake With Meat,1,,swine products/by-products,personal use or consumption
+Pepperoni,1,,swine products/by-products,personal use or consumption
+Pizza w/ Meat,0,1,swine products/by-products,personal use or consumption
+Pork,1,,swine products/by-products,personal use or consumption
+"Pork, Bacon",1,,swine products/by-products,personal use or consumption
+"Pork, Chorizo",1,,swine products/by-products,personal use or consumption
+"Pork, Dried",1,,swine products/by-products,personal use or consumption
+"Pork, Fat/Lard",1,,swine products/by-products,personal use or consumption
+"Pork, Ham",1,,swine products/by-products,personal use or consumption
+"Pork, Processed",1,,swine products/by-products,personal use or consumption
+"Pork, Salami",1,,swine products/by-products,personal use or consumption
+"Pork, Sausage",1,,swine products/by-products,personal use or consumption
+"Pork, Skin",1,,swine products/by-products,personal use or consumption
+"Pudding, Blood",1,,swine products/by-products,personal use or consumption
+Rawhide,0,1,swine products/by-products,personal use or consumption
+"Sandwich, Meat",1,,swine products/by-products,personal use or consumption
+Added by DPW to deal with ARM difference in COMMODITY table names:,0,,,
+Blood,1,,swine products/by-products,personal use or consumption
+Animal Food,1,,fomite,unspecified feed
+Feed,1,,fomite,unspecified feed
+Gelatin,1,,swine products/by-products,personal use or consumption
+Horn,0,,swine products/by-products,personal use or consumption
+Antler,0,,swine products/by-products,personal use or consumption
+Animal Part,1,,swine products/by-products,personal use or consumption
+Skin,1,,swine products/by-products,personal use or consumption
+Skull,0,,swine products/by-products,personal use or consumption
+Trophy,1,,swine products/by-products,personal use or consumption
+Carcass,1,,swine products/by-products,personal use or consumption
+Swine,1,,swine products/by-products,personal use or consumption
+Truck,1,,fomite,vehicle
+Vehicle,1,,fomite,vehicle
+Soil,1,,fomite,personal effects
+Hay,1,,fomite,plant based feed
+Porcine,1,,swine products/by-products,personal use or consumption
+Trophies,1,,swine products/by-products,personal use or consumption
+Veterinary Biologic or Veterinary Biological Product,1,,other products,unspecified

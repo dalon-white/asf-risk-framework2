@@ -1,0 +1,453 @@
+---
+title: "AQIM pathway layers"
+author: "Dalon White"
+date: "2025-07-26"
+output: html_document
+
+params:
+  begin_date: 2000-01-01
+  end_date: 2024-12-31
+  US_grid_cell_size: 30000
+---
+
+The vehicle pathway start (land border vehicle) is too detailed and complicated. I need a simpler system.
+
+Simplify across ports. Ports would be great but that's another, more detailed analysis. This is broad strokes.
+
+The main components need to be, for each pathway:
+
+This Rmd:
+
+-   All passenger final destinations as a spatial layer with a scaled KDE, as a single layer
+
+    -   Do it for all inspections at once, no matter the year
+
+    -   Split northern and southern border
+
+    -   Save to a file folder named for spatial layers
+
+Steps to completion
+
+-   Gather AQIM data all at once. Add necessary columns.
+
+    -   Extract and send all distinct ocmbinations of city-state to the output folder for additional geolocation points
+
+        -   Note: Air Cargo AQIM (ARM) should capture e-Commerce
+
+-   Add geolocation data to all records
+
+-   Create US grid raster
+
+-   KDE the points using the raster for each pathway
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse, magrittr, ggplot2, DT, caret, lubridate, readr, stringdist, purrr)
+pacman::p_load(DBI, odbc)
+pacman::p_load(tidygeocoder, sf, tigris, SpatialKDE)
+```
+
+```{r params for vscode}
+if(!exists("params")) {
+  params <- list(
+    begin_date = "2000-01-01",
+    end_date = "2024-12-31",
+    US_grid_cell_size = 30000
+
+  )
+}
+```
+## Call and compile AQIM data
+
+Get all AQIM data that is relevant and make sure it is geolocated
+
+```{r ARM AQIM data}
+
+#-- Connect to ARM ---- 
+#ARM data base version 2
+db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+
+inspection_cols <- c(
+  "ID",
+  "PATHWAY", 
+  "FINAL_DESTINATION_STATE_ID", 
+  "FINAL_DESTINATION_CITY",
+  "INSPECTION_LOCATION_STATE_CODE")
+
+
+#-- Pull AQIM inspection records from ARM  ---- 
+system.time(arm_aqim <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_INSPECTION]")) |>  
+  dplyr::filter(CATEGORY == "AQIM") |> 
+    dplyr::select(any_of(inspection_cols))
+)
+
+
+#collect records
+system.time(arm_aqim <- arm_aqim |> collect()
+            )
+```
+
+```{r convert state ref ID to 2 digit codes}
+state_code_ref <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[REF_STATE]")) |> 
+  filter(ACTIVE_FL == "Y") |>  
+  dplyr::select(ID, STATE_CD) |> collect()
+
+arm_aqim$FINAL_DESTINATION_STATE_ID <- state_code_ref$STATE_CD[match(arm_aqim$FINAL_DESTINATION_STATE_ID, state_code_ref$ID)]
+
+
+```
+
+### Separate land border pathways by NB/SB
+
+```{r define border state codes}
+NB_state_cd <- c("AK","ID","ME","MN","MT","NH","NY","ND","OH","PA","VT","WA")
+SB_state_cd <- c("CA","AZ","NM","TX")
+```
+
+```{r separate land border to NB-SB}
+arm_aqim <- arm_aqim %>%
+  mutate(
+    PATHWAY = case_when(
+      INSPECTION_LOCATION_STATE_CODE %in% NB_state_cd & grepl("Land Border", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " NB"),
+      INSPECTION_LOCATION_STATE_CODE %in% SB_state_cd & grepl("Land Border", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " SB"),
+      TRUE ~ PATHWAY
+    )
+  )
+```
+
+```{r rename columns}
+arm_aqim <- arm_aqim |> 
+  rename("STATE_DEST_CD" = "FINAL_DESTINATION_STATE_ID",
+         "CITY_DEST_NAME" = "FINAL_DESTINATION_CITY")
+```
+
+# AQAS AQIM data
+
+Will have to get old AQAS data as well, and make sure it matches naming structures
+
+```{r connect to AQAS framework}
+db_conn = DBI::dbConnect(
+  odbc::odbc(),
+  .connection_string =
+    "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_AQAS_DW;
+                        trusted_connection=yes"
+  )
+
+
+```
+
+```{r AQAS data collection function}
+
+aqas_aqim_func <- function(data, pathway_name, state_column_name, city_column_name) {
+  data |> dplyr::select(AQIM_FORM_ID,
+                state_column_name,
+                city_column_name,
+                STATE_CD
+                ) |> 
+    collect() |> 
+    mutate(PATHWAY = pathway_name) |> 
+  relocate(PATHWAY, .after = AQIM_FORM_ID) |> 
+    rename("ID" = "AQIM_FORM_ID") |> 
+    rename("STATE_DEST_CD" = state_column_name,
+           "CITY_DEST_NAME" = city_column_name)
+}
+
+```
+
+```{r AQAS pedestrian - separated by NB-SB aqim}
+
+insp_mv <- tbl(db_conn,sql('SELECT
+                      *
+                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_PEDESTRIAN_MV]'))
+
+ped <- aqas_aqim_func(insp_mv, 
+                      pathway_name = "Pedestrian",
+                      state_column_name = 'PAX_DEST_STATE_CD',
+                      city_column_name = 'PAX_DEST_CITY')
+
+```
+
+```{r AQAS express carrier}
+insp_mv <- tbl(db_conn,sql('SELECT
+                      *
+                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_EXP_CARRIER_MV]'))
+
+eco <- aqas_aqim_func(insp_mv, 
+                 pathway = "Express_courier", 
+                 state_column_name = 'MAIL_DEST_STATE_CD',
+                 city_column_name = 'MAIL_DEST_CITY')
+
+```
+
+```{r AQAS ship}
+insp_mv <- tbl(db_conn,sql('SELECT
+                      *
+                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_SHIP_MV]'))
+
+ship <- aqas_aqim_func(insp_mv,
+                       pathway_name = "Cruise_ship",
+                       state_column_name = 'PAX_DEST_CD',
+                       city_column_name = 'PAX_DEST_CITY')
+```
+
+```{r combined aqas}
+aqas_aqim <- rbind(ped, eco, ship)
+```
+
+```{r separate land border to NB-SB}
+aqas_aqim <- aqas_aqim %>%
+  mutate(
+    PATHWAY = case_when(
+      STATE_CD %in% NB_state_cd & grepl("Pedestrian", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " NB"),
+      STATE_CD %in% SB_state_cd & grepl("Pedestrian", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " SB"),
+      TRUE ~ PATHWAY
+    )
+  )
+  
+```
+
+## Combine ARM and AQAS records
+
+Bring them together in a single data set, solving for naming conventions
+
+```{r combine AQAS and AQIM data}
+aqim_data <- rbind(aqas_aqim |> select(-STATE_CD),
+                   arm_aqim |> select(-INSPECTION_LOCATION_STATE_CODE)
+                   )
+```
+
+## Geolocate data
+
+Pull from input data
+
+1.  to update locations, write unknowns into the geolocation file, then run geolocation, then pull from input files again
+
+```{r create a destination column for indexing and joining}
+aqim_data <- aqim_data |>
+  mutate(destination = paste(CITY_DEST_NAME, STATE_DEST_CD, sep = ", ")) |> 
+  #delete blanks
+  filter(!destination %in% c(", "))
+
+#encoding issue
+aqim_data$destination <- iconv(aqim_data$destination, from = "Latin1", to = "UTF-8")
+
+#now to lowercase
+aqim_data$destination = tolower(aqim_data$destination)
+
+```
+
+```{r geolocate points}
+#read in the file
+setwd(here::here("input","data","place names and geolocation"))
+geolocs = read_csv("city state geolocations.csv")
+
+#add known geolocations
+aqim_data <- aqim_data |> left_join(geolocs, by = c("destination" = "citystlow"), relationship = "many-to-one")
+
+
+#once `geolocate place names.Rmd` gets fixed, the above will throw an error - then, use the below code:
+
+# #add known geolocations
+# aqim_data <- aqim_data |> left_join(geolocs, by = c("STATE_DEST_CD", "CITY_DEST_NAME"), relationship = "many-to-one")
+```
+
+Make a list of unknown locations. Once these locations are saved in the below chunk, they can be attempted to be identified using `geolocate place names.Rmd`
+
+```{r make a list of unknown locations}
+#find unknown locations
+unknown_destinations <- aqim_data |> filter(is.na(x)) |>  distinct(CITY_DEST_NAME, STATE_DEST_CD)
+
+setwd(here::here('output','geoplaces','unknown locations'))
+write.csv(unknown_destinations, "unknown locations.csv")
+```
+
+## Create a spatial raster layer for each pathway
+
+Create a US grid raster layer
+
+Loop over pathways:
+
+-   KDE geolocated points byUS grid
+
+-   save file
+
+```{r turn df to spatial object}
+
+#Create a loop by pathway
+
+#### convert to spatial ####
+# start with converting to NAD83 cause of lat/long
+aqim_data = aqim_data |> filter(!(is.na(x) | is.na(y))) |> sf::st_as_sf(coords = c( x = "x", y = "y"), crs = 4326) 
+#to project to Albers, it requires lat/long and converts to meters:
+aqim_data <- sf::st_transform(aqim_data, 5070)
+#If getting a funny output for aqim_data locations, check that crs = 4326 in the st_as_sf() function in this chunk
+
+```
+
+```{r create US grid}
+#create a raster of US
+us_bounds <- tigris::states(cb = TRUE) |> 
+                  st_union() |>  sf::st_transform(5070)
+us_bounds <- sf::st_transform(us_bounds, crs = 5070)
+#us_bounds <- as(us_bounds, "Spatial")
+
+us_bounds_sf <- st_sf(geometry = us_bounds)
+us_grid <- SpatialKDE::create_grid_hexagonal(
+  us_bounds_sf,
+  cell_size = params$US_grid_cell_size,
+  only_inside = TRUE
+)
+us_grid <- sf::st_intersection(us_bounds_sf, us_grid)
+
+
+```
+
+```{r limit destinations to within US}
+inside <- rowSums(st_within(aqim_data, us_grid, sparse = FALSE)) > 0
+aqim_data <- aqim_data[inside, ]
+
+```
+
+# Save grids for later use
+
+```{r loop and save individually}
+
+# Split data by PATHWAY
+pathway_groups <- aqim_data %>% group_split(PATHWAY)
+pathway_names <- unique(aqim_data$PATHWAY)
+
+bandwidth = 1*params$US_grid_cell_size #in meters
+
+setwd(here::here("output","proportional destination layers"))
+# Loop through each group and save results as soon as they're created
+for (i in seq_along(pathway_groups)) {
+  pathway_name <- pathway_names[i]
+  kde_result <- SpatialKDE::kde(
+    points = pathway_groups[[i]],
+    band_width = bandwidth,
+    scaled = FALSE,
+    grid = us_grid
+  )
+
+  # Save unscaled KDE
+  saveRDS(kde_result, paste0("kde_", pathway_name, ".rds"))
+  
+  # Scale and save scaled KDE
+  kde_result$kde_value <- proportions(kde_result$kde_value)
+  saveRDS(kde_result, paste0("kde_scaled_", pathway_name, ".rds"))
+}
+
+```
+
+```{r ensure they can be read}
+setwd(here::here("output","proportional destination layers"))
+
+#to read use:
+kde_Pedestrian_SB <- readRDS("kde_Pedestrian SB.rds")
+
+#plot these separately
+mapview::mapview(kde_Pedestrian_SB)
+
+#to read use:
+kde_scaled_Pedestrian_SB <- readRDS("kde_scaled_Pedestrian SB.rds")
+
+#plot these separately
+mapview::mapview(kde_scaled_Pedestrian_SB)
+
+
+layer1 <- aqim_data |> filter(PATHWAY == "Pedestrian SB")
+mapview::mapview(kde_scaled_Pedestrian_SB) + mapview::mapview(layer1,
+                             alpha = 0,
+                             alpha.regions = 0.05, #fill
+                             cex = 3
+                                                 )
+
+
+### Problem - the Vehicle KDE and point densities don't match!
+
+setwd(here::here("output","proportional destination layers"))
+#to read use:
+kde_Vehicle <- readRDS("kde_Land Border - Truck - Conveyance - CBP.rds")
+#plot these separately
+mapview::mapview(kde_Vehicle)
+mapview::mapview(kde_Vehicle)
+layer2 <- aqim_data |> filter(PATHWAY == "Land Border - Truck - Conveyance - CBP")
+mapview::mapview(layer2,
+                             alpha = 0,
+                             alpha.regions = 0.05, #fill
+                             cex = 3
+                                                 ) + mapview::mapview(kde_Vehicle)
+
+
+setwd(here::here("output","proportional destination layers"))
+kde_scaled_Vehicle <- readRDS("kde_scaled_Land Border - Truck - Conveyance - CBP.rds")
+mapview::mapview(layer2,
+                             alpha = 0,
+                             alpha.regions = 0.05, #fill
+                             cex = 3
+                                                 ) + mapview::mapview(kde_scaled_Vehicle)
+```
+
+# Need to check into the KDEs vs point observations matching for each pathway
+
+## They do not match for the vehicle pathway, but do match for Pedestrian SB
+
+### Previous method, doing 1 pathway at a time:
+
+```{r KDE for each pathway}
+# bandwidth = 100000 #in meters
+# kde_list <- aqim_data %>%
+#   group_split(PATHWAY) %>%
+#   setNames(unique(aqim_data$PATHWAY)) %>%
+#   map(~ SpatialKDE::kde(
+#     points = .x,
+#     band_width = bandwidth,
+#     scaled = FALSE,
+#     grid = us_grid
+#   ))
+
+```
+
+```{r scale KDE to fraction (0-1)}
+# #scale to 1
+# kde_list_scaled <- lapply(kde_list, function(df) {
+#   df$kde_value <- proportions(df$kde_value)
+#   return(df)
+# })
+
+```
+
+```{r test plotting pathways}
+# #plot these separately
+# mapview::mapview(kde_list[[1]])
+# mapview::mapview(kde_list_scaled[[1]])
+# mapview::mapview(kde_list_scaled[[3]])
+```
+
+```{r combine KDEs into a single data frame}
+# #plot these combined
+# # Combine all KDE results into one sf object
+# combined_kde <- bind_rows(kde_list)
+```
+
+```{r save US grids}
+# setwd(here::here('output','proportional destination layers'))
+# saveRDS(combined_kde, "aqim destination grid")
+# saveRDS(kde_list, "aqim destination grid list.rds")
+# saveRDS(kde_list_scaled, "aqim destination grid list_scaled.rds")
+# 
+# # #to read use:
+# # sf_list <- readRDS("sf_list.rds")
+```
+
+# Clear environment
+
+```{r}
+rm(list=ls())
+gc()
+```

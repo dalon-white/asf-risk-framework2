@@ -1,0 +1,509 @@
+---
+title: "aqim pathway approach rates"
+author: "Dalon White"
+date: "2025-07-27"
+output: html_document
+
+params:
+  risk_quantification: "0_1" # 0_1 or "range"
+  affected_countries: "current" # "current" or "mex_can" or "other"
+  other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify the countries here
+  years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
+---
+
+-   prepped data already has the pathway, entry type, etc., and risk as no/low/med/high
+-   need to use country of origin and product origin to determine if the inspection has any asf risk
+-   then model the kg of product with asf risk by pathway, entry type, location, country of origin, product pathway, product subpathway
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse)
+pacman::p_load(odbc, DBI)
+pacman::p_load(lme4,ggplot2,broom,multcomp,emmeans,sjPlot,tidyverse,broom.mixed)
+```
+
+```{r params for vscode}
+if(!exists("params")) {
+  params <- list(
+    risk_quantification = "0_1", # 0_1 or "range"
+    affected_countries = "current", # "current" or "mex_can" 
+    years = 2024:2024, #The years to include which countries have ASF from the `asf affected countries.csv` file
+    other_affected_countries = c("Country1", "Country2") # If using "other", specify the countries here
+  )
+}
+```
+
+# Call AQIM data
+
+```{r get data}
+
+aqim_dat <- read.csv("C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv")
+
+```
+
+# Set affected countries for analysis
+
+Within params, can choose whether to use the current affected countries or just Mexico and Canada. The current ones, are then filtered by the years specified in params$years.
+If only interested in the last year, then set params$years to the last year of interest. It is important to remember that we are not predicting where surveillance needs to be, such as for the CEAH group, but identifying the risk of ASF in products that are coming into the US, so whether an item corresponds to a year and country is not important. Instead, we are focused on estimating how much comes from each country and whether that country has ASF risk.
+
+```{r identify countries of risk}
+setwd(here::here("input","data","asf affected countries by year"))
+if(params$affected_countries == "current") {
+  affected_countries <- read.csv("asf affected countries.csv") |> 
+    mutate(Year = as.numeric(Year)) |> 
+    filter(Year %in% params$years) |> 
+    filter(Disease == "ASF") |>
+    distinct(ISO3_CODE) |> 
+    pull(ISO3_CODE)
+} else if (params$affected_countries == "mex_can") {
+  affected_countries <- c("MEX", "CAN")
+} else if (params$affected_countries == "other") {
+  affected_countries <- params$other_affected_countries
+} else {
+  stop("Invalid value for params$affected_countries")
+}
+```
+
+# Assign risk by country of origin and product origin
+
+```{r assign risk}
+# Filter for affected countries
+aqim_dat <- aqim_dat %>% mutate(IS_ASF_RISK = case_when(
+  edge_origin %in% affected_countries | product_origin %in% affected_countries ~ IS_ASF_RISK,
+  .default = "NO"
+         )
+)
+```
+
+## handle risk quantification based on 0-1 or a scale
+
+```{r handle risk quantification}
+if(params$risk_quantification == "0_1") {
+  # Convert risk to binary (0 or 1)
+  aqim_dat <- aqim_dat %>%
+    mutate(IS_ASF_RISK = case_when(
+      IS_ASF_RISK == "HIGH" ~ 1,
+      IS_ASF_RISK == "MEDIUM" ~ 1,
+      IS_ASF_RISK == "LOW" ~ 1,
+      .default = 0
+    ))
+} else if (params$risk_quantification == "range") {
+  # Keep risk as is (no conversion)
+  aqim_dat <- aqim_dat %>%
+    mutate(IS_ASF_RISK = case_when(
+      IS_ASF_RISK == "HIGH" ~ 1,
+      IS_ASF_RISK == "MEDIUM" ~ .67,
+      IS_ASF_RISK == "LOW" ~ .33,
+      .default = 0
+    ))
+} else {
+  stop("Invalid value for params$risk_quantification")
+}
+
+# modify TOTAL_KG by IS_ASF_RISK
+aqim_dat <- aqim_dat |> mutate(TOTAL_KG = TOTAL_KG * IS_ASF_RISK)
+
+# modify IS_ASF_RISK to be binary
+aqim_dat <- aqim_dat |> mutate(IS_ASF_RISK = ifelse(IS_ASF_RISK > 0, 1, 0))
+
+```
+
+# Need to predict both the incident rate per entry, and the kg of product that is intercepted.
+
+data_for_risk \<- aqim_dat \|\> dplyr::select(CALENDAR_YEAR, LOCATION_NAME, PATHWAY, group_size, IS_ASF_RISK, TOTAL_KG, container, product_pathway, product_subpathway) \|\> mutate(group = paste(PATHWAY, container, product_pathway, product_subpathway, sep = ";")) \|\>
+
+I want to do all this on a per-pathway basis. For that, I need to first split the data by pathway into a list, and work from there \### Split the data by pathway
+
+```{r split data by pathway}
+data_for_risk <- aqim_dat |> 
+  dplyr::select(CALENDAR_YEAR, INSPECTION_LOCATION_NAME, PATHWAY, group_size, IS_ASF_RISK, TOTAL_KG, container, product_pathway, product_subpathway)
+aqim_dat_list <- split(data_for_risk, data_for_risk$PATHWAY)
+aqim_dat_list <- lapply(aqim_dat_list, function(df) {
+  df$group <- paste(df$PATHWAY, df$container, df$product_pathway, df$product_subpathway, sep = ";")
+  return(df)
+})
+
+# Create a container for results
+group_models <- list()
+
+# Process each pathway separately
+for (pathway_name in names(aqim_dat_list)) {
+  pathway_data <- aqim_dat_list[[pathway_name]]
+  
+  # Get unique groups that aren't absences
+  unique_groups <- pathway_data %>%
+    filter(!endsWith(group, "NA;NA;NA")) %>%
+    pull(group) %>%
+    unique()
+  
+  # Create a sublist for this pathway's results
+  group_models[[pathway_name]] <- list()
+  
+  # For each unique group in this pathway
+  for (group_name in unique_groups) {
+    cat(sprintf("\nAnalyzing group: %s\n", group_name))
+    
+    # Create binary outcome for this specific group
+    modeling_data <- pathway_data %>%
+      mutate(is_target_group = ifelse(group == group_name, 1, 0))
+    
+    # Check if we have enough positive examples
+    positive_count <- sum(modeling_data$is_target_group)
+    if (positive_count < 1) {
+      cat("  Skipping due to insufficient positive examples (", positive_count, ")\n")
+      next
+    }
+    
+    # Store container for this group
+    group_models[[pathway_name]][[group_name]] <- list()
+    
+    # 1. BOOTSTRAP APPROACH - simpler and more robust
+    tryCatch({
+      # Bootstrap function for this specific group
+      boot_group_function <- function(data, indices) {
+        d <- data[indices,]
+        mean(d$is_target_group)
+      }
+      
+      # Run bootstrap
+      boot_result <- boot(modeling_data, 
+                          statistic = boot_group_function, 
+                          R = 1000)
+      
+      # Calculate confidence intervals
+      ci <- boot.ci(boot_result, type = "perc")
+      
+      # Store results
+      group_models[[pathway_name]][[group_name]][["bootstrap"]] <- list(
+        positive_count = positive_count,
+        total_count = nrow(modeling_data),
+        proportion = boot_result$t0,
+        ci_lower = ci$percent[4],
+        ci_upper = ci$percent[5]
+      )
+      
+      cat(sprintf("  Bootstrap results: %.4f (%.4f, %.4f)\n", 
+                  boot_result$t0, ci$percent[4], ci$percent[5]))
+      
+    }, error = function(e) {
+      cat("  Bootstrap analysis failed:", e$message, "\n")
+    })
+    
+    # 2. GLMM APPROACH - for more complex modeling
+      # This approach works but the port isn't a random effect, so it doesn't make sense to use a GLMM here
+    tryCatch({
+      # Fit a GLMM for this group
+      #glmm_group <- glmer(
+      #  is_target_group ~ (1|INSPECTION_LOCATION_NAME),
+      #  data = modeling_data,
+      #  family = binomial(link = "logit"),
+      #  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 20000))
+      #)
+      # Using a simpler GLM instead of GLMM since we don't have random effects
+      glmm_group <- glm(
+  is_target_group ~ INSPECTION_LOCATION_NAME,
+  data = modeling_data,
+  family = binomial(link = "logit")
+)
+      # Store results
+      group_models[[pathway_name]][[group_name]][["glmm"]] <- glmm_group
+      
+      # Extract coefficients
+      coef_summary <- summary(glmm_group)$coefficients
+      
+      cat("  GLMM model fitted successfully\n")
+      
+    }, error = function(e) {
+      cat("  GLMM model failed:", e$message, "\n")
+    })
+  }
+}
+
+# Get the name of the reference level and replace it in the location column
+# Method 1: Extract the reference level directly from a model
+get_reference_location <- function(model) {
+  # Get the data used in the model
+  model_data <- model$model
+  
+  # Get all unique location names from the data
+  all_locations <- unique(model_data$INSPECTION_LOCATION_NAME)
+  
+  # Get location names that appear in coefficients
+  coef_names <- names(coef(model))
+  location_coefs <- coef_names[grepl("INSPECTION_LOCATION_NAME", coef_names)]
+  locations_in_coefs <- gsub("INSPECTION_LOCATION_NAME", "", location_coefs)
+  
+  # The reference location is the one that doesn't appear in coefficients
+  reference_location <- setdiff(all_locations, locations_in_coefs)
+  
+  return(reference_location)
+}
+
+# Apply to a specific model
+for (pathway_name in names(group_models)) {
+  for (group_name in names(group_models[[pathway_name]])) {
+    if (!is.null(group_models[[pathway_name]][[group_name]][["glmm"]])) {
+      model <- group_models[[pathway_name]][[group_name]][["glmm"]]
+      ref_location <- get_reference_location(model)
+      cat(sprintf("For pathway '%s', group '%s', the reference location is: %s\n", 
+                 pathway_name, group_name, ref_location))
+    }
+  }
+}
+
+
+# Create a summary dataframe of all group results
+group_summary <- tibble(
+  pathway = character(),
+  group = character(),
+  positive_count = integer(),
+  total_count = integer(),
+  proportion = numeric(),
+  ci_lower = numeric(),
+  ci_upper = numeric()
+)
+
+# Extract bootstrap results for all groups
+for (pathway_name in names(group_models)) {
+  for (group_name in names(group_models[[pathway_name]])) {
+    results <- group_models[[pathway_name]][[group_name]]
+    
+    if (!is.null(results[["bootstrap"]])) {
+      group_summary <- group_summary %>%
+        add_row(
+          pathway = pathway_name,
+          group = group_name,
+          positive_count = results[["bootstrap"]]$positive_count,
+          total_count = results[["bootstrap"]]$total_count,
+          proportion = results[["bootstrap"]]$proportion,
+          ci_lower = results[["bootstrap"]]$ci_lower,
+          ci_upper = results[["bootstrap"]]$ci_upper
+        )
+    }
+  }
+}
+
+get_location_specific_probabilities <- function(models_list, alpha = 0.1, conf_level = 0.95) {
+  results_df <- data.frame()
+  # Calculate z-value for confidence interval
+  z_value <- qnorm(1 - (1 - conf_level)/2)  # 1.96 for 95% CI
+  
+  for (pathway_name in names(models_list)) {
+    for (group_name in names(models_list[[pathway_name]])) {
+      if (!is.null(models_list[[pathway_name]][[group_name]][["glmm"]])) {
+        model <- models_list[[pathway_name]][[group_name]][["glmm"]]
+        
+        # Get model summary and coefficients
+        model_summary <- summary(model)
+        coefs <- model_summary$coefficients
+        
+        # Get the intercept (baseline probability)
+        intercept <- coefs["(Intercept)", "Estimate"]
+        intercept_se <- coefs["(Intercept)", "Std. Error"]
+        intercept_p <- coefs["(Intercept)", "Pr(>|z|)"]
+        
+        # Calculate CI for intercept on log-odds scale
+        intercept_lower <- intercept - z_value * intercept_se
+        intercept_upper <- intercept + z_value * intercept_se
+        
+        # Transform to probability scale
+        baseline_prob <- plogis(intercept)
+        ci_lower_prob <- plogis(intercept_lower)
+        ci_upper_prob <- plogis(intercept_upper)
+        
+        # Add baseline/intercept to results
+        results_df <- rbind(results_df, data.frame(
+          pathway = pathway_name,
+          group = group_name,
+          location = "Baseline",
+          estimate = intercept,
+          probability = baseline_prob,
+          ci_lower = ci_lower_prob,
+          ci_upper = ci_upper_prob,
+          p_value = intercept_p,
+          significant = intercept_p < alpha,
+          stringsAsFactors = FALSE
+        ))
+        
+        # Add each location to results
+        for (i in 1:nrow(coefs)) {
+          coef_name <- rownames(coefs)[i]
+          
+          # Check if this is a location coefficient
+          if (grepl("INSPECTION_LOCATION_NAME", coef_name) && coef_name != "(Intercept)") {
+            # Extract the actual location name
+            location_name <- gsub("INSPECTION_LOCATION_NAME", "", coef_name)
+            
+            # Get coefficient value, SE and p-value
+            coef_value <- coefs[coef_name, "Estimate"]
+            coef_se <- coefs[coef_name, "Std. Error"]
+            p_value <- coefs[coef_name, "Pr(>|z|)"]
+            
+            # Calculate combined effect with intercept
+            combined_estimate <- intercept + coef_value
+            
+            # Calculate SE for combined estimate (simplified - ignoring covariance)
+            # For more precise CI, profile likelihood or bootstrap methods would be better
+            combined_se <- sqrt(intercept_se^2 + coef_se^2)
+            
+            # Calculate CI for combined effect
+            combined_lower <- combined_estimate - z_value * combined_se
+            combined_upper <- combined_estimate + z_value * combined_se
+            
+            # Transform to probability scale
+            location_prob <- plogis(combined_estimate)
+            location_ci_lower <- plogis(combined_lower)
+            location_ci_upper <- plogis(combined_upper)
+            
+            # Add to results
+            results_df <- rbind(results_df, data.frame(
+              pathway = pathway_name,
+              group = group_name,
+              location = location_name,
+              estimate = coef_value,
+              probability = location_prob,
+              ci_lower = location_ci_lower,
+              ci_upper = location_ci_upper,
+              p_value = p_value,
+              significant = p_value < alpha,
+              stringsAsFactors = FALSE
+            ))
+          }
+        }
+        
+        # Also include the average predicted probability across all observations
+        avg_prob <- mean(fitted(model))
+        
+        # For average probability, we can use bootstrap to get CI
+        # but for simplicity, we'll use NA for now
+        results_df <- rbind(results_df, data.frame(
+          pathway = pathway_name,
+          group = group_name,
+          location = "Average",
+          estimate = NA,
+          probability = avg_prob,
+          ci_lower = NA,
+          ci_upper = NA,
+          p_value = NA,
+          significant = NA,
+          stringsAsFactors = FALSE
+        ))
+      }
+    }
+  }
+  
+  return(results_df)
+}
+
+# Use the function
+location_probabilities <- get_location_specific_probabilities(group_models)
+
+# View the results with confidence intervals
+head(location_probabilities)
+
+# Get the bootstrap results for the average probabilities
+extract_bootstrap_results <- function(models_list) {
+  results_df <- data.frame()
+  
+  for (pathway_name in names(models_list)) {
+    for (group_name in names(models_list[[pathway_name]])) {
+      if (!is.null(models_list[[pathway_name]][[group_name]][["bootstrap"]])) {
+        boot_results <- models_list[[pathway_name]][[group_name]][["bootstrap"]]
+        
+        results_df <- rbind(results_df, data.frame(
+          pathway = pathway_name,
+          group = group_name,
+          proportion = boot_results$proportion,
+          ci_lower = boot_results$ci_lower,
+          ci_upper = boot_results$ci_upper
+        ))
+      }
+    }
+  }
+  
+  return(results_df)
+}
+
+bootstrap_results <- extract_bootstrap_results(group_models)
+View(bootstrap_results)
+
+# Replace the "Average" location probabilities with bootstrap results in cluding estimate and confidence intervals
+location_probabilities_updated <- location_probabilities %>%
+  left_join(
+    bootstrap_results %>% 
+      dplyr::select(pathway, group, bootstrap_proportion = proportion, 
+             bootstrap_ci_lower = ci_lower, bootstrap_ci_upper = ci_upper),
+    by = c("pathway", "group")
+  ) %>%
+  mutate(
+    probability = ifelse(location == "Average" & !is.na(bootstrap_proportion), 
+                       bootstrap_proportion, probability),
+    ci_lower = ifelse(location == "Average" & !is.na(bootstrap_ci_lower), 
+                     bootstrap_ci_lower, ci_lower),
+    ci_upper = ifelse(location == "Average" & !is.na(bootstrap_ci_upper), 
+                     bootstrap_ci_upper, ci_upper)
+  ) %>%
+  dplyr::select(-bootstrap_proportion, -bootstrap_ci_lower, -bootstrap_ci_upper)
+
+# View the updated dataframe
+print(location_probabilities_updated %>% filter(location == "Average"))
+View(location_probabilities_updated)
+
+# Create a dataframe of reference locations for each pathway and group
+reference_locations <- data.frame()
+
+# Extract all reference locations
+for (pathway_name in names(group_models)) {
+  for (group_name in names(group_models[[pathway_name]])) {
+    if (!is.null(group_models[[pathway_name]][[group_name]][["glmm"]])) {
+      model <- group_models[[pathway_name]][[group_name]][["glmm"]]
+      ref_location <- get_reference_location(model)
+      
+      reference_locations <- rbind(reference_locations, data.frame(
+        pathway = pathway_name,
+        group = group_name,
+        reference_location = ref_location
+      ))
+    }
+  }
+}
+
+# Now update the location_probabilities_updated dataframe
+location_probabilities_final <- location_probabilities_updated %>%
+  left_join(reference_locations, by = c("pathway", "group")) %>%
+  mutate(
+    location = ifelse(location == "Baseline", reference_location, location)
+  ) %>%
+  dplyr::select(-reference_location)
+
+# Check the updated dataframe
+View(location_probabilities_final)
+
+# Verify no more "Baseline" entries exist
+if (any(location_probabilities_final$location == "Baseline")) {
+  warning("Some Baseline entries could not be replaced")
+}
+
+
+```
+
+# Check if the incidents found in vessel cargo are allowable at the time they were conducted
+
+```{r}
+#were the incidents found in vessel cargo allowable at the time they were conducted?
+vessel_cargo_question <- aqim_dat |> filter(grepl("Maritime Port - Vessel - Cargo - CBP",PATHWAY)) |> filter(IS_ASF_RISK > 0) |> count(CALENDAR_YEAR,edge_origin,product_origin)
+
+print("these", nrow(vessel_cargo_question), "incidents were found in vessel cargo that were not allowed at the time they were conducted")
+head(vessel_cargo_question)
+
+```
+
+# save data
+
+```{r save data}
+
+setwd(here::here('output','data','aqim pathway approach rates')) 
+# Save the final dataframe to a CSV file
+write.csv(location_probabilities_final, "glmm_results_aqim fraction at risk by pathway and location.csv", row.names = FALSE)
+write.csv(bootstrap_results, "bootstrap_results_aqim fraction at risk by pathway and location.csv.csv", row.names = FALSE)
+
+```
