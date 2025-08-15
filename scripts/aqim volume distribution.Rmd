@@ -63,7 +63,7 @@ Identify the distribution of sizes by pathway and subpathway, entry_type, and co
 
 ```{r}
 
-aqim_data <- read.csv("C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv")
+dat <- read.csv("C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv")
 
 ```
 
@@ -72,7 +72,7 @@ aqim_data <- read.csv("C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf
 ```{r assign risk}
   # filter to only those with IS_ASF_RISK == "YES"
 # Assign risk
-aqim_commodity_data <- aqim_data %>% mutate(IS_ASF_RISK = case_when(
+commodity_dat_tmp <- dat %>% mutate(IS_ASF_RISK = case_when(
   edge_origin %in% affected_countries | product_origin %in% affected_countries ~ IS_ASF_RISK,
   .default = "NO"
          )
@@ -80,8 +80,8 @@ aqim_commodity_data <- aqim_data %>% mutate(IS_ASF_RISK = case_when(
 
   # filter to only those with IS_ASF_RISK == "YES"
 # keep pathway, location, commodity, pathway, subpathway, entry_type, container, and TOTAL_KG
-aqim_commodity_data <- aqim_data %>%
-  filter(IS_ASF_RISK == "YES") %>%
+commodity_dat <- commodity_dat_tmp %>%
+  filter(!IS_ASF_RISK == "NO") %>%
   select(
     ID, 
     PATHWAY, 
@@ -93,13 +93,156 @@ aqim_commodity_data <- aqim_data %>%
     COMMODITY_DISPLAY_NAME, 
     entry_type, 
     container, 
-    TOTAL_KG
+    TOTAL_KG,
+    product_pathway,
+    product_subpathway
   )
 
-  ```
+print(
+    paste(nrow(commodity_dat_tmp %>%
+  filter(!IS_ASF_RISK == "NO")),
+  "records with ASF risk")
+)
+
+
+print("I DONT THINK THESE NUMBERS ARE CORRECT - CHECK THE ASSIGNMENT OF RISK IN `AQIM PATHWAY DATA PREP.RMD`")
+```
+
+# get the distribution of each
+
+```{r}
+if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
+  install.packages("fitdistrplus")
+}
+library(fitdistrplus)
+library(dplyr)
+
+# Create a function to fit distributions to each group
+fit_distributions <- function(data) {
+  # Remove zeros and NAs for better fitting
+  clean_data <- data$TOTAL_KG[data$TOTAL_KG > 0 & !is.na(data$TOTAL_KG)]
+  
+  if(length(clean_data) < 5) {
+    return(list(distribution = "empirical", data = clean_data))
+  }
+  
+  # Try to fit different distributions
+  tryCatch({
+    # Fit lognormal distribution (common for weights)
+    fit_lnorm <- fitdist(clean_data, "lnorm")
+    
+    # Fit gamma distribution (also common for positive continuous data)
+    fit_gamma <- fitdist(clean_data, "gamma")
+    
+    # Fit weibull distribution
+    fit_weibull <- fitdist(clean_data, "weibull")
+    
+    # Compare AICs to find best fit
+    aic_values <- c(fit_lnorm$aic, fit_gamma$aic, fit_weibull$aic)
+    best_dist <- c("lnorm", "gamma", "weibull")[which.min(aic_values)]
+    
+    # Return the best distribution and its parameters
+    if(best_dist == "lnorm") {
+      return(list(distribution = "lnorm", 
+                  params = list(meanlog = fit_lnorm$estimate["meanlog"], 
+                                sdlog = fit_lnorm$estimate["sdlog"]),
+                  fit_object = fit_lnorm))
+    } else if(best_dist == "gamma") {
+      return(list(distribution = "gamma", 
+                  params = list(shape = fit_gamma$estimate["shape"], 
+                                rate = fit_gamma$estimate["rate"]),
+                  fit_object = fit_gamma))
+    } else {
+      return(list(distribution = "weibull", 
+                  params = list(shape = fit_weibull$estimate["shape"], 
+                                scale = fit_weibull$estimate["scale"]),
+                  fit_object = fit_weibull))
+    }
+  }, error = function(e) {
+    # If fitting fails, return empirical distribution (the actual data)
+    return(list(distribution = "empirical", data = clean_data))
+  })
+}
+
+# Apply to each group
+pathway_distributions <- commodity_dat %>%
+  group_by(PATHWAY, container, product_pathway, product_subpathway) %>%
+  nest() %>%
+  mutate(distribution_model = map(data, fit_distributions))
+  
+  pathway_distributions  %>%
+  select(-data)
+```
+
+## save distributions
+```{r save distributions}
+# Save the distribution model object
+saveRDS(pathway_distributions, "pathway_weight_distribution_models.rds")
+
+```
 
 
 
 
+# Example usage of sampling from the distributions
+
+```{r}
+   #Create a function to sample from these distributions
+sample_weight <- function(n, pathway, container, prod_pathway, prod_subpathway, 
+                          distribution_models = pathway_distributions) {
+  
+  # Find the matching distribution
+  dist_model <- distribution_models %>%
+    filter(PATHWAY == pathway, 
+           container == container,
+           product_pathway == prod_pathway,
+           product_subpathway == prod_subpathway) %>%
+    pull(distribution_model) %>%
+    .[[1]]
+  
+  if(is.null(dist_model)) {
+    warning("No distribution found for the specified combination. Returning NA.")
+    return(rep(NA, n))
+  }
+  
+  # Sample from the distribution
+  if(dist_model$distribution == "empirical") {
+    # If empirical, sample from the actual data with replacement
+    return(sample(dist_model$data, size = n, replace = TRUE))
+  } else if(dist_model$distribution == "lnorm") {
+    return(rlnorm(n, meanlog = dist_model$params$meanlog, sdlog = dist_model$params$sdlog))
+  } else if(dist_model$distribution == "gamma") {
+    return(rgamma(n, shape = dist_model$params$shape, rate = dist_model$params$rate))
+  } else if(dist_model$distribution == "weibull") {
+    return(rweibull(n, shape = dist_model$params$shape, scale = dist_model$params$scale))
+  }
+}
+
+# Create diagnostic plots to check the distribution fits
+plot_distribution_fit <- function(pathway, container, prod_pathway, prod_subpathway,
+                                 distribution_models = pathway_distributions) {
+  dist_model <- distribution_models %>%
+    filter(PATHWAY == pathway, 
+           container == container,
+           product_pathway == prod_pathway,
+           product_subpathway == prod_subpathway) %>%
+    pull(distribution_model) %>%
+    .[[1]]
+  
+  if(dist_model$distribution == "empirical") {
+    hist(dist_model$data, main = "Empirical data only (no fit)", xlab = "Weight (kg)")
+  } else {
+    plot(dist_model$fit_object)
+  }
+}
+
+# Example usage:
+# Check a specific distribution fit
+plot_distribution_fit("Land Border - Truck - Conveyance - CBP NB", "baggage", "swine products/by-products", "personal use or consumption")
+
+# Sample from a specific distribution
+# sample_weights <- sample_weight(100, "Your_Pathway", "Your_Container", "Your_Prod_Pathway", "Your_Prod_Subpathway")
+# hist(sample_weights, main = "Sampled weights", xlab = "Weight (kg)")
+```
 
 
