@@ -609,24 +609,6 @@ system.time(aqim_data <- aqim_data %>%
   ungroup()
 )
 
-
-# # Apply the function to each pathway in arm_aqim_records
-# system.time(aqas_aqim <- aqas_aqim %>%
-#   rowwise() %>%
-#   mutate(entry_type = get_entry_type(PATHWAY)) %>%
-#   ungroup()
-# )
-
-
-# system.time(arm_aqim_records <- arm_aqim_records %>%
-#   rowwise() %>%
-#   mutate(entry_type = get_entry_type(PATHWAY)) %>%
-#   ungroup()
-# )
-#print(aqim_data |> count(entry_type, PATHWAY))
-
-
-
 ```
 
 # Assign location 
@@ -668,25 +650,6 @@ system.time(arm_aqim <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDA
 
 # if needed, look into saving separately
 Not sure if needed downstream yet
-<!-- 
-
-```{r apply entry type to each data set}
-# Apply the function to each pathway in arm_aqim_records
-system.time(aqas_aqim <- aqas_aqim %>%
-  rowwise() %>%
-  mutate(entry_type = get_entry_type(PATHWAY)) %>%
-  ungroup()
-)
-
-
-system.time(arm_aqim_records <- arm_aqim_records %>%
-  rowwise() %>%
-  mutate(entry_type = get_entry_type(PATHWAY)) %>%
-  ungroup()
-)
-#print(aqim_data |> count(entry_type, PATHWAY))
-
-``` -->
 
 ```{r }
 # Function to match commodities with ASF reference table
@@ -724,7 +687,7 @@ dat <- aqim_data %>%
 #   mutate(IS_ASF_RISK = ifelse(is.na(IS_ASF_RISK), "NO", IS_ASF_RISK))
 
 ```
-# Convert the entry_type to commercial if size is large
+## Convert the entry_type to commercial if size is large
 
 ```{r convert entry_type to commercial}
 #Use the reference table to convert entry_type to commercial if the size is large
@@ -742,19 +705,16 @@ size_ref_func <- function(data, reference_table){
 
 dat <- size_ref_func(data = dat, reference_table = size_ref)
 
-#dat_arm <- size_ref_func(data = dat_arm, reference_table = size_ref)
 ```
 #  save data
 
 ```{r save aqim data}
 
-write.csv(aqim_data, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv", row.names = FALSE)
+write.csv(dat, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv", row.names = FALSE)
 
 ```
 
-
-
-
+<!-- 
 # model how much of each product type and name is coming in via each pathway
 
 # Left off here 8/8
@@ -923,4 +883,4 @@ commodity_only_func <- function(data) {
 }
 
 commodities <- commodity_only_func(arm_aqim_records)
-```
+``` --> -->

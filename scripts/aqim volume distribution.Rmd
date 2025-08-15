@@ -1,14 +1,105 @@
 ---
-title: "aqim pathway approach rates"
+title: "aqim pathway volume per incident"
 author: "Dalon White"
-date: "2025-07-27"
+date: "2025-08-15"
 output: html_document
 
 params:
-  
-  
+  risk_quantification: "0_1" # 0_1 or "range"
+  affected_countries: "current" # "current" or "mex_can" or "other"
+  other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify the countries here
+  years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
 ---
 Run in conjunction with aqim pathway passenger layers.Rmd and aqim pathway approach rates.Rmd
 
-# Read data
+
+
+```{r params for vscode}
+if(!exists("params")) {
+  params <- list(
+    risk_quantification = "0_1", # 0_1 or "range"
+    affected_countries = "current", # "current" or "mex_can" 
+    years = 2024:2024, #The years to include which countries have ASF from the `asf affected countries.csv` file
+    other_affected_countries = c("Country1", "Country2") # If using "other", specify the countries here
+  )
+}
+```
+
+# Determine if for ASF countries or mex/can
+
+```{r identify countries of risk}
+setwd(here::here("input","data","asf affected countries by year"))
+if(params$affected_countries == "current") {
+  affected_countries <- read.csv("asf affected countries.csv") |> 
+    mutate(Year = as.numeric(Year)) |> 
+    filter(Year %in% params$years) |> 
+    filter(Disease == "ASF") |>
+    distinct(ISO3_CODE) |> 
+    pull(ISO3_CODE)
+} else if (params$affected_countries == "mex_can") {
+  affected_countries <- c("MEX", "CAN")
+} else if (params$affected_countries == "other") {
+  affected_countries <- params$other_affected_countries
+} else {
+  stop("Invalid value for params$affected_countries")
+}
+
+
+# setwd(here::here("input","data","asf affected countries by year"))
+# affected_countries <- read.csv("asf affected countries.csv") |> 
+#     mutate(Year = as.numeric(Year)) |> 
+#     filter(Year %in% params$years) |> 
+#     filter(Disease == "ASF") |>
+#     distinct(ISO3_CODE) |> 
+#     pull(ISO3_CODE)
+
+# affected_countries
+```
+
+# Read and prep data
+Read prepared data
+Isolate to ASF at risk commodities
+Identify the distribution of sizes by pathway and subpathway, entry_type, and container
+
+```{r}
+
+aqim_data <- read.csv("C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv")
+
+```
+
+# identify which commodities are at risk for ASF
+
+```{r assign risk}
+  # filter to only those with IS_ASF_RISK == "YES"
+# Assign risk
+aqim_commodity_data <- aqim_data %>% mutate(IS_ASF_RISK = case_when(
+  edge_origin %in% affected_countries | product_origin %in% affected_countries ~ IS_ASF_RISK,
+  .default = "NO"
+         )
+)
+
+  # filter to only those with IS_ASF_RISK == "YES"
+# keep pathway, location, commodity, pathway, subpathway, entry_type, container, and TOTAL_KG
+aqim_commodity_data <- aqim_data %>%
+  filter(IS_ASF_RISK == "YES") %>%
+  select(
+    ID, 
+    PATHWAY, 
+    PORT_CD,
+    CALENDAR_MONTH,
+    CALENDAR_YEAR,
+    INSPECTION_LOCATION_ID, 
+    INSPECTION_LOCATION_NAME, 
+    COMMODITY_DISPLAY_NAME, 
+    entry_type, 
+    container, 
+    TOTAL_KG
+  )
+
+  ```
+
+
+
+
+
 
