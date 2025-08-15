@@ -493,7 +493,7 @@ low_data_combinations <- aqas_aqim %>%
   filter(n < 500)
 
 # Apply the filter to remove low-observation year-pathway combinations
-aqas_aqim <- aqas_aqim %>%
+aqas_aqim_filtered <- aqas_aqim %>%
   anti_join(low_data_combinations, by = c("PATHWAY", "CALENDAR_YEAR"))
 
 # Quick summary of records removed
@@ -504,6 +504,8 @@ percent_kept <- round(records_after / records_before * 100, 1)
 cat(sprintf("Filtered out %d observations (%.1f%% data retained)\n", 
             records_before - records_after,
             percent_kept))
+
+aqas_aqim <- aqas_aqim_filtered
 ```
 
 ## Separate land border to NB-SB
@@ -577,9 +579,7 @@ for (i in 1:nrow(mismatched_columns)) {
   # Add more conversions as needed
 }
 
-# Now bind the dataframes with consistent types
 aqim_data <- dplyr::bind_rows(aqas_aqim, arm_aqim_records)
-
 ```
 
 # Create a reference table that identifies what entry type each PATHWAY is associated with
@@ -602,10 +602,6 @@ get_entry_type <- function(pathway_str) {
   return(NA_character_)
 }
 
-
-
-
-
 # Apply the function to each pathway in arm_aqim_records
 system.time(aqim_data <- aqim_data %>%
   rowwise() %>%
@@ -614,19 +610,19 @@ system.time(aqim_data <- aqim_data %>%
 )
 
 
-# Apply the function to each pathway in arm_aqim_records
-system.time(aqas_aqim <- aqas_aqim %>%
-  rowwise() %>%
-  mutate(entry_type = get_entry_type(PATHWAY)) %>%
-  ungroup()
-)
+# # Apply the function to each pathway in arm_aqim_records
+# system.time(aqas_aqim <- aqas_aqim %>%
+#   rowwise() %>%
+#   mutate(entry_type = get_entry_type(PATHWAY)) %>%
+#   ungroup()
+# )
 
 
-system.time(arm_aqim_records <- arm_aqim_records %>%
-  rowwise() %>%
-  mutate(entry_type = get_entry_type(PATHWAY)) %>%
-  ungroup()
-)
+# system.time(arm_aqim_records <- arm_aqim_records %>%
+#   rowwise() %>%
+#   mutate(entry_type = get_entry_type(PATHWAY)) %>%
+#   ungroup()
+# )
 #print(aqim_data |> count(entry_type, PATHWAY))
 
 
@@ -648,8 +644,8 @@ inspection_cols <- c(
     "SITE", 
     "LOCATION_STATE_CD", 
     "PATHWAY_ID", 
-    "PATH
-)
+    "PATHWAY"
+    )
 
 
 #-- Pull AQIM inspection records from ARM  ---- 
@@ -667,23 +663,12 @@ system.time(arm_aqim <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDA
 
 
 
-# save data
-```{r save aqim data}
-write.csv(aqim_data, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv", row.names = FALSE)
-
-```
-
-
-
-
-
-
 
 
 
 # if needed, look into saving separately
 Not sure if needed downstream yet
-
+<!-- 
 
 ```{r apply entry type to each data set}
 # Apply the function to each pathway in arm_aqim_records
@@ -701,7 +686,7 @@ system.time(arm_aqim_records <- arm_aqim_records %>%
 )
 #print(aqim_data |> count(entry_type, PATHWAY))
 
-```
+``` -->
 
 ```{r }
 # Function to match commodities with ASF reference table
@@ -722,21 +707,21 @@ match_asf_risk <- function(data, reference_table) {
 
 # Apply to both datasets
 asf_matches_aqim <- match_asf_risk(aqim_data, asf_product_ref)
-asf_matches_arm <- match_asf_risk(arm_aqim_records, asf_product_ref)
+# asf_matches_arm <- match_asf_risk(arm_aqim_records, asf_product_ref)
 
-# Combine all matches from both sources
-asf_matches <- bind_rows(asf_matches_aqim, asf_matches_arm) %>%
-  distinct(ID, COMMODITY_ID, .keep_all = TRUE)
+# # Combine all matches from both sources
+# asf_matches <- bind_rows(asf_matches_aqim, asf_matches_arm) %>%
+#   distinct(ID, COMMODITY_ID, .keep_all = TRUE)
 
 # Apply risk classification to the full dataset
 dat <- aqim_data %>% 
-  left_join(asf_matches, by = c("ID", "COMMODITY_ID"), relationship = "many-to-many") %>%
+  left_join(asf_matches_aqim, relationship = "many-to-many") %>%
   mutate(IS_ASF_RISK = ifelse(is.na(IS_ASF_RISK), "NO", IS_ASF_RISK))
 
-# Apply risk classification to ARM records separately
-dat_arm <- arm_aqim_records %>% 
-  left_join(asf_matches, by = c("ID", "COMMODITY_ID"), relationship = "many-to-many") %>%
-  mutate(IS_ASF_RISK = ifelse(is.na(IS_ASF_RISK), "NO", IS_ASF_RISK))
+# # Apply risk classification to ARM records separately
+# dat_arm <- arm_aqim_records %>% 
+#   left_join(asf_matches, by = c("ID", "COMMODITY_ID"), relationship = "many-to-many") %>%
+#   mutate(IS_ASF_RISK = ifelse(is.na(IS_ASF_RISK), "NO", IS_ASF_RISK))
 
 ```
 # Convert the entry_type to commercial if size is large
@@ -757,16 +742,16 @@ size_ref_func <- function(data, reference_table){
 
 dat <- size_ref_func(data = dat, reference_table = size_ref)
 
-dat_arm <- size_ref_func(data = dat_arm, reference_table = size_ref)
+#dat_arm <- size_ref_func(data = dat_arm, reference_table = size_ref)
 ```
-# save arm and aqas data separtely
-```{r save aqas aqim data}
-write.csv(dat, "aqas_aqim_combined.csv", row.names = FALSE)
+#  save data
+
+```{r save aqim data}
+
+write.csv(aqim_data, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv", row.names = FALSE)
 
 ```
-```{r save arm aqim data}
-write.csv(dat_arm, "arm_aqim_combined.csv", row.names = FALSE)  
-```
+
 
 
 

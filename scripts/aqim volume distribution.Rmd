@@ -1,0 +1,14 @@
+---
+title: "aqim pathway approach rates"
+author: "Dalon White"
+date: "2025-07-27"
+output: html_document
+
+params:
+  
+  
+---
+Run in conjunction with aqim pathway passenger layers.Rmd and aqim pathway approach rates.Rmd
+
+# Read data
+
