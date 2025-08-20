@@ -494,6 +494,9 @@ vessel_cargo_question <- aqim_dat |> filter(grepl("Maritime Port - Vessel - Carg
 
 print("these", nrow(vessel_cargo_question), "incidents were found in vessel cargo that were not allowed at the time they were conducted")
 head(vessel_cargo_question)
+print("however, they were not seized, indicating that they were allowed to be imported with the correct paperwork, so these are not a risk for ASF")
+print("In conclusion, no smuggling shows up in AQIM data of regulated cargo")
+
 
 ```
 

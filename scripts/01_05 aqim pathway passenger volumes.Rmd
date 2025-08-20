@@ -1,0 +1,123 @@
+---
+title: "aqim pathway passenger volumes"
+author: "Dalon White"
+date: "2025-07-27"
+output: html_document
+
+params:
+  wads_volume_begin_date: "2023-01-01" # Start date for pulling WADS volume data
+  wads_volume_end_date: "2024-12-31" # End date for pulling WADS volume data
+  wads_volume_filename: "wads_passenger_volume_by_port_pathway_month_year.rds" # Name of the output file for WADS volume data
+---
+
+Third Rmd
+
+-   Separate the WADS reference table for a column that identifies if the line item is passenger volume or intercepted material; see input\>data\>wads codes\>get wads codes.R; process those codes (started this process with WADS Lookup Codes.csv but I think I need to include more WADS codes)
+
+    -   WADS for passenger volumes at each port
+
+    -   WADS interceptions at each port
+
+-   Produce a table with each identified combination that calculates:
+
+    -   Port Code
+
+    -   ASF item volume (volume \* rates for each combination)
+
+        -   This is a single calculation - passenger volume at port X the total pathway-combination's rate,
+
+    -   Interceptions of the combination
+
+    -   Entry (volume - interceptions) of the combination
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse)
+pacman::p_load(odbc, DBI)
+```
+```{r params for vscode}
+if(!exists("params")) {
+  params <- list(
+    wads_volume_begin_date = "2021-01-01",
+    wads_volume_end_date = "2024-12-31"
+
+  )
+}
+```
+## gather WADS codes
+### Get WADS reference table for volume, inspections, and interceptions
+```{r get wads codes}
+setwd(here::here("input","data","wads codes"))
+wads_ref_table <- read.csv("wads volume reference table.csv") 
+
+wads_vol_ref <- wads_ref_table |> 
+  filter(quantification_purpose %in% c("arrival")) |>
+  dplyr::select(CODE, PATHWAY)
+
+wads_volume_codes <- wads_vol_ref |> pull(CODE)
+# wads_ref_list <- split(wads_ref_table, wads_ref_table$quantification_purpose)
+# View(wads_ref_list$volume)
+
+```
+
+### Connect to ARM
+```{r set driven}
+
+db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+
+wads_cols <- c(
+  "LOCATION_ID", 
+  "LOCATION_NAME", 
+  "LOCATION_STATE_CODE", 
+  "COUNT", 
+  "MAX", 
+  "MIN", 
+  "ACTIVITY_CODE",
+  "WORK_ACTIVITY_DATE"
+  )
+
+
+#-- Pull AQIM inspection records from ARM  ---- 
+system.time(wads <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_WADS]")) |> 
+              dplyr::select(all_of(wads_cols)) |> 
+              #filter to begin and end date
+              dplyr::filter(WORK_ACTIVITY_DATE >= params$wads_volume_begin_date & WORK_ACTIVITY_DATE <= params$wads_volume_end_date) |>
+              dplyr::filter(ACTIVITY_CODE %in% wads_volume_codes) |>
+              collect()
+           )
+ 
+```
+
+## Summarize WADS volume by month, year, location, and pathway
+```{r summarize wads volume}
+# First, adjust count so that each count falls within the min/max range for that activity code
+# If COUNT is below MIN, then COUNT = MIN; if COUNT is above MAX, then COUNT = MAX.
+#If MIN is NULL, then do not adjust if COUNT is below MIN.
+#If MAX is NULL, then do not adjust if COUNT is above MAX.
+#If both MIN and MAX are NULL, then do not adjust COUNT.
+wads <- wads |> 
+  mutate(COUNT = case_when(
+    !is.na(MIN) & COUNT < MIN ~ MIN,
+    !is.na(MAX) & COUNT > MAX ~ MAX,
+    TRUE ~ COUNT
+  )) |> dplyr::select(-c(MIN, MAX))
+
+wads_volume <- wads |> 
+  left_join(wads_vol_ref, by = c("ACTIVITY_CODE" = "CODE")) |> 
+  mutate(year = lubridate::year(WORK_ACTIVITY_DATE),
+         month = lubridate::month(WORK_ACTIVITY_DATE)) |> 
+  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, year, month) |> 
+  summarize(passenger_volume = sum(COUNT, na.rm=TRUE),
+            .groups = "drop")
+
+```
+
+## Save summarized WADS volume
+```{r save wads volume}
+setwd(here::here("output","data","wads","arrivals or entries"))
+saveRDS(wads_volume, "wads_passenger_volume_by_port_pathway_month_year.rds")
+```
+

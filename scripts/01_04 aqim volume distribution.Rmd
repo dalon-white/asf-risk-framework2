@@ -176,6 +176,8 @@ pathway_distributions <- commodity_dat %>%
 
 ## save distributions
 ```{r save distributions}
+
+setwd(here::here("output","item size sampling distributions","aqim"))
 # Save the distribution model object
 saveRDS(pathway_distributions, "pathway_weight_distribution_models.rds")
 

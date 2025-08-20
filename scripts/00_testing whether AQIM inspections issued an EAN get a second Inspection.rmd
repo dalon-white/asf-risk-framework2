@@ -1,0 +1,46 @@
+---
+output:
+  reprex::reprex_document:
+    venue: "gh"
+    advertise: FALSE
+    session_info: TRUE
+    style: TRUE
+    comment: "#;-)"
+    tidyverse_quiet: FALSE
+    std_out_err: TRUE
+knit: reprex::reprex_render
+---
+
+I could not connect AQIM inspection IDs to EANs to CommodityID. 
+If an EAN is issued during an AQIM inspection, does it generate a second INSPECTION_ID, which then goes into the EAN database?
+
+
+
+```{r connect to arm}
+db_conn <- dbConnect(odbc::odbc(), .connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+
+```
+
+```{r}
+
+insp_fact <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_INSPECTION]"))
+inspection_cols <- c(
+  "ID", 
+  "IS_AQIM")
+
+```
+
+#-- Pull AQIM inspection records from ARM  ---- 
+```{r}
+test <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_INSPECTION]")) |> 
+            #   dplyr::filter(CATEGORY == "AQIM") |>
+              dplyr::select(inspection_cols)  |> count(ID) |> count(n) |> collect()
+           
+
+
+```
+No, it does not generate a second INSPECTION_ID. The AQIM inspection records are already in the ARM database, and they do not create a new inspection ID when an EAN is issued.

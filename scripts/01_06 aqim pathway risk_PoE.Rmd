@@ -1,0 +1,35 @@
+---
+title: "aqim pathway risk by PoE"
+author: "Dalon White"
+date: "2025-07-27"
+output: html_document
+
+params:
+ 
+  wads_volume_filename: "wads_passenger_volume_by_port_pathway_month_year.rds" # Name of the output file for WADS volume data
+---
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse)
+pacman::p_load(odbc, DBI)
+```
+```{r params for vscode}
+if(!exists("params")) {
+  params <- list(
+    wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year.rds"
+  )
+}
+```
+
+# Read WADS volume data
+```{r read wads volume data}
+setwd(here::here("output","data","wads","arrivals or entries"))
+wads_volume <- readRDS(params$wads_volume_filename)
+```
+# read approach rates
+```{r read approach rates}
+setwd(here::here('output','data','aqim pathway approach rates')) 
+location_probabilities_glmm <- read.csv("glmm_results_aqim fraction at risk by pathway and location.csv", row.names = FALSE)
+write.csv(bootstrap_results, "bootstrap_results_aqim fraction at risk by pathway and location.csv.csv", row.names = FALSE)
+```
+# Join WADS volume and approach rates

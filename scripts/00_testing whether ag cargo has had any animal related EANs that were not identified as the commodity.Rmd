@@ -1,0 +1,106 @@
+---
+title: "aqim ag cargo to EANs crosswalk"
+author: "Dalon White"
+date: "2025-08-15"
+output: html_document
+
+params:
+  risk_quantification: "0_1" # 0_1 or "range"
+  affected_countries: "current" # "current" or "mex_can" or "other"
+  other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify the countries here
+  years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
+---
+I want to know if any of the AQIM inspections had any pork products not in the manifested cargo. This will help identify if there are any AQIM data regarding smuggling that isn't apparent at first.
+
+```{r packages}
+pacman::p_load(tidyverse)
+pacman::p_load(odbc, DBI)
+```
+
+```{r params for vscode}
+# if(!exists("params")) {
+#   params <- list(
+#     risk_quantification = "0_1", # 0_1 or "range"
+#     affected_countries = "current", # "current" or "mex_can" 
+#     years = 2024:2024, #The years to include which countries have ASF from the `asf affected countries.csv` file
+#     other_affected_countries = c("Country1", "Country2") # If using "other", specify the countries here
+#   )
+# }
+```
+
+# Read and prep data
+Read prepared data
+Isolate to ASF at risk commodities
+Identify the distribution of sizes by pathway and subpathway, entry_type, and container
+
+```{r}
+
+dat <- read.csv("C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv")
+
+```
+
+Gather AQIM data Inspection IDS
+```{r gather aqim ids}
+
+aqim_ids <- dat |> 
+# filter any PATHWAY with 'cargo' in it
+    filter(grepl("cargo", PATHWAY, ignore.case = TRUE)) |>
+  filter(!is.na(ID)) |> 
+  distinct(ID) |> 
+  pull(ID)
+```
+
+# Connect to ARM
+```{r connect to arm}
+db_conn <- dbConnect(odbc::odbc(), .connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+```
+
+# access EAN data
+```{r access ean data}
+ean_fact <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_EAN]"))
+ean_collected <- ean_fact |>
+  collect() |>
+dplyr::mutate(INSPECTION_ID = as.character(INSPECTION_ID))
+ean_filtered <- ean_collected |> 
+              dplyr::filter(INSPECTION_ID %in% aqim_ids)
+
+#it says commodity ID but not commodity name
+
+#Get any commodity types that might be animal-related
+commod_type_id <- '5917' #animal products
+
+commodity_type_ref <-  tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[REF_COMMODITY]")) |> collect()
+animal_ref <- commodity_type_ref |> filter(REF_COMMODITY_TYPE_ID == commod_type_id) |> pull(ID)
+
+#Check if any animal related commodities are in the EANs that came from AQIM
+ean_filtered |> dplyr::filter(COMMODITY_ID %in% animal_ref)
+
+#Which product types were they?
+ean_from_aqim_commodities <- ean_filtered |> pull(COMMODITY_ID) |> unique() |> sort()
+#Check if there are any matches in ean_from_aqim_commodities with matches in commodity_type_ref, and then determine what ref_commodity_type_id they are
+ean_commodities_ref <- commodity_type_ref |> 
+  filter(ID %in% ean_from_aqim_commodities) |> 
+  select(ID, REF_COMMODITY_TYPE_ID)
+
+#This should have shown up as some products but the table is empty
+
+```
+
+
+
+Try it on the DARTs EAn data table taht is connected to commodity display name
+nope, that doesn't work, can't find any EANs that mathc here
+```{r dart ean data}
+#might not work because I don't know if this data set is complete
+dart_ean <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[dbo].[z_vw_ean_data_azure_poc_test]")) |> 
+ dplyr::select(FACT2_INSPECTION_ID) |> collect() |> 
+  dplyr::mutate(FACT2_INSPECTION_ID = as.character(FACT2_INSPECTION_ID))
+
+ean_filtered <- ean_filtered |> rename(FACT2_INSPECTION_ID = INSPECTION_ID)
+dart_ean |> left_join(ean_filtered, by = "FACT2_INSPECTION_ID")
+View(ean_filtered |> left_join(dart_ean) |> filter(!is.na(COMMODITY_DISPLAY_NAME)))
+```
