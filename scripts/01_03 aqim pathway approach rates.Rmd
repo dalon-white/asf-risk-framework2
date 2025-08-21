@@ -9,6 +9,8 @@ params:
   affected_countries: "current" # "current" or "mex_can" or "other"
   other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify the countries here
   years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
+  glm_results_filename: "glmm_results_aqim fraction at risk by pathway and location"
+  bootstrap_results_filename: "bootstrap_results_aqim fraction at risk by pathway and location"
 ---
 
 -   prepped data already has the pathway, entry type, etc., and risk as no/low/med/high
@@ -18,7 +20,7 @@ params:
 ```{r setup, include=FALSE}
 pacman::p_load(tidyverse)
 pacman::p_load(odbc, DBI)
-pacman::p_load(lme4,ggplot2,broom,multcomp,emmeans,sjPlot,tidyverse,broom.mixed)
+pacman::p_load(lme4,ggplot2,broom,multcomp,emmeans,sjPlot,tidyverse,broom.mixed,boot)
 ```
 
 ```{r params for vscode}
@@ -27,7 +29,9 @@ if(!exists("params")) {
     risk_quantification = "0_1", # 0_1 or "range"
     affected_countries = "current", # "current" or "mex_can" 
     years = 2024:2024, #The years to include which countries have ASF from the `asf affected countries.csv` file
-    other_affected_countries = c("Country1", "Country2") # If using "other", specify the countries here
+    other_affected_countries = c("Country1", "Country2"), # If using "other", specify the countries here
+    glm_results_filename = "glmm_results_aqim fraction at risk by pathway and location",
+    bootstrap_results_filename = "bootstrap_results_aqim fraction at risk by pathway and location"
   )
 }
 ```
@@ -504,9 +508,11 @@ print("In conclusion, no smuggling shows up in AQIM data of regulated cargo")
 
 ```{r save data}
 
-setwd(here::here('output','data','aqim pathway approach rates')) 
+setwd(here::here('output','aqim pathway approach rates')) 
 # Save the final dataframe to a CSV file
-write.csv(location_probabilities_final, "glmm_results_aqim fraction at risk by pathway and location.csv", row.names = FALSE)
-write.csv(bootstrap_results, "bootstrap_results_aqim fraction at risk by pathway and location.csv.csv", row.names = FALSE)
+write.csv(location_probabilities_final, paste(params$glm_results_filename,".csv"), row.names = FALSE)
+saveRDS(location_probabilities_final, paste(params$glm_results_filename,".rds"))
+write.csv(bootstrap_results, paste(params$bootstrap_results_filename,".csv"), row.names = FALSE)
+saveRDS(bootstrap_results, paste(params$bootstrap_results_filename,".rds"))
 
 ```
