@@ -7,7 +7,8 @@ output: html_document
 params:
   wads_volume_begin_date: "2023-01-01" # Start date for pulling WADS volume data
   wads_volume_end_date: "2024-12-31" # End date for pulling WADS volume data
-  wads_volume_filename: "wads_passenger_volume_by_port_pathway_month_year.rds" # Name of the output file for WADS volume data
+  wads_volume_reference_filename: "wads volume reference table.csv" # Name of the input reference file that houses which ACTIVITY_CODE is for which PATHWAY
+  wads_volume_filename: wads_passenger_volume_by_port_pathway_month_year # Name of the output file for WADS volume data
 ---
 
 Third Rmd
@@ -38,7 +39,9 @@ pacman::p_load(odbc, DBI)
 if(!exists("params")) {
   params <- list(
     wads_volume_begin_date = "2021-01-01",
-    wads_volume_end_date = "2024-12-31"
+    wads_volume_end_date = "2024-12-31",
+    wads_volume_reference_filename = "wads volume reference table.csv", # Name of the input reference file that houses which ACTIVITY_CODE is for which PATHWAY
+    wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year"
 
   )
 }
@@ -47,7 +50,7 @@ if(!exists("params")) {
 ### Get WADS reference table for volume, inspections, and interceptions
 ```{r get wads codes}
 setwd(here::here("input","data","wads codes"))
-wads_ref_table <- read.csv("wads volume reference table.csv") 
+wads_ref_table <- read.csv(params$wads_volume_reference_filename) 
 
 wads_vol_ref <- wads_ref_table |> 
   filter(quantification_purpose %in% c("arrival")) |>
@@ -110,14 +113,28 @@ wads_volume <- wads |>
   mutate(year = lubridate::year(WORK_ACTIVITY_DATE),
          month = lubridate::month(WORK_ACTIVITY_DATE)) |> 
   group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, year, month) |> 
-  summarize(passenger_volume = sum(COUNT, na.rm=TRUE),
+  summarize(COUNT = sum(COUNT, na.rm=TRUE),
             .groups = "drop")
 
 ```
 
+```{r define border state codes}
+NB_state_cd <- c("AK","ID","ME","MI","MN","MT","NH","NY","ND","OH","PA","VT","WA")
+SB_state_cd <- c("CA","AZ","NM","TX")
+```
+```{r separate land border to NB-SB}
+wads_volume <- wads_volume %>%
+  mutate(
+    PATHWAY = case_when(
+      LOCATION_STATE_CODE %in% NB_state_cd & grepl("Land Border|Pedestrian", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " NB"),
+      LOCATION_STATE_CODE %in% SB_state_cd & grepl("Land Border|Pedestrian", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " SB"),
+      TRUE ~ PATHWAY
+    )
+  )
+```
 ## Save summarized WADS volume
 ```{r save wads volume}
-setwd(here::here("output","data","wads","arrivals or entries"))
-saveRDS(wads_volume, "wads_passenger_volume_by_port_pathway_month_year.rds")
+setwd(here::here("output","wads","arrivals_or_entries"))
+saveRDS(wads_volume, paste(params$wads_volume_filename,".rds"))
 ```
 

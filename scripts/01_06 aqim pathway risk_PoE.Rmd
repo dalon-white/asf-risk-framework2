@@ -6,30 +6,238 @@ output: html_document
 
 params:
  
-  wads_volume_filename: "wads_passenger_volume_by_port_pathway_month_year.rds" # Name of the output file for WADS volume data
----
+  wads_volume_filename: "wads_passenger_volume_by_port_pathway_month_year" # Name of the output file for WADS volume data
+  glm_results_filename: "glmm_results_aqim fraction at risk by pathway and location"
+  bootstrap_results_filename: "bootstrap_results_aqim fraction at risk by pathway and location"
+  aqim_qmi_size_distribution_filename: "pathway_weight_distribution_models" # Name of the output file for the distribution models of the weight of items observed in the AQIM pathways
+  ---
 
 ```{r setup, include=FALSE}
 pacman::p_load(tidyverse)
-pacman::p_load(odbc, DBI)
+
 ```
 ```{r params for vscode}
 if(!exists("params")) {
   params <- list(
-    wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year.rds"
+    wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year",
+    glm_results_filename = "glmm_results_aqim fraction at risk by pathway and location",
+    bootstrap_results_filename = "bootstrap_results_aqim fraction at risk by pathway and location",
+    aqim_qmi_size_distribution_filename = "pathway_weight_distribution_models" # Name of the output file for the distribution models
   )
 }
 ```
 
 # Read WADS volume data
 ```{r read wads volume data}
-setwd(here::here("output","data","wads","arrivals or entries"))
-wads_volume <- readRDS(params$wads_volume_filename)
+setwd(here::here("output","wads","arrivals_or_entries"))
+wads_volume <- readRDS(paste(params$wads_volume_filename, ".rds"))
 ```
 # read approach rates
 ```{r read approach rates}
-setwd(here::here('output','data','aqim pathway approach rates')) 
-location_probabilities_glmm <- read.csv("glmm_results_aqim fraction at risk by pathway and location.csv", row.names = FALSE)
-write.csv(bootstrap_results, "bootstrap_results_aqim fraction at risk by pathway and location.csv.csv", row.names = FALSE)
+setwd(here::here('output','aqim pathway approach rates')) 
+location_probabilities_glmm <- readRDS(paste(params$glm_results_filename,".rds", sep = " "))
+bootstrap_results <- readRDS(paste(params$bootstrap_results_filename,".rds", sep = " "))
 ```
 # Join WADS volume and approach rates
+
+```{r join wads volume and approach rates}
+#for every entry in wads_volume where PATHWAY exists in location_probabilities_glmm, then all possible `group` values in location_probabilities_glmm of that PATHWAY can exist. 
+
+
+# connect wads_volume and location_probabilities_glmm using PATHWAY and INSPECTION_LOCATION_NAME = LOCATION_NAME, and group
+wads_volume_joined <- wads_volume |> 
+  left_join(location_probabilities_glmm, by = c("PATHWAY" = 'pathway', "LOCATION_NAME" = "location"), relationship = "many-to-many")
+View(wads_volume_joined)
+
+back_join_test <- location_probabilities_glmm |> 
+  left_join(wads_volume, by = c("pathway" = 'PATHWAY', "location" = "LOCATION_NAME"), relationship = "many-to-many")
+View(back_join_test)
+
+print("I've fixed everything so far except that the location_name is AQAS is not the same as that of ARM, so all that location-based predictions were for nothing...")
+print("Think about whether location can just be done by state, maybe?")
+
+#Split the group column into its component parts
+test <- wads_volume_joined %>%
+  separate(group, 
+           into = c("PATHWAY_check", "container", "product_pathway", "product_subpathway"),
+           sep = ";",
+           remove = FALSE)
+View(test)
+test2 <- test %>%  # Keep original group column
+  mutate(
+    # Verify PATHWAY matches with split value
+    pathway_match = PATHWAY == PATHWAY_check
+  ) %>%
+  dplyr::select(-PATHWAY_check)  # Remove the redundant PATHWAY column
+View(test2)
+# If a location_name is not in the location_probabilities_glmm, then if pathway is not NA and  the probability is not known (i.e., the LOCATION_NAME was not in the model parameters), then the probability should equivalent to the pathway when LOCATION_NAME == "Average"
+#the significant column is whether it is different from the baseline, which is not relevant
+wads_volume_joined <- wads_volume_joined |> rowwise() |>
+  mutate(probability = ifelse(!is.na(PATHWAY) & is.na(probability), 
+                              location_probabilities_glmm$probability[location_probabilities_glmm$location == "Average" & location_probabilities_glmm$pathway == PATHWAY], 
+                              probability))
+#View(wads_volume_joined)
+
+# wads_volume_joined |> 
+#   mutate(probability = ifelse(is.na(probability), 0, probability)) # replace NA probabilities with 0
+
+```
+# retrieve pathway weight distribution models
+```{r retrieve pathway weight distribution models}
+setwd(here::here("output","item size sampling distributions","aqim"))
+pathway_distributions <- readRDS(paste(params$aqim_qmi_size_distribution_filename, ".rds", sep = ""))
+```
+
+
+
+# Sample weights from the distribution models
+skip this one for the next section
+```{r}
+   #Create a function to sample from these distributions
+sample_weight <- function(n, pathway, container, prod_pathway, prod_subpathway, 
+                          distribution_models = pathway_distributions) {
+  
+  # Find the matching distribution
+  dist_model <- distribution_models %>%
+    filter(PATHWAY == pathway, 
+           container == container,
+           product_pathway == prod_pathway,
+           product_subpathway == prod_subpathway) %>%
+    pull(distribution_model) %>%
+    .[[1]]
+  
+  if(is.null(dist_model)) {
+    warning("No distribution found for the specified combination. Returning NA.")
+    return(rep(NA, n))
+  }
+  
+  # Sample from the distribution
+  if(dist_model$distribution == "empirical") {
+    # If empirical, sample from the actual data with replacement
+    return(sample(dist_model$data, size = n, replace = TRUE))
+  } else if(dist_model$distribution == "lnorm") {
+    return(rlnorm(n, meanlog = dist_model$params$meanlog, sdlog = dist_model$params$sdlog))
+  } else if(dist_model$distribution == "gamma") {
+    return(rgamma(n, shape = dist_model$params$shape, rate = dist_model$params$rate))
+  } else if(dist_model$distribution == "weibull") {
+    return(rweibull(n, shape = dist_model$params$shape, scale = dist_model$params$scale))
+  }
+}
+
+sample_weight(10, "Express_courier", "baggage", "swine products/by-products", "personal use or consumption")
+
+
+```
+
+
+
+
+
+
+
+
+```{r try again}
+str(pathway_distributions, max.level = 2)
+
+# Calculate total kg at risk for each row in wads_volume_joined
+risk_weights_by_pathway_tmp <- wads_volume_joined %>%
+  # Process each row individually
+  rowwise() %>%
+  mutate(
+    # Calculate number of events with risk (rounded to integer)
+    events_with_risk = round(probability * COUNT, 0)
+  )
+
+risk_weights_by_pathway <- risk_weights_by_pathway_tmp %>%
+  rowwise() %>%
+  mutate(
+    # Use the sample_weight function with column values as arguments
+    sampled_weights = if(!is.na(events_with_risk) && events_with_risk > 0 && !is.na(PATHWAY)) {
+      # Sample weights based on the current row's values
+      # Make sure these column names match exactly what's in your dataframe
+      list(sample_weight(
+        n = events_with_risk, 
+        pathway = PATHWAY,
+        container = container,
+        prod_pathway = product_pathway,
+        prod_subpathway = product_subpathway
+      ))
+    } else {
+      list(numeric(0))  # Empty list if no events with risk
+    },
+    # Sum the sampled weights to get total kg at risk
+    total_kg_at_risk = if(length(sampled_weights) > 0) sum(sampled_weights, na.rm = TRUE) else 0
+  ) %>%
+  ungroup()
+
+
+
+```
+
+
+
+
+```{r sample events from distriution models of weight per event}
+risk_weights_by_pathway <- risk_weights_by_pathway_tmp %>%
+  # Add mutate() here
+  mutate(
+    total_kg_at_risk = case_when(
+      # Only process if we have events with risk and can find the pathway
+      events_with_risk > 0 & !is.na(PATHWAY) ~ {
+        # Rest of your case_when logic remains the same
+        dist_model <- pathway_distributions %>%
+          filter(PATHWAY == .data$PATHWAY,
+          container == .data$container,
+          product_pathway == .data$product_pathway,
+          product_subpathway == .data$product_subpathway) %>%
+          pull(distribution_model) %>%
+          first()
+
+#test
+pathway_distributions %>%
+          filter(PATHWAY == 'Express_courier',
+          container == 'baggage',
+          product_pathway == .data$'swine products/by-products',
+          product_subpathway == 'personal use or consumption') %>%
+          pull(distribution_model) %>%
+          first()
+
+#end test
+
+        # If we found a distribution model, sample from it
+        if(!is.null(dist_model) && length(dist_model) > 0) {
+          # Sample weights based on the distribution model
+          sampled_weights <- if(dist_model$distribution == "empirical") {
+            sample(dist_model$data, size = events_with_risk, replace = TRUE)
+          } else if(dist_model$distribution == "lnorm") {
+            rlnorm(events_with_risk, 
+                   meanlog = dist_model$params$meanlog, 
+                   sdlog = dist_model$params$sdlog)
+          } else if(dist_model$distribution == "gamma") {
+            rgamma(events_with_risk, 
+                   shape = dist_model$params$shape, 
+                   rate = dist_model$params$rate)
+          } else if(dist_model$distribution == "weibull") {
+            rweibull(events_with_risk, 
+                     shape = dist_model$params$shape, 
+                     scale = dist_model$params$scale)
+          } else {
+            # Default case if distribution type unknown
+            rep(NA_real_, events_with_risk)
+          }
+          
+          # Sum the sampled weights
+          sum(sampled_weights, na.rm = TRUE)
+        } else {
+          NA_real_  # No distribution model found
+        }
+      },
+      TRUE ~ 0  # No events with risk
+    )
+  ) %>%
+  ungroup()
+
+# View the results
+summary(risk_weights_by_pathway$total_kg_at_risk)
+
+```

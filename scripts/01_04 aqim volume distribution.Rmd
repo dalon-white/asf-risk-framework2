@@ -9,6 +9,7 @@ params:
   affected_countries: "current" # "current" or "mex_can" or "other"
   other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify the countries here
   years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
+  aqim_qmi_size_distribution_filename: "pathway_weight_distribution_models" # Name of the output file for the distribution models
 ---
 Run in conjunction with aqim pathway passenger layers.Rmd and aqim pathway approach rates.Rmd
 
@@ -20,7 +21,8 @@ if(!exists("params")) {
     risk_quantification = "0_1", # 0_1 or "range"
     affected_countries = "current", # "current" or "mex_can" 
     years = 2024:2024, #The years to include which countries have ASF from the `asf affected countries.csv` file
-    other_affected_countries = c("Country1", "Country2") # If using "other", specify the countries here
+    other_affected_countries = c("Country1", "Country2"), # If using "other", specify the countries here,
+    aqim_qmi_size_distribution_filename = "pathway_weight_distribution_models" # Name of the output file for the distribution models
   )
 }
 ```
@@ -106,6 +108,8 @@ print(
 
 
 print("I DONT THINK THESE NUMBERS ARE CORRECT - CHECK THE ASSIGNMENT OF RISK IN `AQIM PATHWAY DATA PREP.RMD`")
+
+View(commodity_dat_tmp |> filter(IS_ASF_RISK == "NO") |> count(COMMODITY_DISPLAY_NAME, sort=TRUE))
 ```
 
 # get the distribution of each
@@ -179,7 +183,8 @@ pathway_distributions <- commodity_dat %>%
 
 setwd(here::here("output","item size sampling distributions","aqim"))
 # Save the distribution model object
-saveRDS(pathway_distributions, "pathway_weight_distribution_models.rds")
+saveRDS(pathway_distributions, paste(params$aqim_qmi_size_distribution_filename, ".rds", sep = "")
+)
 
 ```
 
@@ -189,36 +194,6 @@ saveRDS(pathway_distributions, "pathway_weight_distribution_models.rds")
 # Example usage of sampling from the distributions
 
 ```{r}
-   #Create a function to sample from these distributions
-sample_weight <- function(n, pathway, container, prod_pathway, prod_subpathway, 
-                          distribution_models = pathway_distributions) {
-  
-  # Find the matching distribution
-  dist_model <- distribution_models %>%
-    filter(PATHWAY == pathway, 
-           container == container,
-           product_pathway == prod_pathway,
-           product_subpathway == prod_subpathway) %>%
-    pull(distribution_model) %>%
-    .[[1]]
-  
-  if(is.null(dist_model)) {
-    warning("No distribution found for the specified combination. Returning NA.")
-    return(rep(NA, n))
-  }
-  
-  # Sample from the distribution
-  if(dist_model$distribution == "empirical") {
-    # If empirical, sample from the actual data with replacement
-    return(sample(dist_model$data, size = n, replace = TRUE))
-  } else if(dist_model$distribution == "lnorm") {
-    return(rlnorm(n, meanlog = dist_model$params$meanlog, sdlog = dist_model$params$sdlog))
-  } else if(dist_model$distribution == "gamma") {
-    return(rgamma(n, shape = dist_model$params$shape, rate = dist_model$params$rate))
-  } else if(dist_model$distribution == "weibull") {
-    return(rweibull(n, shape = dist_model$params$shape, scale = dist_model$params$scale))
-  }
-}
 
 # Create diagnostic plots to check the distribution fits
 plot_distribution_fit <- function(pathway, container, prod_pathway, prod_subpathway,
