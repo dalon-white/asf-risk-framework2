@@ -1,0 +1,34 @@
+AQAS_location_name,ARM_location_name,port_type
+AZ Douglas CBP,"DOUGLAS, AZ (2601)",land border
+AZ Nogales CBP Grand Ave.,Nogales - Grand Ave.,land border
+AZ San Luis CBP,"SAN LUIS, AZ (2608)",land border
+CA Calexico CBP,"CALEXICO, CA (2503)",land border
+CA Calexico CBP East,CALEXICO-EAST (2507),land border
+CA Otay Mesa CBP,OTAY MESA (2506),land border
+CA San Ysidro CBP,SAN YSIDRO (2504),land border
+CA Tecate CBP,"TECATE, CA (2505)",land border
+TX Brownsville CBP GW,"BROWNSVILLE, TX (2301)",land border
+TX El Paso CBP,"EL PASO, TX (2402)",land border
+TX El Paso CBP BOTA,"EL PASO, TX (2402)",land border
+TX El Paso CBP Del Norte,"EL PASO, TX (2402)",land border
+TX Hidalgo CBP,"HIDALGO, TX (2305)",land border
+TX Laredo CBP Bridge I,"LAREDO, TX (2304)",land border
+TX Pharr CBP,Pharr,land border
+TX Ysleta CBP,"YSLETA, TX (2401)",land border
+CA Long Beach CBP,"LONG BEACH, CA (2709)",seaport
+FL Cape Canaveral CBP,"PORT CANAVERAL, FL (1816)",seaport
+FL Ft. Lauderdale CBP,"PORT EVERGLADES, FL (5203)",seaport
+FL Miami Sea CBP,"MIAMI, FL (5201)",seaport
+FL Port Everglades CBP,"PORT EVERGLADES, FL (5203)",seaport
+FL Tampa CBP,"PORT MANATEE, FL (1821)",seaport
+MD Riverdale PPQ,,NA
+NJ Newark Sea CBP,New York/Newark Area Sea,seaport
+NY Brooklyn CBP,"NEW YORK, NY (1001)",seaport
+PR San Juan Sea CBP,"SAN JUAN, PR (4909)",seaport
+AK Anchorage Express CBP,FEDERAL EXPRESS COURIER AK (3195),express courier
+CA Oakland CBP,FEDEX COURIER FACILITY OAKLAND (2895),express courier
+FL Miami Air Cargo CBP,,express courier
+KY Louisville CBP,,express courier
+OH Cincinnati DHL CBP,DHL COURIER CINCINNATI (4197),express courier
+PR Aguadilla CBP,"AGUADILLA, PR (4901)",express courier
+TN Memphis Fed-X CBP,"FEDEX COURIER, MEMPHIS TN (2095)",express courier

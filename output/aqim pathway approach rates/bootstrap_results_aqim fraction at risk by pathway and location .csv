@@ -1,0 +1,16 @@
+"pathway","group","proportion","ci_lower","ci_upper"
+"Airport - Aircraft - Passenger - Predeparture","Airport - Aircraft - Passenger - Predeparture;baggage;swine products/by-products;personal use or consumption",0.0150104587101906,0.0140680759666324,0.0160117637646819
+"Airport - Aircraft - Person - CBP","Airport - Aircraft - Person - CBP;baggage;swine products/by-products;personal use or consumption",0.0243814328032736,0.0238264970904872,0.0249659257487149
+"Airport - Aircraft - Person - Pre-Clearance","Airport - Aircraft - Person - Pre-Clearance;baggage;swine products/by-products;personal use or consumption",0.0166441028908179,0.0155490961216851,0.0177784222929281
+"Cruise_ship","Cruise_ship;baggage;swine products/by-products;personal use or consumption",0.00389300847457627,0.00328389830508475,0.00455508474576271
+"Express_courier","Express_courier;baggage;swine products/by-products;personal use or consumption",0.00147258055015609,0.00119279024562644,0.00178182246568887
+"Express_courier","Express_courier;baggage;other products;plasma",4.41774165046828e-05,0,0.000103080638510927
+"Express_courier","Express_courier;baggage;fomite;unspecified feed",0.000176709666018731,8.83548330093656e-05,0.000279790304529658
+"Express_courier","Express_courier;baggage;fomite;personal effects",1.47258055015609e-05,0,4.41774165046828e-05
+"Land Border - Truck - Conveyance - CBP NB","Land Border - Truck - Conveyance - CBP NB;baggage;swine products/by-products;personal use or consumption",0.00634689569837689,0.00590308905357599,0.00679070234317778
+"Land Border - Truck - Conveyance - CBP SB","Land Border - Truck - Conveyance - CBP SB;baggage;swine products/by-products;personal use or consumption",0.0155080904123627,0.0150348296456802,0.0159929855515803
+"Land Border - Truck - Conveyance - CBP SB","Land Border - Truck - Conveyance - CBP SB;conveyance;fomite;plant based feed",3.91124600564002e-06,0,1.17337380169201e-05
+"Maritime Port - Vessel - Cargo - CBP","Maritime Port - Vessel - Cargo - CBP;container;swine products/by-products;commercial",0.000304761904761905,7.61904761904762e-05,0.000685714285714286
+"Maritime Port - Vessel - Mail - CBP","Maritime Port - Vessel - Mail - CBP;baggage;swine products/by-products;personal use or consumption",0.00475542390521176,0.00421103194299896,0.00528380433912417
+"Pedestrian SB","Pedestrian SB;baggage;swine products/by-products;personal use or consumption",0.00186400315235827,0.00170638523873974,0.00201468106333566
+"Pedestrian SB","Pedestrian SB;baggage;fomite;unspecified feed",3.08382874471038e-05,1.37059055320461e-05,5.13971457451729e-05
