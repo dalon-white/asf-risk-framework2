@@ -473,6 +473,7 @@ ship <- aqas_aqim_func(insp_data,
   correct_units_func()
 
 ship <- collect(ship)
+
 ```
 
 ## Bind aqas aqim data together
@@ -486,6 +487,19 @@ aqas_aqim <- aqas_aqim %>%
 
 ```
 
+## Correct location names to be compatible with ARM WADS location names
+````{r correct location names}
+setwd(here::here('input', 'data', 'aqas to arm port location name crosswalk'))
+aqas_location_ref <- read.csv("aqas to arm port location name crosswalk.csv", stringsAsFactors = FALSE)
+aqas_aqim <- aqas_aqim %>%
+  left_join(aqas_location_ref, by = c("INSPECTION_LOCATION_NAME" = "AQAS_location_name"), relationship = "many-to-one") 
+
+aqas_aqim <- aqas_aqim %>%
+  mutate(INSPECTION_LOCATION_NAME = coalesce(ARM_location_name, INSPECTION_LOCATION_NAME)) %>%
+  dplyr::select(-ARM_location_name, port_type)
+
+#View(aqas_aqim)
+```
 ```{r filter low observation years}
 # Count observations by year and pathway, then filter out low-count combinations
 low_data_combinations <- aqas_aqim %>%
@@ -689,7 +703,7 @@ dat <- aqim_data %>%
 ```
 ## Convert the entry_type to commercial if size is large
 
-```{r convert entry_type to commercial}
+```{r if large interceptions then convert product_subpathway to commercial}
 #Use the reference table to convert entry_type to commercial if the size is large
 setwd(here::here('input', 'data', 'product pathway by volume key'))
 size_ref <- read.csv("product pathway by volume reference table.csv", stringsAsFactors = FALSE)
@@ -698,9 +712,9 @@ size_ref_func <- function(data, reference_table){
     data %>%
   left_join(reference_table, by = c("entry_type" = "entry_type_ref"), relationship = "many-to-one") %>%
   mutate(
-    entry_type = ifelse(!is.na(size_threshold_kg
+    product_subpathway = ifelse(!is.na(size_threshold_kg
 ) & !is.na(TOTAL_KG) & TOTAL_KG >= size_threshold_kg
-, subpathway, entry_type)
+, subpathway, product_subpathway)
   ) }
 
 dat <- size_ref_func(data = dat, reference_table = size_ref)
@@ -883,4 +897,4 @@ commodity_only_func <- function(data) {
 }
 
 commodities <- commodity_only_func(arm_aqim_records)
-``` --> -->
+```
