@@ -1,0 +1,53 @@
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse, magrittr, ggplot2, DT, caret, lubridate, readr, stringdist, purrr)
+pacman::p_load(DBI, odbc)
+pacman::p_load(tidygeocoder, sf, tigris, SpatialKDE)
+```
+
+```{r params for vscode}
+if(!exists("params")) {
+  params <- list(
+wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year"
+
+  )
+}
+```
+## Call and compile AQIM data
+
+Get all AQIM data that is relevant and make sure it is geolocated
+
+```{r ARM AQIM data}
+
+#-- Connect to ARM ---- 
+#ARM data base version 2
+geo_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=GeoLocations;
+                        trusted_connection=yes")
+
+rg_cols <- c("Operational", "State", "Type", "Latitude", "Longitude")
+
+#-- Pull AQIM inspection records from ARM  ---- 
+system.time(rg_dat <- tbl(geo_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_Processing_Facilities_Regulated_Garbage]")) |> 
+              dplyr::select(all_of(rg_cols)) |> 
+              collect() |>
+              dplyr::filter(!grepl("Not|No|Out|Cease", Operational)))
+
+```
+# conver to spatial
+```{r}
+# convert to spatial
+rg_geo <- rg_dat |> sf::st_as_sf(coords = c("Latitude", "Longitude"), crs = 4326) 
+
+
+
+```
+
+```{r load wads volume}
+setwd(here::here("output","wads","arrivals_or_entries"))
+wads_volume <- readRDS(paste(params$wads_volume_filename, ".rds"))
+rg_volume <- wads_volume |> filter(grepl("RG", PATHWAY))
+rg_volume_yrly <- rg_volume |> group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, year) |> summarize(COUNT = sum(COUNT)) |> ungroup()
+
+```

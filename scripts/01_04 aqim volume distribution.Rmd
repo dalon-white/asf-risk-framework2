@@ -84,7 +84,7 @@ commodity_dat_tmp <- dat %>% mutate(IS_ASF_RISK = case_when(
 # keep pathway, location, commodity, pathway, subpathway, entry_type, container, and TOTAL_KG
 commodity_dat <- commodity_dat_tmp %>%
   filter(!IS_ASF_RISK == "NO") %>%
-  select(
+  dplyr::select(
     ID, 
     PATHWAY, 
     PORT_CD,
@@ -99,6 +99,8 @@ commodity_dat <- commodity_dat_tmp %>%
     product_pathway,
     product_subpathway
   )
+print(paste(nrow(commodity_dat |> filter(is.na(TOTAL_KG))), "entries with NA TOTAL_KG. It is being removed."))
+
 
 print(
     paste(nrow(commodity_dat_tmp %>%
@@ -106,10 +108,14 @@ print(
   "records with ASF risk")
 )
 
+print("These numbers drop off significantly when you filter to only those countries with ASF")
 
-print("I DONT THINK THESE NUMBERS ARE CORRECT - CHECK THE ASSIGNMENT OF RISK IN `AQIM PATHWAY DATA PREP.RMD`")
+View(dat |> filter(IS_ASF_RISK != "NO") |> count(edge_origin, product_origin)) |> arrange(desc(n))
+
+print("Most items that could carry risk are coming from Mex, Can, or the US; in 4th and 5th, though, are ESP, BHS, PRI (Puerto Rico), with ITA, DEU, and PHL not far behind. These all actually carry risk")
 
 View(commodity_dat_tmp |> filter(IS_ASF_RISK == "NO") |> count(COMMODITY_DISPLAY_NAME, sort=TRUE))
+print("I double checked all these commodities to ensure none of these names carried risk, and that the reference tables are working appropriately. They are, and these commodities do not carry risk.")
 ```
 
 # get the distribution of each
@@ -175,7 +181,123 @@ pathway_distributions <- commodity_dat %>%
   mutate(distribution_model = map(data, fit_distributions))
   
   pathway_distributions  %>%
-  select(-data)
+  dplyr::select(-data)
+```
+```{r}
+library(stats)
+test_all_distribution_fits <- function(distribution_models = pathway_distributions) {
+  # Get all unique combinations
+  combinations <- distribution_models %>%
+    dplyr::select(PATHWAY, container, product_pathway, product_subpathway)
+  
+  # Create empty dataframe to store results
+  results <- data.frame()
+  
+  # Loop through each combination
+  for(i in 1:nrow(combinations)) {
+    tryCatch({
+      # Extract current combination
+      current <- combinations[i, ]
+      
+      # Get distribution model
+      dist_model <- distribution_models %>%
+        filter(PATHWAY == current$PATHWAY,
+               container == current$container,
+               product_pathway == current$product_pathway,
+               product_subpathway == current$product_subpathway) %>%
+        pull(distribution_model) %>%
+        .[[1]]
+      
+      # Skip empirical distributions (no formal tests available)
+      if(dist_model$distribution == "empirical") {
+        results <- rbind(results, data.frame(
+          PATHWAY = current$PATHWAY,
+          container = current$container,
+          product_pathway = current$product_pathway,
+          product_subpathway = current$product_subpathway,
+          distribution = "empirical",
+          ks_statistic = NA,
+          p_value = NA,
+          is_good_fit = NA,
+          sample_size = length(dist_model$data)
+        ))
+        next
+      }
+      
+      # Extract data and parameters
+      data <- dist_model$fit_object$data
+      dist_name <- dist_model$distribution
+      
+      # Run Kolmogorov-Smirnov test
+      if(dist_name == "lnorm") {
+        ks_result <- ks.test(data, "plnorm", 
+                            meanlog = dist_model$params$meanlog,
+                            sdlog = dist_model$params$sdlog)
+      } else if(dist_name == "gamma") {
+        ks_result <- ks.test(data, "pgamma",
+                            shape = dist_model$params$shape,
+                            rate = dist_model$params$rate)
+      } else if(dist_name == "weibull") {
+        ks_result <- ks.test(data, "pweibull",
+                            shape = dist_model$params$shape,
+                            scale = dist_model$params$scale)
+      }
+      
+      # Add results to dataframe
+      results <- rbind(results, data.frame(
+        PATHWAY = current$PATHWAY,
+        container = current$container,
+        product_pathway = current$product_pathway,
+        product_subpathway = current$product_subpathway,
+        distribution = dist_name,
+        ks_statistic = ks_result$statistic,
+        p_value = ks_result$p.value,
+        is_good_fit = ks_result$p.value > 0.05,
+        sample_size = length(data)
+      ))
+    }, error = function(e) {
+      # Handle errors gracefully
+      results <- rbind(results, data.frame(
+        PATHWAY = current$PATHWAY,
+        container = current$container,
+        product_pathway = current$product_pathway,
+        product_subpathway = current$product_subpathway,
+        distribution = "error",
+        ks_statistic = NA,
+        p_value = NA,
+        is_good_fit = FALSE,
+        sample_size = NA,
+        error = as.character(e)
+      ))
+    })
+    
+    # Print progress
+    if(i %% 10 == 0) cat("Processed", i, "of", nrow(combinations), "combinations\n")
+  }
+  
+  return(results)
+}
+
+# Run the test on all combinations
+fit_test_results <- test_all_distribution_fits()
+
+# View summary of results
+summary_results <- fit_test_results %>%
+  group_by(distribution) %>%
+  summarize(
+    total = n(),
+    good_fits = sum(is_good_fit, na.rm = TRUE),
+    good_fit_percentage = mean(is_good_fit, na.rm = TRUE) * 100
+  )
+
+print(summary_results)
+
+# Show the combinations with poor fit (p-value < 0.05)
+poor_fits <- fit_test_results %>%
+  filter(!is_good_fit & !is.na(is_good_fit)) %>%
+  arrange(p_value)
+
+print(poor_fits)
 ```
 
 ## save distributions
@@ -217,6 +339,9 @@ plot_distribution_fit <- function(pathway, container, prod_pathway, prod_subpath
 # Check a specific distribution fit
 plot_distribution_fit("Land Border - Truck - Conveyance - CBP NB", "baggage", "swine products/by-products", "personal use or consumption")
 
+plot_distribution_fit("Express_courier", "baggage", "swine products/by-products", "smuggled commercial products")
+
+print("warnings are based on low sample sizes. eg smuggled commercials only has 1 example in express courier. In such a case, the empirical distribution is used, and if n=1 it just re-samples that value.")
 # Sample from a specific distribution
 # sample_weights <- sample_weight(100, "Your_Pathway", "Your_Container", "Your_Prod_Pathway", "Your_Prod_Subpathway")
 # hist(sample_weights, main = "Sampled weights", xlab = "Weight (kg)")

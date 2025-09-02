@@ -291,7 +291,7 @@ aqim_data <- sf::st_transform(aqim_data, 5070)
 
 ```{r create US grid}
 #create a raster of US
-us_bounds <- tigris::states(cb = TRUE) |> 
+us_bounds <- tigris::states(cb = FALSE) |> 
                   st_union() |>  sf::st_transform(5070)
 us_bounds <- sf::st_transform(us_bounds, crs = 5070)
 #us_bounds <- as(us_bounds, "Spatial")

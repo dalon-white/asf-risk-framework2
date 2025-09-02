@@ -9,6 +9,7 @@ params:
   end_date: 2024-12-31
   affected_country_file: "asf affected countries.csv"
   affected_product_file: "asf affected product name reference table.csv"
+  pathway_volume_smuggling_reference_table_filename: "product pathway by volume reference table"
 ---
 
 -   \% estimate of each pathway type for each AQIM-conveyance/pathway
@@ -36,7 +37,8 @@ if(!exists("params")) {
     end_date = "2024-12-31",
     affected_product_file = "asf affected product name reference table.csv",
     affected_country_file = "asf affected countries.csv",
-    quantity_units_to_kg = "quantity units to kilograms reference table.csv"
+    quantity_units_to_kg = "quantity units to kilograms reference table.csv",
+    pathway_volume_smuggling_reference_table_filename = "product pathway by volume reference table"
 
   )
 }
@@ -244,7 +246,7 @@ arm_aqim_records <- arm_aqim_records %>%
 
 ```{r correct quantity}
 setwd(here::here("input","data","asf affected product names"))
-quantity_units_reference_table <- read.csv("quantity units to kilograms reference table.csv")
+quantity_units_reference_table <- read.csv(params$quantity_units_to_kg)
 arm_aqim_records <- arm_aqim_records %>% 
   mutate(QUANTITY = abs(QUANTITY)) %>%
   left_join(
@@ -384,7 +386,7 @@ aqas_aqim_func <- function(insp_data, commod_data, pathway_name,
     data |> mutate(
       TOTAL_KG = case_when(
       UNIT == "Kilogram" ~ QUANTITY,
-      UNIT == "Each" ~ 2 * QUANTITY,
+      UNIT == "Each" ~  QUANTITY / 2, #assume each is 0.5kg
       UNIT == "Grams" ~ QUANTITY / 1000
       )
       )
@@ -625,45 +627,40 @@ system.time(aqim_data <- aqim_data %>%
 
 ```
 
-# Assign location 
-```{r}
-db_conn <- dbConnect(odbc::odbc(),.connection_string = 
-                      "Driver=SQL Server;
-                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
-                        Database=PPQ_AQI_ARMDMV2;
-                        trusted_connection=yes")
+# # Assign location 
+# ```{r}
+# db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+#                       "Driver=SQL Server;
+#                         Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+#                         Database=PPQ_AQI_ARMDMV2;
+#                         trusted_connection=yes")
 
-inspection_cols <- c(
-    "ID", 
-    "NAME", 
-    "PARENT_LOCATION_ID", 
-    "SITE", 
-    "LOCATION_STATE_CD", 
-    "PATHWAY_ID", 
-    "PATHWAY"
-    )
+# inspection_cols <- c(
+#     "ID", 
+#     "CATEGORY",
+#     "NAME", 
+#     "PARENT_LOCATION_ID", 
+#     "SITE", 
+#     "LOCATION_STATE_CD", 
+#     "PATHWAY_ID", 
+#     "PATHWAY"
+#     )
 
 
-#-- Pull AQIM inspection records from ARM  ---- 
-system.time(arm_aqim <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_LOCATION]")) |> 
-              dplyr::filter(CATEGORY == "AQIM") |>
-              dplyr::select(inspection_cols) |> 
-              #rename to fit AQAS data structure
-              rename(edge_origin = COUNTRY_OF_ORIGIN_NAME,
-                      group_size = NUMBER_OF_PASSENGERS
-           )
-)
+# #-- Pull AQIM inspection records from ARM  ---- 
+# system.time(arm_aqim <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_LOCATION]")) |> 
+#               dplyr::filter(CATEGORY == "AQIM") |>
+#               dplyr::select(inspection_cols) |> 
+#               #rename to fit AQAS data structure
+#               rename(edge_origin = COUNTRY_OF_ORIGIN_NAME,
+#                       group_size = NUMBER_OF_PASSENGERS
+#            )
+# )
  
 
-```
+# ```
 
 
-
-
-
-
-# if needed, look into saving separately
-Not sure if needed downstream yet
 
 ```{r }
 # Function to match commodities with ASF reference table
@@ -706,195 +703,202 @@ dat <- aqim_data %>%
 ```{r if large interceptions then convert product_subpathway to commercial}
 #Use the reference table to convert entry_type to commercial if the size is large
 setwd(here::here('input', 'data', 'product pathway by volume key'))
-size_ref <- read.csv("product pathway by volume reference table.csv", stringsAsFactors = FALSE)
+size_ref <- read.csv(paste0(params$pathway_volume_smuggling_reference_table_filename,".csv"), stringsAsFactors = FALSE)
 
 size_ref_func <- function(data, reference_table){
     data %>%
   left_join(reference_table, by = c("entry_type" = "entry_type_ref"), relationship = "many-to-one") %>%
   mutate(
-    product_subpathway = ifelse(!is.na(size_threshold_kg
+    product_subpathway = ifelse(IS_ASF_RISK != "NO" & !is.na(size_threshold_kg
 ) & !is.na(TOTAL_KG) & TOTAL_KG >= size_threshold_kg
 , subpathway, product_subpathway)
   ) }
 
 dat <- size_ref_func(data = dat, reference_table = size_ref)
+View(dat |> filter(grepl("smuggled", product_subpathway)))
+```
+
+# # trouble shooting
+#  ```{r trouble shooting}
+# #Only one passenger in SAN FRANCISCO with a large quantity of pork that would be considered smuggled
+# View(aqim_data |> filter(grepl("SAN FRANCISCO",INSPECTION_LOCATION_NAME)) |> count(PATHWAY, entry_type, TOTAL_KG))
+# # so, the 0.03 approach rate estimate is not correct
+# dat |> filter(grepl("SAN FRANCISCO",INSPECTION_LOCATION_NAME)) |> View()
 
 ```
-#  save data
-
 ```{r save aqim data}
 
 write.csv(dat, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv", row.names = FALSE)
 
 ```
 
-<!-- 
-# model how much of each product type and name is coming in via each pathway
+# <!-- 
+# # model how much of each product type and name is coming in via each pathway
 
-# Left off here 8/8
+# # Left off here 8/8
 
-```{r just checking}
+# ```{r just checking}
 
-aqim_data |> count(PATHWAY) |> View()
+# aqim_data |> count(PATHWAY) |> View()
 
-##What kind of matches do we have?
-##i went through the thousands of records and the matches are appropriate
-#aqim_data |> left_join(asf_matches, relationship = "many-to-many") |> 
-#  count(IS_ASF_RISK, COMMODITY_DISPLAY_NAME) |> 
-#  arrange(desc(n)) |> 
-#  View()
+# ##What kind of matches do we have?
+# ##i went through the thousands of records and the matches are appropriate
+# #aqim_data |> left_join(asf_matches, relationship = "many-to-many") |> 
+# #  count(IS_ASF_RISK, COMMODITY_DISPLAY_NAME) |> 
+# #  arrange(desc(n)) |> 
+# #  View()
 
-#aqim_data |> left_join(asf_matches, relationship = "many-to-many") |> 
-#  count(IS_ASF_RISK, COMMODITY_DISPLAY_NAME, PATHWAY) |> 
-#  arrange(desc(n)) |> 
-#  View()
+# #aqim_data |> left_join(asf_matches, relationship = "many-to-many") |> 
+# #  count(IS_ASF_RISK, COMMODITY_DISPLAY_NAME, PATHWAY) |> 
+# #  arrange(desc(n)) |> 
+# #  View()
 
-## maritime -mail was an issue because of 2 reference tables not matching.
-## Can continue to Check what entry_type is assigned to this pathway
-#aqim_data %>% 
-#  filter(PATHWAY == "Maritime Port - Vessel - Mail - CBP") %>%
-#  select(PATHWAY, entry_type) %>%
-#  distinct()
+# ## maritime -mail was an issue because of 2 reference tables not matching.
+# ## Can continue to Check what entry_type is assigned to this pathway
+# #aqim_data %>% 
+# #  filter(PATHWAY == "Maritime Port - Vessel - Mail - CBP") %>%
+# #  select(PATHWAY, entry_type) %>%
+# #  distinct()
 
-## Check if these commodities exist in the reference table
-#missing_matches <- aqim_data %>% 
-#  filter(PATHWAY == "Maritime Port - Vessel - Mail - CBP") %>%
-#  anti_join(asf_matches, by = c("ID", "COMMODITY_ID")) %>%
-#  count(COMMODITY_DISPLAY_NAME, entry_type) %>%
-#  arrange(desc(n))
+# ## Check if these commodities exist in the reference table
+# #missing_matches <- aqim_data %>% 
+# #  filter(PATHWAY == "Maritime Port - Vessel - Mail - CBP") %>%
+# #  anti_join(asf_matches, by = c("ID", "COMMODITY_ID")) %>%
+# #  count(COMMODITY_DISPLAY_NAME, entry_type) %>%
+# #  arrange(desc(n))
 
-## Check what entry types exist in the reference table for these commodities
-#asf_product_ref %>%
-#  filter(ITEM %in% missing_matches$COMMODITY_DISPLAY_NAME) %>%
-#  select(ITEM, entry_type) %>%
-#  distinct()
+# ## Check what entry types exist in the reference table for these commodities
+# #asf_product_ref %>%
+# #  filter(ITEM %in% missing_matches$COMMODITY_DISPLAY_NAME) %>%
+# #  select(ITEM, entry_type) %>%
+# #  distinct()
 
-```
-
-
-```{r step two}
-# Step 2: Get unique inspections
-inspections <- aqim_data %>%
-  select(ID, PATHWAY, INSPECTION_LOCATION_ID, INSPECTION_LOCATION_NAME, edge_origin, product_origin) %>%
-  distinct()
-
-```
-
-```{r step three}
-# Step 3: For each inspection, determine if it has any commodities with ASF risk
-inspection_asf_risk <- inspections %>%
-  left_join(
-    asf_matches %>%
-      group_by(ID, entry_type, container, product_pathway, product_subpathway) %>%
-      summarize(
-        highest_asf_risk = case_when(
-          any(IS_ASF_RISK == "HIGH") ~ "HIGH",
-          any(IS_ASF_RISK == "MEDIUM") ~ "MEDIUM",
-          any(IS_ASF_RISK == "LOW") ~ "LOW",
-          TRUE ~ NA_character_
-        )
-      ),
-    by = "ID"
-  ) %>%
-  # Create binary indicator for ASF risk
-  mutate(has_asf_risk = !is.na(highest_asf_risk)) %>% 
-  ungroup()
-
-```
-
-```{r step four}
-
-# Step 4: Calculate fractions
-inspection_asf_risk %>% 
-  group_by(
-    PATHWAY,INSPECTION_LOCATION_ID,COUNTRY_OF_ORIGIN_NAME,product_pathway,product_subpathway
-  )
+# ```
 
 
+# ```{r step two}
+# # Step 2: Get unique inspections
+# inspections <- aqim_data %>%
+#   select(ID, PATHWAY, INSPECTION_LOCATION_ID, INSPECTION_LOCATION_NAME, edge_origin, product_origin) %>%
+#   distinct()
+
+# ```
+
+# ```{r step three}
+# # Step 3: For each inspection, determine if it has any commodities with ASF risk
+# inspection_asf_risk <- inspections %>%
+#   left_join(
+#     asf_matches %>%
+#       group_by(ID, entry_type, container, product_pathway, product_subpathway) %>%
+#       summarize(
+#         highest_asf_risk = case_when(
+#           any(IS_ASF_RISK == "HIGH") ~ "HIGH",
+#           any(IS_ASF_RISK == "MEDIUM") ~ "MEDIUM",
+#           any(IS_ASF_RISK == "LOW") ~ "LOW",
+#           TRUE ~ NA_character_
+#         )
+#       ),
+#     by = "ID"
+#   ) %>%
+#   # Create binary indicator for ASF risk
+#   mutate(has_asf_risk = !is.na(highest_asf_risk)) %>% 
+#   ungroup()
+
+# ```
+
+# ```{r step four}
+
+# # Step 4: Calculate fractions
+# inspection_asf_risk %>% 
+#   group_by(
+#     PATHWAY,INSPECTION_LOCATION_ID,COUNTRY_OF_ORIGIN_NAME,product_pathway,product_subpathway
+#   )
 
 
 
 
-# Step 4: Calculate fractions by PATHWAY
-pathway_risk <- inspection_asf_risk %>%
-  group_by(PATHWAY,
-  INSPECTION_LOCATION_ID,
-  ) %>%
-  summarize(
-    total_inspections = n(),
-    risk_inspections = sum(has_asf_risk, na.rm = TRUE),
-    fraction = risk_inspections / total_inspections
-  ) %>%
-  arrange(desc(fraction))
-
-# Calculate fractions by INSPECTION_LOCATION_ID
-location_risk <- inspection_asf_risk %>%
-  group_by(INSPECTION_LOCATION_ID, INSPECTION_LOCATION_NAME) %>%
-  summarize(
-    total_inspections = n(),
-    risk_inspections = sum(has_asf_risk, na.rm = TRUE),
-    fraction = risk_inspections / total_inspections
-  ) %>%
-  arrange(desc(fraction))
-
-# Calculate fractions by COUNTRY_OF_ORIGIN_NAME
-country_risk <- inspection_asf_risk %>%
-  group_by(COUNTRY_OF_ORIGIN_NAME) %>%
-  summarize(
-    total_inspections = n(),
-    risk_inspections = sum(has_asf_risk, na.rm = TRUE),
-    fraction = risk_inspections / total_inspections
-  ) %>%
-  arrange(desc(fraction))
-
-# Display top results from each category
-print("Top pathways by ASF risk:")
-print(pathway_risk)
-
-print("Top 10 locations by ASF risk:")
-print(head(location_risk, 10))
-
-print("Top 10 countries of origin by ASF risk:")
-print(head(country_risk, 10))
-
-```
-
-# TO DO:
-
-## I want to change this to amount of material intercepted, not just the number of inspections.
-
-## I want to calculate the amount of material intercepted by each pathway, subpathway, and entry type, as well as container in the product reference table.
-
-## create an inspection only and commodity only table
-
-probably not needed, but keeping it here for now.
-
-This is just so we dont have to collect() both inspection and commodity tables
-
-```{r insp and commod dfs}
-
-#need to check this function; it should take the commodity-only columns away from arm_aqim_records and reduce to  
-inspections_only_func <- function(data) {
-  df <- data |>
-    dplyr::select(inspection_cols
-                  ) |> 
-    distinct()
-  return(df)
-}
-
-inspections <- inspections_only_func(arm_aqim_records)
 
 
-commodity_only_func <- function(data) {
-  df <- data |>
-    rename("INSPECTION_ID" = "ID") |> 
-    dplyr::select(any_of(commodity_cols),
-                  COMMODITY_ID,
-                  COMMODITY_COUNTRY_ORIGIN) |>
-    #rename("COMMODITY_ID" = "ID") |> 
-    filter(!is.na(COMMODITY_ID))
-  return(df)
-}
+# # Step 4: Calculate fractions by PATHWAY
+# pathway_risk <- inspection_asf_risk %>%
+#   group_by(PATHWAY,
+#   INSPECTION_LOCATION_ID,
+#   ) %>%
+#   summarize(
+#     total_inspections = n(),
+#     risk_inspections = sum(has_asf_risk, na.rm = TRUE),
+#     fraction = risk_inspections / total_inspections
+#   ) %>%
+#   arrange(desc(fraction))
 
-commodities <- commodity_only_func(arm_aqim_records)
-```
+# # Calculate fractions by INSPECTION_LOCATION_ID
+# location_risk <- inspection_asf_risk %>%
+#   group_by(INSPECTION_LOCATION_ID, INSPECTION_LOCATION_NAME) %>%
+#   summarize(
+#     total_inspections = n(),
+#     risk_inspections = sum(has_asf_risk, na.rm = TRUE),
+#     fraction = risk_inspections / total_inspections
+#   ) %>%
+#   arrange(desc(fraction))
+
+# # Calculate fractions by COUNTRY_OF_ORIGIN_NAME
+# country_risk <- inspection_asf_risk %>%
+#   group_by(COUNTRY_OF_ORIGIN_NAME) %>%
+#   summarize(
+#     total_inspections = n(),
+#     risk_inspections = sum(has_asf_risk, na.rm = TRUE),
+#     fraction = risk_inspections / total_inspections
+#   ) %>%
+#   arrange(desc(fraction))
+
+# # Display top results from each category
+# print("Top pathways by ASF risk:")
+# print(pathway_risk)
+
+# print("Top 10 locations by ASF risk:")
+# print(head(location_risk, 10))
+
+# print("Top 10 countries of origin by ASF risk:")
+# print(head(country_risk, 10))
+
+# ```
+
+# # TO DO:
+
+# ## I want to change this to amount of material intercepted, not just the number of inspections.
+
+# ## I want to calculate the amount of material intercepted by each pathway, subpathway, and entry type, as well as container in the product reference table.
+
+# ## create an inspection only and commodity only table
+
+# probably not needed, but keeping it here for now.
+
+# This is just so we dont have to collect() both inspection and commodity tables
+
+# ```{r insp and commod dfs}
+
+# #need to check this function; it should take the commodity-only columns away from arm_aqim_records and reduce to  
+# inspections_only_func <- function(data) {
+#   df <- data |>
+#     dplyr::select(inspection_cols
+#                   ) |> 
+#     distinct()
+#   return(df)
+# }
+
+# inspections <- inspections_only_func(arm_aqim_records)
+
+
+# commodity_only_func <- function(data) {
+#   df <- data |>
+#     rename("INSPECTION_ID" = "ID") |> 
+#     dplyr::select(any_of(commodity_cols),
+#                   COMMODITY_ID,
+#                   COMMODITY_COUNTRY_ORIGIN) |>
+#     #rename("COMMODITY_ID" = "ID") |> 
+#     filter(!is.na(COMMODITY_ID))
+#   return(df)
+# }
+
+# commodities <- commodity_only_func(arm_aqim_records)
+# ```

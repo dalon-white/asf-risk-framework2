@@ -1,0 +1,460 @@
+---
+title: "ASF Risk Spatial Visualization"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cosmo
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.width = 10, fig.height = 8)
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(RColorBrewer)
+library(here)
+library(DT)
+```
+
+## Load Risk Distribution Layers
+
+```{r load_data}
+# Set paths
+risk_dir <- here::here('output', 'spatial layers', 'risk at final destinations')
+new_layers_dir <- here::here('output', 'additional layers')  # Directory for your additional layers
+
+# Load the layer catalog for easier access
+layer_catalog <- read.csv(file.path(risk_dir, "layer_catalog.csv"))
+
+# Function to load a specific layer by its short name
+load_layer <- function(short_name) {
+  file_path <- file.path(risk_dir, paste0("risk_", short_name, ".gpkg"))
+  if(file.exists(file_path)) {
+    return(st_read(file_path))
+  } else {
+    warning(paste("Layer not found:", file_path))
+    return(NULL)
+  }
+}
+
+# Function to discover and load additional layers
+load_additional_layers <- function(directory, pattern = "*.gpkg") {
+  if(!dir.exists(directory)) {
+    warning(paste("Directory not found:", directory))
+    return(list())
+  }
+  
+  # List all matching files
+  layer_files <- list.files(directory, pattern = pattern, full.names = TRUE)
+  
+  # Load each file into a named list
+  layers <- list()
+  for(file in layer_files) {
+    name <- tools::file_path_sans_ext(basename(file))
+    layers[[name]] <- st_read(file)
+  }
+  
+  return(layers)
+}
+
+# Optional: Load the complete distributed_risks object if needed
+# distributed_risks <- readRDS(file.path(risk_dir, "all_distributed_risks.rds"))
+```
+
+## Risk Layer Overview
+
+```{r layer_overview}
+# Display catalog of available layers
+datatable(layer_catalog %>% 
+            select(short_name, pathway, container, product_pathway, product_subpathway, risk_value) %>%
+            arrange(desc(risk_value)),
+          options = list(pageLength = 10),
+          caption = "Available Risk Distribution Layers (Click to Select)")
+```
+
+## Map Highest Risk Layers
+
+```{r top_risk_map}
+# Get the top 5 highest risk layers
+top_layers <- head(layer_catalog, 15)
+
+# US states for background
+us_states <- tigris::states(cb = TRUE)
+
+# Load and plot top risk layers
+for(i in 1:nrow(top_layers)) {
+  layer_name <- top_layers$short_name[i]
+  layer_data <- load_layer(layer_name)
+  
+  if(!is.null(layer_data)) {
+    # Create title with details
+    title <- paste0(
+      "Risk Distribution: ", top_layers$pathway[i], 
+      " - ", top_layers$container[i],
+      " (", round(top_layers$risk_value[i], 2), " kg at risk)"
+    )
+    
+    # Plot using ggplot2
+    p <- ggplot() +
+      geom_sf(data = us_states, fill = "white", color = "gray70") +
+      geom_sf(data = layer_data, aes(fill = risk_value), alpha = 0.7) +
+      scale_fill_viridis_c(name = "Risk (kg)", 
+                          option = "plasma", 
+                          trans = "log1p") +
+      labs(title = title,
+           subtitle = paste("Product:", top_layers$product_pathway[i], "-", top_layers$product_subpathway[i])) +
+      theme_minimal() +
+      theme(legend.position = "right")
+    
+    print(p)
+  }
+}
+```
+
+## Interactive Map of Selected Layer
+
+Select a specific layer to visualize interactively:
+
+```{r interactive_map, fig.width=12, fig.height=8}
+# Change this to visualize a different layer
+selected_layer_name <- layer_catalog$short_name[1]  # Default: highest risk layer
+
+# Load the selected layer
+selected_layer <- load_layer(selected_layer_name)
+layer_details <- layer_catalog[layer_catalog$short_name == selected_layer_name, ]
+
+if(!is.null(selected_layer)) {
+  # Create leaflet map
+  pal <- colorNumeric(
+    palette = "YlOrRd",
+    domain = selected_layer$risk_value,
+    na.color = "transparent"
+  )
+  
+  # Convert to web mercator for leaflet
+  selected_layer_wgs <- st_transform(selected_layer, 4326)
+  
+  leaflet(selected_layer_wgs) %>%
+    addProviderTiles(providers$CartoDB.Positron) %>%
+    addPolygons(
+      fillColor = ~pal(risk_value),
+      weight = 1,
+      opacity = 1,
+      color = "white",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlight = highlightOptions(
+        weight = 2,
+        color = "#666",
+        dashArray = "",
+        fillOpacity = 0.9,
+        bringToFront = TRUE),
+      popup = ~paste0(
+        "<strong>Risk Value:</strong> ", round(risk_value, 4), " kg<br>"
+      ),
+      label = ~paste0("Risk: ", round(risk_value, 4), " kg")
+    ) %>%
+    addLegend(
+      pal = pal,
+      values = ~risk_value,
+      opacity = 0.7,
+      title = "Risk (kg)",
+      position = "bottomright"
+    ) %>%
+    setView(lng = -95, lat = 39, zoom = 4) %>%
+    addMiniMap(
+      toggleDisplay = TRUE,
+      position = "bottomleft"
+    )
+}
+```
+
+## Combining Multiple Risk Layers
+
+You can combine multiple layers to see their cumulative effect:
+
+```{r combine_layers}
+# Select multiple layers to combine (e.g., top 3)
+layers_to_combine <- head(layer_catalog$short_name, 3)
+
+# Function to combine multiple spatial layers
+combine_risk_layers <- function(layer_names) {
+  # Use a different approach for creating the base grid
+  # Get US counties as the base grid instead of trying to create Voronoi cells
+  us_grid <- tigris::counties(cb = TRUE) %>%
+    st_transform(5070) %>%  # Use Albers projection
+    # No need for complex voronoi/casting operations
+    st_sf() %>%
+    mutate(combined_risk = 0)
+  
+  # Add risk from each layer
+  for(name in layer_names) {
+    layer <- load_layer(name)
+    if(!is.null(layer)) {
+      # Ensure compatible CRS
+      layer <- st_transform(layer, st_crs(us_grid))
+      
+      # Spatial join and sum risk
+      temp_join <- st_join(us_grid, layer %>% select(risk_value))
+      
+      # Aggregate risk by county
+      us_grid <- temp_join %>%
+        group_by(GEOID) %>%  # Group by county ID
+        summarize(
+          combined_risk = sum(combined_risk, na.rm = TRUE) + sum(risk_value, na.rm = TRUE),
+          .groups = "drop"
+        )
+    }
+  }
+  
+  return(us_grid)
+}
+
+# Create combined layer
+combined_layer <- combine_risk_layers(layers_to_combine)
+
+# Plot combined layer
+ggplot() +
+  geom_sf(data = us_states %>% st_transform(st_crs(combined_layer)), 
+          fill = "white", color = "gray70") +
+  geom_sf(data = combined_layer, aes(fill = combined_risk), alpha = 0.7) +
+  scale_fill_viridis_c(name = "Combined Risk (kg)", 
+                       option = "plasma", 
+                       trans = "log1p") +
+  labs(title = paste("Combined Risk from", length(layers_to_combine), "Highest Risk Pathways"),
+       subtitle = paste("Total kg at risk:", round(sum(combined_layer$combined_risk, na.rm=TRUE), 2))) +
+  theme_minimal() +
+  theme(legend.position = "right")
+```
+
+## Incorporate New Layers
+
+You can load and incorporate additional layers from other sources:
+
+```{r additional_layers}
+# Load additional layers (add your specific layers here)
+additional_layers <- load_additional_layers(new_layers_dir)
+
+# Example: If you have a layer with farm locations
+if(length(additional_layers) > 0) {
+  # Get the first layer for demonstration
+  add_layer_name <- names(additional_layers)[1]
+  add_layer <- additional_layers[[add_layer_name]]
+  
+  # Get one of our risk layers
+  risk_layer <- load_layer(layer_catalog$short_name[1])
+  
+  if(!is.null(risk_layer) && !is.null(add_layer)) {
+    # Ensure compatible CRS
+    add_layer <- st_transform(add_layer, st_crs(risk_layer))
+    
+    # Plot together
+    ggplot() +
+      geom_sf(data = us_states %>% st_transform(st_crs(risk_layer)), 
+              fill = "white", color = "gray70") +
+      geom_sf(data = risk_layer, aes(fill = risk_value), alpha = 0.7) +
+      geom_sf(data = add_layer, color = "black", size = 1) +
+      scale_fill_viridis_c(name = "Risk (kg)", 
+                           option = "plasma", 
+                           trans = "log1p") +
+      labs(title = paste("Risk Layer with Additional", add_layer_name, "Layer"),
+           subtitle = "Combining risk distribution with external data") +
+      theme_minimal()
+  } else {
+    cat("Either risk layer or additional layer not available\n")
+  }
+} else {
+  cat("No additional layers found in the specified directory\n")
+}
+```
+
+## Creating Custom Visualizations
+
+You can create custom visualizations by filtering and combining layers:
+
+```{r custom_viz}
+# Example: Select layers by pathway type
+passenger_layers <- layer_catalog %>%
+  filter(grepl("Person|Passenger", pathway)) %>%
+  pull(short_name)
+
+cargo_layers <- layer_catalog %>%
+  filter(grepl("Cargo|Shipment", pathway)) %>%
+  pull(short_name)
+
+# Function to summarize risk by pathway type
+summarize_pathway_risk <- function(layer_names) {
+  total_risk <- 0
+  
+  for(name in layer_names) {
+    layer <- load_layer(name)
+    if(!is.null(layer)) {
+      layer_risk <- sum(layer$risk_value, na.rm = TRUE)
+      total_risk <- total_risk + layer_risk
+    }
+  }
+  
+  return(total_risk)
+}
+
+# Calculate total risk by pathway type
+passenger_risk <- summarize_pathway_risk(passenger_layers)
+cargo_risk <- summarize_pathway_risk(cargo_layers)
+
+# Create comparative bar chart
+comparison_data <- data.frame(
+  Pathway_Type = c("Passenger", "Cargo"),
+  Risk_kg = c(passenger_risk, cargo_risk)
+)
+
+ggplot(comparison_data, aes(x = Pathway_Type, y = Risk_kg, fill = Pathway_Type)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(Risk_kg, 1)), vjust = -0.5) +
+  scale_fill_brewer(palette = "Set1") +
+  labs(title = "Comparison of Risk by Pathway Type",
+       subtitle = "Total kg at risk by passenger vs cargo pathways",
+       x = "", y = "Risk (kg)") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+
+
+```{r multi_layer_map, fig.width=12, fig.height=8}
+# Create layer categories for better organization
+layer_categories <- list(
+  "High Risk (Top 5)" = head(layer_catalog$short_name, 5),
+  "Passenger Pathways" = layer_catalog %>% 
+    filter(grepl("Person|Passenger", pathway)) %>% 
+    pull(short_name),
+  "Cargo Pathways" = layer_catalog %>% 
+    filter(grepl("Cargo|Shipment", pathway)) %>% 
+    pull(short_name),
+  "Swine Products" = layer_catalog %>%
+    filter(grepl("swine", product_pathway, ignore.case = TRUE)) %>%
+    pull(short_name)
+)
+
+# Create base map
+map <- leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  setView(lng = -95, lat = 39, zoom = 4) %>%
+  addMiniMap(toggleDisplay = TRUE, position = "bottomleft")
+
+# Create color palette function that will work across all layers
+max_risk <- max(layer_catalog$risk_value, na.rm = TRUE)
+pal <- colorNumeric(palette = "YlOrRd", domain = c(0, max_risk))
+
+# Track all layer groups for the layer control
+all_groups <- c()
+active_layers <- c() # Layers to show initially
+
+# Add individual layers by category
+for(category_name in names(layer_categories)) {
+  # Get layers for this category
+  category_layers <- layer_categories[[category_name]]
+  
+  # Create a collapsed section heading for this category
+  map <- map %>% addLayersControl(
+    overlayGroups = category_name,
+    options = layersControlOptions(collapsed = FALSE)
+  )
+  
+  # Prepare a combined layer for this category (for efficiency)
+  combined_layer <- combine_risk_layers(category_layers) 
+  combined_name <- paste0("ALL: ", category_name)
+  
+  # Add the combined layer
+  if(!is.null(combined_layer)) {
+    map <- map %>% addPolygons(
+      data = st_transform(combined_layer, 4326),
+      fillColor = ~pal(combined_risk),
+      weight = 1,
+      opacity = 0.8,
+      color = "white",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      group = combined_name,
+      popup = ~paste0("<strong>", category_name, " Combined Risk:</strong> ", 
+                    round(combined_risk, 4), " kg"),
+      label = ~paste0(category_name, ": ", round(combined_risk, 4), " kg")
+    )
+    all_groups <- c(all_groups, combined_name)
+    active_layers <- c(active_layers, combined_name)  # Show combined layers by default
+  }
+  
+  # Add individual layers (limit to first 10 for performance)
+  for(i in 1:min(10, length(category_layers))) {
+    layer_name <- category_layers[i]
+    layer_details <- layer_catalog[layer_catalog$short_name == layer_name, ]
+    
+    # Skip if no details found
+    if(nrow(layer_details) == 0) next
+    
+    # Create descriptive name
+    display_name <- paste0(
+      substr(layer_details$pathway, 1, 15), "...: ",
+      substr(layer_details$product_pathway, 1, 15), " (", 
+      round(layer_details$risk_value, 2), " kg)"
+    )
+    
+    # Load layer
+    layer <- load_layer(layer_name)
+    if(is.null(layer)) next
+    
+    # Add layer to map
+    map <- map %>% addPolygons(
+      data = st_transform(layer, 4326),
+      fillColor = ~pal(risk_value),
+      weight = 1,
+      opacity = 0.8,
+      color = "black",  # Different color for individual layers
+      dashArray = "3",
+      fillOpacity = 0.7,
+      group = display_name,
+      popup = ~paste0(
+        "<strong>Layer:</strong> ", display_name, "<br>",
+        "<strong>Risk:</strong> ", round(risk_value, 4), " kg"
+      )
+    )
+    
+    all_groups <- c(all_groups, display_name)
+    # Don't add to active_layers - we'll show only combined by default
+  }
+}
+
+# Add final layer control with all groups
+map %>%
+  addLayersControl(
+    overlayGroups = all_groups,
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  addLegend(
+    pal = pal,
+    values = c(0, max_risk),
+    title = "Risk (kg)",
+    position = "bottomright"
+  ) %>%
+  # Hide individual layers by default, show only combined
+  hideGroup(setdiff(all_groups, active_layers))
+  ```
+
+
+
+
+
+
+## Conclusion
+
+This document provides a framework for visualizing and analyzing ASF risk distribution across the US. You can:
+
+1. View individual risk layers 
+2. Combine multiple layers to see cumulative effects
+3. Incorporate additional external layers
+4. Create custom analyses by pathway or other attributes
+
+For additional analyses, you can extend this document with more specific visualizations or statistical summaries based on your specific research questions.

@@ -11,6 +11,7 @@ params:
   years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
   glm_results_filename: "glmm_results_aqim fraction at risk by pathway and location"
   bootstrap_results_filename: "bootstrap_results_aqim fraction at risk by pathway and location"
+  group_size_filename: "aqim_mean_pathway_group_size"
 ---
 
 -   prepped data already has the pathway, entry type, etc., and risk as no/low/med/high
@@ -27,11 +28,12 @@ pacman::p_load(lme4,ggplot2,broom,multcomp,emmeans,sjPlot,tidyverse,broom.mixed,
 if(!exists("params")) {
   params <- list(
     risk_quantification = "0_1", # 0_1 or "range"
-    affected_countries = "current", # "current" or "mex_can" 
+    affected_countries = "current", # "current" or "mex_can" or "other" 
     years = 2024:2024, #The years to include which countries have ASF from the `asf affected countries.csv` file
     other_affected_countries = c("Country1", "Country2"), # If using "other", specify the countries here
     glm_results_filename = "glmm_results_aqim fraction at risk by pathway and location",
-    bootstrap_results_filename = "bootstrap_results_aqim fraction at risk by pathway and location"
+    bootstrap_results_filename = "bootstrap_results_aqim fraction at risk by pathway and location",
+   group_size_filename = "aqim_mean_pathway_group_size"
   )
 }
 ```
@@ -67,6 +69,7 @@ if(params$affected_countries == "current") {
 }
 ```
 
+
 # Assign risk by country of origin and product origin
 
 ```{r assign risk}
@@ -76,6 +79,8 @@ aqim_dat <- aqim_dat %>% mutate(IS_ASF_RISK = case_when(
   .default = "NO"
          )
 )
+#once it is filtered by country, this is the at risk products by weight
+aqim_dat |> filter(PATHWAY== "Pedestrian SB") |> count(TOTAL_KG > 0, IS_ASF_RISK)
 ```
 
 ## handle risk quantification based on 0-1 or a scale
@@ -106,8 +111,62 @@ if(params$risk_quantification == "0_1") {
 # modify TOTAL_KG by IS_ASF_RISK
 aqim_dat <- aqim_dat |> mutate(TOTAL_KG = TOTAL_KG * IS_ASF_RISK)
 
-# modify IS_ASF_RISK to be binary
-aqim_dat <- aqim_dat |> mutate(IS_ASF_RISK = ifelse(IS_ASF_RISK > 0, 1, 0))
+# # modify IS_ASF_RISK to be binary
+# aqim_dat <- aqim_dat |> mutate(IS_ASF_RISK = ifelse(IS_ASF_RISK > 0, 1, 0))
+
+```
+
+## Create Summary
+This is to make sure I remember that not all these pathways have risk, so not all of them will be used in the 01_06 aqim pathway risk_PoE.Rmd script
+
+```{r}
+# Create summary statistics for combinations and risk counts
+# Count all combinations by risk status
+combinations_summary <- aqim_dat |>
+  dplyr::count(PATHWAY, container, product_pathway, product_subpathway, IS_ASF_RISK)
+
+# Get key statistics
+pathway_counts <- combinations_summary |> distinct(PATHWAY) |> nrow()
+total_combinations <- combinations_summary |> distinct(PATHWAY, container, product_pathway, product_subpathway) |> nrow()
+risk_combinations <- combinations_summary |> filter(IS_ASF_RISK > 0) |> distinct(PATHWAY, container, product_pathway, product_subpathway) |> nrow()
+no_risk_combinations <- combinations_summary |> filter(IS_ASF_RISK == 0) |> distinct(PATHWAY, container, product_pathway, product_subpathway) |> nrow()
+
+# Count observations
+total_risk_count <- combinations_summary |> filter(IS_ASF_RISK > 0) |> summarize(total = sum(n)) |> pull(total)
+total_no_risk_count <- combinations_summary |> filter(IS_ASF_RISK == 0) |> summarize(total = sum(n)) |> pull(total)
+grand_total_count <- sum(combinations_summary$n)
+
+# Create pathway-level summary
+pathway_summary <- combinations_summary |>
+  group_by(PATHWAY, IS_ASF_RISK) |>
+  summarize(count = sum(n), .groups = "drop") |>
+  pivot_wider(names_from = IS_ASF_RISK, values_from = count, 
+              names_prefix = "risk_", values_fill = 0) |>
+  mutate(total = risk_0 + risk_1,
+         risk_percent = round(100 * risk_1 / total, 1))
+
+# Print summary information
+cat("\n### Summary of AQIM Data Combinations ###\n\n")
+cat(paste("Total unique pathways:", pathway_counts, "\n"))
+cat(paste("Total unique PATHWAY-container-product combinations:", total_combinations, "\n"))
+cat(paste("- Combinations with ASF risk:", risk_combinations, 
+          sprintf("(%.1f%%)", 100 * risk_combinations/total_combinations), "\n"))
+cat(paste("- Combinations without ASF risk:", no_risk_combinations, "\n\n"))
+
+cat("### Observation Counts ###\n\n")
+cat(paste("Total observations:", format(grand_total_count, big.mark=","), "\n"))
+cat(paste("- Observations with ASF risk:", format(total_risk_count, big.mark=","), 
+          sprintf("(%.1f%%)", 100 * total_risk_count/grand_total_count), "\n"))
+cat(paste("- Observations without ASF risk:", format(total_no_risk_count, big.mark=","), "\n\n"))
+
+cat("###  Pathways by Risk Percentage ###\n\n")
+top_risk_pathways <- pathway_summary |>
+  filter(risk_1 > 0) |>
+  arrange(desc(risk_percent)) 
+
+print(top_risk_pathways |> dplyr::select(PATHWAY, risk_1, total, risk_percent))
+print("The pathway combinations that exist are in the following table:")
+View(combinations_summary)
 
 ```
 
@@ -165,7 +224,7 @@ for (pathway_name in names(aqim_dat_list)) {
       # Bootstrap function for this specific group
       boot_group_function <- function(data, indices) {
         d <- data[indices,]
-        mean(d$is_target_group)
+        mean(d$IS_ASF_RISK)
       }
       
       # Run bootstrap
@@ -204,7 +263,7 @@ for (pathway_name in names(aqim_dat_list)) {
       #)
       # Using a simpler GLM instead of GLMM since we don't have random effects
       glmm_group <- glm(
-  is_target_group ~ INSPECTION_LOCATION_NAME,
+  IS_ASF_RISK ~ INSPECTION_LOCATION_NAME,
   data = modeling_data,
   family = binomial(link = "logit")
 )
@@ -490,13 +549,13 @@ if (any(location_probabilities_final$location == "Baseline")) {
 
 ```
 
-# Check if the incidents found in vessel cargo are allowable at the time they were conducted
+## Validation Check: Check if the incidents found in vessel cargo are allowable at the time they were conducted
 
 ```{r}
 #were the incidents found in vessel cargo allowable at the time they were conducted?
 vessel_cargo_question <- aqim_dat |> filter(grepl("Maritime Port - Vessel - Cargo - CBP",PATHWAY)) |> filter(IS_ASF_RISK > 0) |> count(CALENDAR_YEAR,edge_origin,product_origin)
 
-print("these", nrow(vessel_cargo_question), "incidents were found in vessel cargo that were not allowed at the time they were conducted")
+print(paste("these", nrow(vessel_cargo_question), "incidents were found in vessel cargo that were not allowed at the time they were conducted"))
 head(vessel_cargo_question)
 print("however, they were not seized, indicating that they were allowed to be imported with the correct paperwork, so these are not a risk for ASF")
 print("In conclusion, no smuggling shows up in AQIM data of regulated cargo")
@@ -515,4 +574,33 @@ saveRDS(location_probabilities_final, paste(params$glm_results_filename,".rds"))
 write.csv(bootstrap_results, paste(params$bootstrap_results_filename,".csv"), row.names = FALSE)
 saveRDS(bootstrap_results, paste(params$bootstrap_results_filename,".rds"))
 
+```
+
+# Save group size for later calculations
+```{r save group size}
+View(aqim_dat |> count(group_size, PATHWAY))
+# If group_size is NA or 0, replace with 1
+# for each pathway, find the average group size
+group_size_summary <- aqim_dat %>%
+  mutate(group_size = case_when(
+    group_size == 0 ~ 1,
+    is.na(group_size) ~ 1,
+    .default = group_size
+  )) %>%
+  group_by(PATHWAY) %>%
+  summarize(
+    avg_group_size = mean(group_size, na.rm = TRUE),
+    median_group_size = median(group_size, na.rm = TRUE),
+    min_group_size = min(group_size, na.rm = TRUE),
+    max_group_size = max(group_size, na.rm = TRUE),
+    count = n()
+  )
+
+```
+
+## save group size summary
+```{r save group size summary}
+setwd(here::here('output','aqim pathway approach rates'))
+write.csv(group_size_summary, paste(params$group_size_filename,".csv", sep=""), row.names = FALSE)
+saveRDS(group_size_summary, paste(params$group_size_filename,".rds", sep=""))
 ```

@@ -112,6 +112,8 @@ wads_volume <- wads |>
   left_join(wads_vol_ref, by = c("ACTIVITY_CODE" = "CODE")) |> 
   mutate(year = lubridate::year(WORK_ACTIVITY_DATE),
          month = lubridate::month(WORK_ACTIVITY_DATE)) |> 
+         #reduce to only relevant pathways
+  filter(!(is.na(PATHWAY) | PATHWAY == "")) |>
   group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, year, month) |> 
   summarize(COUNT = sum(COUNT, na.rm=TRUE),
             .groups = "drop")
