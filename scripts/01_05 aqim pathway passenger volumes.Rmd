@@ -32,20 +32,46 @@ Third Rmd
     -   Entry (volume - interceptions) of the combination
 
 ```{r setup, include=FALSE}
-pacman::p_load(tidyverse)
-pacman::p_load(odbc, DBI)
+library(tidyverse)
+library(odbc)
+library(DBI)
+library(here)
+library(lubridate)
 ```
-```{r params for vscode}
-if(!exists("params")) {
-  params <- list(
-    wads_volume_begin_date = "2021-01-01",
-    wads_volume_end_date = "2024-12-31",
-    wads_volume_reference_filename = "wads volume reference table.csv", # Name of the input reference file that houses which ACTIVITY_CODE is for which PATHWAY
-    wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year"
 
-  )
+```{r load-params}
+# Function to load the shared parameters if available
+load_shared_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    message("Loading shared parameters from 00_asf_risk_parameters.Rmd")
+    return(readRDS(params_file))
+  } else {
+    message("Shared parameter file not found. Using script-specific parameters.")
+    return(NULL)
+  }
+}
+
+# Try to load shared params
+shared_params <- load_shared_params()
+
+# Use shared params if available, otherwise use script-specific params
+if (!exists("params")) {
+  if (!is.null(shared_params)) {
+    params <- shared_params
+  } else {
+    # Default params specific to this script
+    params <- list(
+      wads_volume_begin_date = "2021-01-01",
+      wads_volume_end_date = "2024-12-31",
+      wads_volume_reference_filename = "wads volume reference table.csv",
+      wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year"
+    )
+  }
 }
 ```
+
 ## gather WADS codes
 ### Get WADS reference table for volume, inspections, and interceptions
 ```{r get wads codes}

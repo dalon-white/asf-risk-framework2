@@ -13,17 +13,42 @@ params:
 ---
 Run in conjunction with aqim pathway passenger layers.Rmd and aqim pathway approach rates.Rmd
 
+```{r setup, include=FALSE}
+library(tidyverse)
+library(here)
+```
 
+```{r load-params}
+# Function to load the shared parameters if available
+load_shared_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    message("Loading shared parameters from 00_asf_risk_parameters.Rmd")
+    return(readRDS(params_file))
+  } else {
+    message("Shared parameter file not found. Using script-specific parameters.")
+    return(NULL)
+  }
+}
 
-```{r params for vscode}
-if(!exists("params")) {
-  params <- list(
-    risk_quantification = "0_1", # 0_1 or "range"
-    affected_countries = "current", # "current" or "mex_can" 
-    years = 2024:2024, #The years to include which countries have ASF from the `asf affected countries.csv` file
-    other_affected_countries = c("Country1", "Country2"), # If using "other", specify the countries here,
-    aqim_qmi_size_distribution_filename = "pathway_weight_distribution_models" # Name of the output file for the distribution models
-  )
+# Try to load shared params
+shared_params <- load_shared_params()
+
+# Use shared params if available, otherwise use script-specific params
+if (!exists("params")) {
+  if (!is.null(shared_params)) {
+    params <- shared_params
+  } else {
+    # Default params specific to this script
+    params <- list(
+      risk_quantification = "0_1", # 0_1 or "range"
+      affected_countries = "current", # "current" or "mex_can" 
+      years = 2024:2024, #The years to include which countries have ASF
+      other_affected_countries = c("Country1", "Country2"),
+      aqim_qmi_size_distribution_filename = "pathway_weight_distribution_models"
+    )
+  }
 }
 ```
 
@@ -110,7 +135,7 @@ print(
 
 print("These numbers drop off significantly when you filter to only those countries with ASF")
 
-View(dat |> filter(IS_ASF_RISK != "NO") |> count(edge_origin, product_origin)) |> arrange(desc(n))
+View(dat |> filter(IS_ASF_RISK != "NO") |> count(edge_origin, product_origin) |> arrange(desc(n)))
 
 print("Most items that could carry risk are coming from Mex, Can, or the US; in 4th and 5th, though, are ESP, BHS, PRI (Puerto Rico), with ITA, DEU, and PHL not far behind. These all actually carry risk")
 
@@ -120,7 +145,7 @@ print("I double checked all these commodities to ensure none of these names carr
 
 # get the distribution of each
 
-```{r}
+```{r fit distributions to item weights}
 if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
   install.packages("fitdistrplus")
 }
@@ -183,7 +208,7 @@ pathway_distributions <- commodity_dat %>%
   pathway_distributions  %>%
   dplyr::select(-data)
 ```
-```{r}
+```{r test distribution fits}
 library(stats)
 test_all_distribution_fits <- function(distribution_models = pathway_distributions) {
   # Get all unique combinations
@@ -346,5 +371,6 @@ print("warnings are based on low sample sizes. eg smuggled commercials only has 
 # sample_weights <- sample_weight(100, "Your_Pathway", "Your_Container", "Your_Prod_Pathway", "Your_Prod_Subpathway")
 # hist(sample_weights, main = "Sampled weights", xlab = "Weight (kg)")
 ```
+````
 
 

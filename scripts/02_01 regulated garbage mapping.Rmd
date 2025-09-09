@@ -35,13 +35,39 @@ system.time(rg_dat <- tbl(geo_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl
               dplyr::filter(!grepl("Not|No|Out|Cease", Operational)))
 
 ```
-# conver to spatial
+# convert to spatial
 ```{r}
 # convert to spatial
-rg_geo <- rg_dat |> sf::st_as_sf(coords = c("Latitude", "Longitude"), crs = 4326) 
+rg_geo <- rg_dat |> sf::st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326)
 
+# Create a function to simplify the types
+simplify_type <- function(type_string) {
+  if (grepl("steriliz", type_string, ignore.case = TRUE)) {
+    return("Sterilizer")
+  } else if (grepl("incinerat", type_string, ignore.case = TRUE)) {
+    return("Incinerator")
+  } else {
+    return(type_string)  # Keep other types as is
+  }
+}
 
+# Apply the function to create a new simplified type column
+rg_geo$SimpleType <- sapply(rg_geo$Type, simplify_type)
 
+library(htmlwidgets)
+
+# Update the mapview visualization with the simplified types
+rg_map_simplified <- mapview::mapview(
+  rg_geo,
+  zcol = "SimpleType",                # Use simplified type for coloring
+  col.regions = RColorBrewer::brewer.pal(length(unique(rg_geo$SimpleType)), "Set1"),
+  layer.name = "RG Facilities",       
+  label = paste(rg_geo$SimpleType, "-", rg_geo$State),
+  cex = 3                             
+)
+
+# Display the map with simplified types
+rg_map_simplified
 ```
 
 ```{r load wads volume}
@@ -50,4 +76,462 @@ wads_volume <- readRDS(paste(params$wads_volume_filename, ".rds"))
 rg_volume <- wads_volume |> filter(grepl("RG", PATHWAY))
 rg_volume_yrly <- rg_volume |> group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, year) |> summarize(COUNT = sum(COUNT)) |> ungroup()
 
+```
+
+# Gather geolocation data
+```{r geolocation data}
+#-- Connect to ARM ---- 
+#ARM data base version 2
+db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+
+
+brg_loc_cols <- c("ID",
+                "NAME",
+                "SITE",
+                "PHYSICAL_ADDRESS_ID",
+                "MAIL_ADDRESS_ID",
+                'CBP_PORT_NUMBER',
+                "IATA_CODE")
+cbp_poe_cols <- c("CBP_NAME", "CBP_CODE", "LAT", "LON", "Port of Entry Name")
+ppq_facilities_cols <- c("LocationName", "PPQCode", "City", "State", "Longitude", "Latitude")
+loc_280_cols <- c("LOCATION", "ARM_InspectionLocationName", "Latitude", "Longitude")
+
+
+```
+
+
+# gather coords from difference sources
+
+```{r}
+# BRG2_LOCATION
+brg_loc <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_LOCATION]")) |> 
+               dplyr::select(all_of(brg_loc_cols)) |> 
+              collect()
+
+
+cbp_poe <- tbl(geo_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_CBP_POEs]")) |> 
+              dplyr::select(all_of(cbp_poe_cols)) |> 
+              collect()
+
+
+ppq_facilities <- tbl(db_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_PPQ_Facilities]")) |> dplyr::select(all_of(ppq_facilities_cols)) |> collect()
+
+
+rg_volume_yrly_loc <- rg_volume_yrly |> left_join(brg_loc, by = c("LOCATION_ID" = "ID"))
+
+
+# Step 1: Join with CBP POE data first
+rg_volume_yrly_geo <- rg_volume_yrly_loc %>%
+  left_join(cbp_poe, by = c("CBP_PORT_NUMBER" = "CBP_CODE")) %>%
+  # Create initial LAT/LON columns that might be filled
+  rename(
+    CBP_LAT = LAT,
+    CBP_LON = LON,
+    CBP_PORT_NAME = `Port of Entry Name`
+  )
+
+# Step 2: Join with PPQ facilities for rows still missing coordinates
+rg_volume_yrly_geo <- rg_volume_yrly_geo %>%
+  left_join(
+    ppq_facilities %>% 
+      dplyr::select(LocationName, Latitude, Longitude) %>%
+      rename(
+        PPQ_LAT = Latitude,
+        PPQ_LON = Longitude
+      ),
+    by = c("LOCATION_NAME" = "LocationName")
+  )
+
+# Step 3: Create combined coordinate columns, prioritizing CBP data
+rg_volume_yrly_geo <- rg_volume_yrly_geo %>%
+  mutate(
+    final_LAT = coalesce(CBP_LAT, PPQ_LAT),
+    final_LON = coalesce(CBP_LON, PPQ_LON)
+  )
+
+# Step 4: For remaining missing coordinates, use IATA code if available
+missing_coords <- rg_volume_yrly_geo %>%
+  filter(is.na(final_LAT) | is.na(final_LON)) %>%
+  filter(!is.na(IATA_CODE))
+
+if(nrow(missing_coords) > 0) {
+  # Option 1: Use tidygeocoder package if available
+  if(requireNamespace("tidygeocoder", quietly = TRUE)) {
+    iata_coords <- missing_coords %>%
+      dplyr::select(IATA_CODE) %>%
+      distinct() %>%
+      mutate(
+        # Look up IATA codes - this creates lat/lng columns
+        query = paste("airport", IATA_CODE)
+      ) %>%
+      tidygeocoder::geocode(address = query, method = "osm")
+    
+    # Join the results back
+    rg_volume_yrly_geo <- rg_volume_yrly_geo %>%
+      left_join(
+        iata_coords %>% 
+          dplyr::select(IATA_CODE, lat, long) %>%
+          rename(IATA_LAT = lat, IATA_LON = long),
+        by = "IATA_CODE"
+      ) %>%
+      mutate(
+        final_LAT = coalesce(final_LAT, IATA_LAT),
+        final_LON = coalesce(final_LON, IATA_LON)
+      )
+  } else {
+    # Option 2: Create a simple example for manual IATA lookup
+    cat("Found", nrow(missing_coords), "rows with IATA codes but no coordinates.\n")
+    cat("Consider using the 'airportr' or 'tidygeocoder' package to look up these codes.\n")
+    print(missing_coords %>% dplyr::select(IATA_CODE) %>% distinct())
+  }
+}
+```
+
+```{r}
+#convert to spatial
+rg_volume_yrly_geo_sf <- rg_volume_yrly_geo |> filter(!is.na(final_LAT) | !is.na(final_LON)) |> 
+  sf::st_as_sf(coords = c("final_LON", "final_LAT"), crs = 4326) |> st_transform(crs = 5070)
+
+```
+
+```{r plot}
+# #use mapview to plot
+# # Make sure required libraries are loaded
+# library(mapview)
+# library(viridis)  # For better color scales
+
+# # Create a mapview plot with COUNT as the scaling factor
+# m <- mapview(
+#   rg_volume_yrly_geo_sf,
+#   zcol = "COUNT",                      # Use COUNT for coloring points
+#   col.regions = viridis(10),           # Better color palette
+#   layer.name = "RG Volume (COUNT)",    # Legend title
+#   cex = "COUNT",                       # Scale point size by COUNT as well
+#   label = paste0(                      # Custom labels
+#     rg_volume_yrly_geo_sf$LOCATION_NAME, 
+#     " (", rg_volume_yrly_geo_sf$year, "): ", 
+#     rg_volume_yrly_geo_sf$COUNT
+#   )
+# )
+
+# # Display the map
+# m
+
+# #Overplotting is an issue
+# coords <- st_coordinates(rg_volume_yrly_geo_sf)
+# weights <- rg_volume_yrly_geo_sf$COUNT
+# library(leaflet)
+# library(leaflet.extras)
+# # Create heatmap
+# heat_map <- leaflet() %>%
+#   addProviderTiles(providers$CartoDB.Positron) %>%
+#   addHeatmap(
+#     lng = coords[, 1], 
+#     lat = coords[, 2],
+#     intensity = weights,
+#     radius = 15, 
+#     blur = 20,
+#     max = max(weights, na.rm = TRUE) * 0.8,
+#     gradient = "YlOrRd"
+#   ) %>%
+#   setView(lng = -95, lat = 39, zoom = 4)
+# heat_map
+
+# #Create output directory if it doesn't exist
+# output_dir <- here::here("output", "nonpermanent files")
+# dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+
+# # Save the heatmap as HTML
+# html_file <- file.path(output_dir, "regulated_garbage_heatmap.html")
+# htmlwidgets::saveWidget(
+#   heat_map,
+#   file = html_file,
+#   selfcontained = TRUE  # Include all dependencies in the HTML file
+# )
+
+# # Open the saved map in your default browser
+# browseURL(html_file)
+
+# # Print confirmation message
+# cat("Map saved to and opened from:", html_file)
+```
+
+
+```{r}
+library(tigris)
+library(sf)
+library(dplyr)
+
+us_bounds_sf <- readRDS(here::here("output","intermediate files", "US hex grid","us_bounds.rds"))
+
+# # Check if us_bounds_sf already exists
+# if (!exists("us_bounds_sf")) {
+#   # Get US states and territories
+#   us_all <- tigris::states(cb = FALSE) 
+  
+#   # Create a simplified boundary
+#   us_bounds_sf <- us_all %>%
+#     st_union() %>%
+#     st_simplify(dTolerance = 1000) %>%  # Simplify to avoid complex geometries
+#     st_transform(4326) %>%              # Ensure WGS84 projection
+#     st_buffer(0) %>%                    # Fix potential topology issues
+#     st_as_sf()
+# }
+
+# Create hexagonal grid covering the continental US only (for simplicity)
+us_grid <- readRDS(here::here("output","intermediate files", "US hex grid","us_grid.rds"))
+
+# Check validity of both datasets
+cat("Hex grid valid:", all(st_is_valid(us_grid)), "\n")
+cat("Points valid:", all(st_is_valid(rg_volume_yrly_geo_sf)), "\n")
+
+# Fix any invalid geometries if needed
+us_grid <- st_make_valid(us_grid)
+rg_volume_yrly_geo_sf <- st_make_valid(rg_volume_yrly_geo_sf)
+
+# Use a different approach for aggregation that's more robust
+# 1. Find which hex each point falls in
+point_hex_overlay <- st_intersects(rg_volume_yrly_geo_sf, us_grid, sparse = TRUE)
+point_hex_ids <- sapply(point_hex_overlay, function(x) if(length(x) > 0) x[1] else NA)
+
+# 2. Add hex_id to points data
+rg_volume_yrly_geo_sf$hex_id <- point_hex_ids
+
+# 3. Aggregate by hex_id (non-spatial operation, more reliable)
+hex_summary <- rg_volume_yrly_geo_sf %>%
+  filter(!is.na(hex_id)) %>%
+  group_by(hex_id) %>%
+  summarize(
+    total_count = sum(COUNT, na.rm = TRUE),
+    n_points = n()
+  ) %>%
+  ungroup()
+
+# 4. Join summary back to hex grid
+hex_counts <- us_grid %>%
+  st_join(hex_summary) %>%    
+  filter(!is.na(total_count)) |> # Keep only hexagons with data
+  mutate(
+    total_count = replace_na(total_count, 0),
+    n_points = replace_na(n_points, 0)
+  )
+
+# Visualize with mapview
+hex_map <- mapview::mapview(
+  hex_counts,
+  zcol = "total_count",
+  col.regions = viridis::viridis(50),
+  alpha.regions = 0.7,
+  layer.name = "RG Volume by Region"
+)
+```
+
+```{r}
+
+# Check Pandoc path
+# Execute this to get the path
+Sys.getenv("RSTUDIO_PANDOC")
+
+#If null, set it manually (adjust path as needed)
+Sys.setenv(RSTUDIO_PANDOC="C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools")
+
+# hex_map
+# rmarkdown::find_pandoc()
+# # Save map
+# output_dir <- here::here("output", "nonpermanent files")
+# dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+# mapview::mapshot(
+#   hex_map,
+#   file = file.path(output_dir, "regulated_garbage_hexbin.html"),
+#   selfcontained = TRUE
+# )
+
+# Save map
+# Create output directory
+output_dir <- here::here("output", "regulated garbage map")
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+
+# Create the combined map
+combined_map <- rg_map_simplified + hex_map
+
+# Save map without requiring pandoc
+htmlwidgets::saveWidget(
+  combined_map@map,
+  file = file.path(output_dir, "regulated_garbage_facilities_and_volume.html"),
+  selfcontained = TRUE  # This requires pandoc
+)
+
+```
+
+# combine regulated garbage and locations of facilities
+
+```{r}
+# Create a combined map from scratch using leaflet directly
+# First, extract data from the mapview objects
+hex_data <- hex_counts
+facility_data <- rg_geo
+
+# Create a clean palette for the hexbins
+hex_pal <- leaflet::colorNumeric(
+  palette = "viridis",
+  domain = hex_data$total_count
+)
+
+# Create a new leaflet map from scratch
+combined_leaflet <- leaflet() %>%
+  # Add basemap
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  # Add hexbins first (on bottom)
+  addPolygons(
+    data = hex_data,
+    fillColor = ~hex_pal(total_count),
+    weight = 1,
+    opacity = 0.7,
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    popup = ~paste0("Count: ", round(total_count, 0)),
+    group = "Regulated Garbage Volume"
+  ) %>%
+  # Add facility points on top
+  addCircleMarkers(
+    data = facility_data,
+    radius = 5,
+    color = ~colorFactor("Set1", facility_data$SimpleType)(SimpleType),
+    stroke = FALSE,
+    fillOpacity = 0.8,
+    popup = ~paste0("Type: ", SimpleType, "<br>State: ", State),
+    group = "Regulated Garbage Facilities"
+  ) %>%
+  # Add legends
+  addLegend(
+    position = "bottomright",
+    pal = hex_pal,
+    values = hex_data$total_count,
+    title = "RG Volume"
+  ) %>%
+  addLegend(
+    position = "bottomright",
+    colors = colorFactor("Set1", facility_data$SimpleType)(unique(facility_data$SimpleType)),
+    labels = unique(facility_data$SimpleType),
+    title = "Facility Types"
+  ) %>%
+  # Add layer controls
+  addLayersControl(
+    overlayGroups = c("Regulated Garbage Volume", "Regulated Garbage Facilities"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  setView(lng = -95, lat = 39, zoom = 4)
+
+# Save this map
+htmlwidgets::saveWidget(
+  combined_leaflet,
+  file = file.path(output_dir, "combined_map_direct.html"),
+  selfcontained = TRUE
+)
+
+# Show the path
+cat("Combined map saved to:", file.path(output_dir, "combined_map_direct.html"))
+
+
+
+
+
+
+
+# # First, let's install pandoc if needed
+# if (!requireNamespace("installr", quietly = TRUE)) {
+#   install.packages("installr")
+# }
+# installr::install.pandoc()
+# if (!requireNamespace("webshot", quietly = TRUE)) {
+#   install.packages("webshot")
+# }
+# library('installr', 'webshot')
+
+# After installation, you may need to install PhantomJS (which webshot uses)
+# webshot::install_phantomjs()
+
+```
+
+
+
+
+
+
+# Create US boundaries
+```{r}
+# Create US boundaries with all territories
+# Get all states and territories in one call
+us_all <- tigris::states(cb = FALSE) 
+
+us_bounds_sf <- us_all %>%
+  st_union() %>%
+  st_transform(4326) %>%  # Use same CRS as your data
+  st_sf(geometry = .)
+
+# rg_geo_filtered <- rg_geo %>%
+#   st_join(us_bounds_sf, left = TRUE) 
+
+# Count how many points were kept vs removed
+total_points <- nrow(rg_geo)
+kept_points <- nrow(rg_geo_filtered)
+removed_points <- total_points - kept_points
+```
+
+```{r}
+# Create a leaflet map of regulated garbage facilities
+library(leaflet)
+library(htmlwidgets)
+
+# Create color palette based on facility type
+pal <- colorFactor(palette = "Set1", domain = unique(rg_geo$Type))
+
+mapview::mapview(rg_geo_filtered)
+
+# Create the map
+rg_map <- leaflet(rg_geo_filtered) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addCircleMarkers(
+    radius = 5,
+    color = ~pal(Type),
+    stroke = FALSE,
+    fillOpacity = 0.7,
+    popup = ~paste0(
+      "<strong>Type:</strong> ", Type, "<br>",
+      "<strong>State:</strong> ", State, "<br>",
+      "<strong>Operational:</strong> ", Operational
+    ),
+    label = ~paste(Type, "-", State)
+  ) %>%
+  addLegend(
+    position = "bottomright",
+    pal = pal,
+    values = ~Type,
+    title = "Facility Type"
+  ) %>%
+  setView(lng = -95, lat = 39, zoom = 4) %>%  # Center on the US
+  addControl(
+    html = "<h3>Regulated Garbage Processing Facilities</h3>",
+    position = "topleft"
+  ) %>%
+  addScaleBar(position = "bottomleft")
+
+# Create output directory if it doesn't exist
+output_dir <- here::here("output", "maps")
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+
+# Save the map as an HTML file
+htmlwidgets::saveWidget(
+  rg_map,
+  file = file.path(output_dir, "regulated_garbage_facilities_map.html"),
+  selfcontained = TRUE  # Include all dependencies in the HTML file
+)
+
+# Print confirmation message
+cat("Map saved to:", file.path(output_dir, "regulated_garbage_facilities_map.html"))
 ```

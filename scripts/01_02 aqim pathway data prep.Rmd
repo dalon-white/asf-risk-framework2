@@ -24,23 +24,48 @@ params:
 
     -   For each PoE, Conveyance, Subconveyance, Edge, Subpathway, Pathway, estimate the rate of entry
 
-```{r setup, include=FALSE}
-pacman::p_load(tidyverse)
-pacman::p_load(odbc, DBI)
-pacman::p_load(countrycode)
-```
-### chunk only runs in VSCode - does nothing in R
-```{r params for vscode}
-if(!exists("params")) {
-  params <- list(
-    begin_date = "2021-01-01",
-    end_date = "2024-12-31",
-    affected_product_file = "asf affected product name reference table.csv",
-    affected_country_file = "asf affected countries.csv",
-    quantity_units_to_kg = "quantity units to kilograms reference table.csv",
-    pathway_volume_smuggling_reference_table_filename = "product pathway by volume reference table"
+# setup
 
-  )
+```{r setup, include=FALSE}
+library(tidyverse)
+library(odbc)
+library(DBI)
+library(countrycode)
+library(here)
+```
+
+```{r load-params}
+# Function to load the shared parameters if available
+load_shared_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    message("Loading shared parameters from 00_asf_risk_parameters.Rmd")
+    return(readRDS(params_file))
+  } else {
+    message("Shared parameter file not found. Using script-specific parameters.")
+    return(NULL)
+  }
+}
+
+# Try to load shared params
+shared_params <- load_shared_params()
+
+# Use shared params if available, otherwise use script-specific params
+if (!exists("params")) {
+  if (!is.null(shared_params)) {
+    params <- shared_params
+  } else {
+    # Default params specific to this script
+    params <- list(
+      begin_date = "2021-01-01",
+      end_date = "2024-12-31",
+      affected_product_file = "asf affected product name reference table.csv",
+      affected_country_file = "asf affected countries.csv",
+      quantity_units_to_kg = "quantity units to kilograms reference table.csv",
+      pathway_volume_smuggling_reference_table_filename = "product pathway by volume reference table"
+    )
+  }
 }
 ```
 
@@ -231,7 +256,7 @@ system.time(arm_aqim_records <- arm_aqim_records %>%
 )
 ```
 
-```{r separate land border to NB-SB}
+```{r separate ARM land border data to NB-SB}
 arm_aqim_records <- arm_aqim_records %>%
   mutate(
     PATHWAY = case_when(
@@ -490,7 +515,7 @@ aqas_aqim <- aqas_aqim %>%
 ```
 
 ## Correct location names to be compatible with ARM WADS location names
-````{r correct location names}
+```{r correct location names}
 setwd(here::here('input', 'data', 'aqas to arm port location name crosswalk'))
 aqas_location_ref <- read.csv("aqas to arm port location name crosswalk.csv", stringsAsFactors = FALSE)
 aqas_aqim <- aqas_aqim %>%
@@ -528,7 +553,7 @@ aqas_aqim <- aqas_aqim_filtered
 
 This will separate the land border pathway into NB and SB pathways based on the STATE_CD of the inspection location. It will append "NB" or "SB" to the PATHWAY name.
 
-```{r separate land border to NB-SB}
+```{r separate AQAS land border data to NB-SB}
 aqas_aqim <- aqas_aqim %>%
   mutate(
     PATHWAY = case_when(
@@ -627,8 +652,8 @@ system.time(aqim_data <- aqim_data %>%
 
 ```
 
-# # Assign location 
-# ```{r}
+# Assign location 
+```{r}
 # db_conn <- dbConnect(odbc::odbc(),.connection_string = 
 #                       "Driver=SQL Server;
 #                         Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
@@ -658,7 +683,7 @@ system.time(aqim_data <- aqim_data %>%
 # )
  
 
-# ```
+```
 
 
 
@@ -694,7 +719,7 @@ dat <- aqim_data %>%
 
 # # Apply risk classification to ARM records separately
 # dat_arm <- arm_aqim_records %>% 
-#   left_join(asf_matches, by = c("ID", "COMMODITY_ID"), relationship = "many-to-many") %>%
+#   left_join(asf_matches, by = c("ID", "COMMODITY_ID"), relationship = "many-to-many") %>% 
 #   mutate(IS_ASF_RISK = ifelse(is.na(IS_ASF_RISK), "NO", IS_ASF_RISK))
 
 ```
@@ -756,21 +781,21 @@ write.csv(dat, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-f
 # ## maritime -mail was an issue because of 2 reference tables not matching.
 # ## Can continue to Check what entry_type is assigned to this pathway
 # #aqim_data %>% 
-# #  filter(PATHWAY == "Maritime Port - Vessel - Mail - CBP") %>%
-# #  select(PATHWAY, entry_type) %>%
+# #  filter(PATHWAY == "Maritime Port - Vessel - Mail - CBP") %>% 
+# #  select(PATHWAY, entry_type) %>% 
 # #  distinct()
 
 # ## Check if these commodities exist in the reference table
 # #missing_matches <- aqim_data %>% 
-# #  filter(PATHWAY == "Maritime Port - Vessel - Mail - CBP") %>%
-# #  anti_join(asf_matches, by = c("ID", "COMMODITY_ID")) %>%
-# #  count(COMMODITY_DISPLAY_NAME, entry_type) %>%
+# #  filter(PATHWAY == "Maritime Port - Vessel - Mail - CBP") %>% 
+# #  anti_join(asf_matches, by = c("ID", "COMMODITY_ID")) %>% 
+# #  count(COMMODITY_DISPLAY_NAME, entry_type) %>% 
 # #  arrange(desc(n))
 
 # ## Check what entry types exist in the reference table for these commodities
-# #asf_product_ref %>%
-# #  filter(ITEM %in% missing_matches$COMMODITY_DISPLAY_NAME) %>%
-# #  select(ITEM, entry_type) %>%
+# #asf_product_ref %>% 
+# #  filter(ITEM %in% missing_matches$COMMODITY_DISPLAY_NAME) %>% 
+# #  select(ITEM, entry_type) %>% 
 # #  distinct()
 
 # ```
@@ -778,18 +803,18 @@ write.csv(dat, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-f
 
 # ```{r step two}
 # # Step 2: Get unique inspections
-# inspections <- aqim_data %>%
-#   select(ID, PATHWAY, INSPECTION_LOCATION_ID, INSPECTION_LOCATION_NAME, edge_origin, product_origin) %>%
+# inspections <- aqim_data %>% 
+#   select(ID, PATHWAY, INSPECTION_LOCATION_ID, INSPECTION_LOCATION_NAME, edge_origin, product_origin) %>% 
 #   distinct()
 
-# ```
+# ``` 
 
 # ```{r step three}
 # # Step 3: For each inspection, determine if it has any commodities with ASF risk
-# inspection_asf_risk <- inspections %>%
+# inspection_asf_risk <- inspections %>% 
 #   left_join(
-#     asf_matches %>%
-#       group_by(ID, entry_type, container, product_pathway, product_subpathway) %>%
+#     asf_matches %>% 
+#       group_by(ID, entry_type, container, product_pathway, product_subpathway) %>% 
 #       summarize(
 #         highest_asf_risk = case_when(
 #           any(IS_ASF_RISK == "HIGH") ~ "HIGH",
@@ -799,12 +824,12 @@ write.csv(dat, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-f
 #         )
 #       ),
 #     by = "ID"
-#   ) %>%
+#   ) %>% 
 #   # Create binary indicator for ASF risk
 #   mutate(has_asf_risk = !is.na(highest_asf_risk)) %>% 
 #   ungroup()
 
-# ```
+# ``` 
 
 # ```{r step four}
 
@@ -812,7 +837,7 @@ write.csv(dat, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-f
 # inspection_asf_risk %>% 
 #   group_by(
 #     PATHWAY,INSPECTION_LOCATION_ID,COUNTRY_OF_ORIGIN_NAME,product_pathway,product_subpathway
-#   )
+#   ) 
 
 
 
@@ -820,35 +845,35 @@ write.csv(dat, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-f
 
 
 # # Step 4: Calculate fractions by PATHWAY
-# pathway_risk <- inspection_asf_risk %>%
+# pathway_risk <- inspection_asf_risk %>% 
 #   group_by(PATHWAY,
 #   INSPECTION_LOCATION_ID,
-#   ) %>%
+#   ) %>% 
 #   summarize(
 #     total_inspections = n(),
 #     risk_inspections = sum(has_asf_risk, na.rm = TRUE),
 #     fraction = risk_inspections / total_inspections
-#   ) %>%
+#   ) %>% 
 #   arrange(desc(fraction))
 
 # # Calculate fractions by INSPECTION_LOCATION_ID
-# location_risk <- inspection_asf_risk %>%
-#   group_by(INSPECTION_LOCATION_ID, INSPECTION_LOCATION_NAME) %>%
+# location_risk <- inspection_asf_risk %>% 
+#   group_by(INSPECTION_LOCATION_ID, INSPECTION_LOCATION_NAME) %>% 
 #   summarize(
 #     total_inspections = n(),
 #     risk_inspections = sum(has_asf_risk, na.rm = TRUE),
 #     fraction = risk_inspections / total_inspections
-#   ) %>%
+#   ) %>% 
 #   arrange(desc(fraction))
 
 # # Calculate fractions by COUNTRY_OF_ORIGIN_NAME
-# country_risk <- inspection_asf_risk %>%
-#   group_by(COUNTRY_OF_ORIGIN_NAME) %>%
+# country_risk <- inspection_asf_risk %>% 
+#   group_by(COUNTRY_OF_ORIGIN_NAME) %>% 
 #   summarize(
 #     total_inspections = n(),
 #     risk_inspections = sum(has_asf_risk, na.rm = TRUE),
 #     fraction = risk_inspections / total_inspections
-#   ) %>%
+#   ) %>% 
 #   arrange(desc(fraction))
 
 # # Display top results from each category
@@ -861,7 +886,7 @@ write.csv(dat, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-f
 # print("Top 10 countries of origin by ASF risk:")
 # print(head(country_risk, 10))
 
-# ```
+# ``` 
 
 # # TO DO:
 
@@ -879,7 +904,7 @@ write.csv(dat, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-f
 
 # #need to check this function; it should take the commodity-only columns away from arm_aqim_records and reduce to  
 # inspections_only_func <- function(data) {
-#   df <- data |>
+#   df <- data |> 
 #     dplyr::select(inspection_cols
 #                   ) |> 
 #     distinct()
@@ -890,15 +915,15 @@ write.csv(dat, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-f
 
 
 # commodity_only_func <- function(data) {
-#   df <- data |>
+#   df <- data |> 
 #     rename("INSPECTION_ID" = "ID") |> 
 #     dplyr::select(any_of(commodity_cols),
 #                   COMMODITY_ID,
-#                   COMMODITY_COUNTRY_ORIGIN) |>
+#                   COMMODITY_COUNTRY_ORIGIN) |> 
 #     #rename("COMMODITY_ID" = "ID") |> 
 #     filter(!is.na(COMMODITY_ID))
 #   return(df)
 # }
 
 # commodities <- commodity_only_func(arm_aqim_records)
-# ```
+# ``` 

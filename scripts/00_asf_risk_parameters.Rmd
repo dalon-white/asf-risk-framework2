@@ -1,0 +1,192 @@
+---
+title: "ASF Risk Framework Parameters"
+author: "Dalon White"
+date: "2025-09-03"
+output: html_document
+---
+
+<!--
+This script defines all parameters used across the ASF risk framework.
+It serves as the master configuration file for the entire pipeline.
+This is the SINGLE SOURCE OF TRUTH for all parameter values.
+-->
+
+```{r setup, include=FALSE}
+library(here) # For project-relative paths
+
+# Create output directory if it doesn't exist
+dir.create(here::here("output", "intermediate files"), showWarnings = FALSE, recursive = TRUE)
+```
+
+# Master Parameters for ASF Risk Framework
+
+This file contains all the parameters used by the ASF risk framework. It is the single source of truth for these values. When you want to change a parameter value, you should modify it here.
+
+The parameters defined here are used by all the scripts in the ASF risk framework. They can be run with these parameters either:
+
+1. By running the scripts directly, which will load these parameters if available
+2. By using the `run_pipeline.R` script to run scripts in sequence
+
+## Parameter Definitions
+
+```{r define-params}
+# Create the master params list that will be used by all scripts
+asf_params <- list(
+  # Date ranges
+  begin_date = "2021-01-01",
+  end_date = "2024-12-31",
+  wads_volume_begin_date = "2023-01-01",
+  wads_volume_end_date = "2024-12-31",
+  
+  # Affected countries settings
+  affected_countries = "current", # "current" or "mex_can" or "other"
+  other_affected_countries = c("Country1 ISO-3 Code", "Country2 ISO-3 Code"),
+  years = 2023:2024, # Years to include for ASF affected countries
+  affected_country_file = "asf affected countries.csv",
+  
+  # Product settings
+  affected_product_file = "asf affected product name reference table.csv",
+  quantity_units_to_kg = "quantity units to kilograms reference table.csv",
+  pathway_volume_smuggling_reference_table_filename = "product pathway by volume reference table",
+  risk_quantification = "0_1", # "0_1" or "range"
+  
+  # WADS volume settings
+  wads_volume_reference_filename = "wads volume reference table.csv",
+  wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year",
+  
+  # Output file names
+  glm_results_filename = "glmm_results_aqim fraction at risk by pathway and location",
+  bootstrap_results_filename = "bootstrap_results_aqim fraction at risk by pathway and location",
+  group_size_filename = "aqim_mean_pathway_group_size",
+  aqim_qmi_size_distribution_filename = "pathway_weight_distribution_models",
+  pathway_volumes_filename = "volume_of_risk_by_pathway",
+  
+  # Simulation settings
+  # Default is 100 for production, can be reduced for testing
+  n_sims_for_volume = 3,
+  
+  # Spatial settings
+  # Default is 1000000 for production, can be reduced for testing
+  # 30000 is used for high-resolution final output
+  US_grid_cell_size = 1000000
+)
+
+# Save the params object for use by other scripts
+saveRDS(asf_params, here::here("output", "intermediate files", "asf_risk_params.rds"))
+```
+
+# Function to Load Parameters
+
+```{r load-params-function}
+# This function will be used by all scripts to load parameters
+# It allows scripts to be run independently or as part of the pipeline
+load_asf_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    # Load the saved params
+    params <- readRDS(params_file)
+    message("Loaded parameters from shared configuration file")
+  } else {
+    # Create default params if the file doesn't exist
+    message("Shared parameter file not found. Using default parameters.")
+    params <- list(
+      begin_date = "2021-01-01",
+      end_date = "2024-12-31",
+      affected_countries = "current",
+      risk_quantification = "0_1",
+      n_sims_for_volume = 100,
+      pathway_volumes_filename = "volume_of_risk_by_pathway",
+      US_grid_cell_size = 30000
+      # Add minimal defaults needed for scripts to run independently
+    )
+  }
+  
+  return(params)
+}
+```
+
+# Source Files to Run Complete Pipeline
+
+```{r run-complete-pipeline, eval=FALSE}
+# This code chunk is not evaluated by default
+# It shows how to run the full pipeline in sequence
+
+# Define the list of scripts in order
+pipeline_scripts <- c(
+  "01_01 aqim pathway passenger layers.Rmd",
+  "01_02 aqim pathway data prep.Rmd",
+  "01_03 aqim pathway approach rates.Rmd",
+  "01_04 aqim volume distribution.Rmd",
+  "01_05 aqim pathway passenger volumes.Rmd",
+  "01_06 aqim pathway risk_PoE.Rmd",
+  "01_07 aqim volume spatial layers.Rmd"
+)
+
+# You can run the pipeline using the run_pipeline.R script:
+# source(here::here("scripts", "run_pipeline.R"))
+# run_pipeline()
+```
+
+# Parameter Modification Guide
+
+If you need to modify parameter values for different runs or scenarios, you have several options:
+
+1. Edit this file and re-run `initialize_params.R` to update the shared parameter file
+2. For temporary changes, modify the parameters in memory:
+   ```r
+   # Load existing parameters
+   params <- readRDS(here::here("output", "intermediate files", "asf_risk_params.rds"))
+   
+   # Modify a parameter
+   params$n_sims_for_volume <- 10  # Reduce for faster testing
+   
+   # Run with modified parameters
+   run_pipeline(params)
+   ```
+3. Create different parameter files for different scenarios:
+   ```r
+   # Load existing parameters
+   params <- readRDS(here::here("output", "intermediate files", "asf_risk_params.rds"))
+   
+   # Modify parameters for a specific scenario
+   params$n_sims_for_volume <- 500
+   params$US_grid_cell_size <- 10000
+   
+   # Save with a scenario name
+   saveRDS(params, here::here("output", "intermediate files", "asf_risk_params_high_resolution.rds"))
+   ```
+  "01_02 aqim pathway data prep.Rmd",
+  "01_03 aqim pathway approach rates.Rmd",
+  "01_04 aqim volume distribution.Rmd",
+  "01_05 aqim pathway passenger volumes.Rmd",
+  "01_06 aqim pathway risk_PoE.Rmd",
+  "01_07 aqim volume spatial layers.Rmd"
+)
+
+# Function to render an Rmd file with params
+render_with_params <- function(script_path, params) {
+  require(rmarkdown)
+  rmarkdown::render(
+    here::here("scripts", script_path),
+    params = params,
+    output_dir = here::here("output", "rendered_reports")
+  )
+}
+
+# Run the full pipeline
+for (script in pipeline_scripts) {
+  message(paste("Running:", script))
+  render_with_params(script, asf_params)
+}
+```
+
+# Running Individual Scripts
+
+Individual scripts can be run in two ways:
+
+1. By sourcing this file first, then running the script (which will use the shared params)
+2. By running the script directly (which will use its built-in default params)
+
+The scripts have been modified to check for the existence of the shared params file
+and use it if available, or fall back to their built-in defaults.

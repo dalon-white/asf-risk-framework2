@@ -1,108 +1,133 @@
 ---
-title: "aqim volume spatial layers"
+title: "AQIM Volume Spatial Layers"
 author: "Dalon White"
 date: "2025-08-28"
 output: html_document
 
 params:
-
   # Set number of simulations
   n_sims_for_volume: 100
   pathway_volumes_filename: "volume_of_risk_by_pathway" # Name of the output file for the pathway risk summary results
   affected_countries: "current" # "current" or "mex_can" or "other"
-  other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using 
+  other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify countries
 ---
+
+<!--
+This script creates spatial layers for ASF risk assessment based on AQIM data.
+It processes the input data to:
+1. Load pathway risk summary data
+2. Add geolocation information from various sources
+3. Convert to spatial objects
+4. Create individual spatial layers by pathway combination
+5. Generate final destination risk layers
+6. Save outputs as GeoPackages (.gpkg) for Shiny app compatibility
+-->
+
 ```{r setup, include=FALSE}
-pacman::p_load(tidyverse, magrittr, ggplot2, DT, caret, lubridate, readr, stringdist, purrr)
-pacman::p_load(DBI, odbc)
-pacman::p_load(tidygeocoder, sf, tigris, SpatialKDE, here)
-```
-
-
-
-```{r params for vscode}
-if(!exists("params")) {
-  params <- list(
-   # Set number of simulations
-   n_sims_for_volume = 100,
-   affected_countries = "current", # "current" or "mex_can" or "other"
-   other_affected_countries = c("Country1 ISO-3 Code", "Country2 ISO-3 Code"), # If using "other", specify the countries here
-   pathway_volumes_filename = "volume_of_risk_by_pathway" # Name of the output file for the pathway risk summary results
-  )
+# Load required packages
+library(tidyverse) # For dplyr, ggplot2, etc.
+library(magrittr)  # For %>% pipe
+library(lubridate) # For date handling
+library(readr)     # For data reading
+library(stringdist) # For string matching
+library(purrr)     # For functional programming
+library(DBI)       # For database connections
+library(odbc)      # For ODBC database connections
+library(sf)        # For spatial data handling
+library(tigris)    # For geographic boundaries
+library(SpatialKDE) # For kernel density estimation
+library(here)      # For project-relative paths
+# Conditionally load tidygeocoder if we need it
+if(requireNamespace("tidygeocoder", quietly = TRUE)) {
+  library(tidygeocoder) # For geocoding
 }
 ```
-# Steps to spatial mappings
 
-Have Location ID & Location Name
-These correspond to BRG2_LOCATION IDs
-Can connect to CBP Port Number & IATA code (sometimes both) thruogh this BRG
-CBP Port Number is geolocated in the GeoLocations database in ARM; IATA codes are geolocated elsewhere
+```{r load-params}
+# Function to load the shared parameters if available
+load_shared_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    message("Loading shared parameters from 00_asf_risk_parameters.Rmd")
+    return(readRDS(params_file))
+  } else {
+    message("Shared parameter file not found. Using script-specific parameters.")
+    return(NULL)
+  }
+}
 
-Will have to check to see how many Location Type isn't mapped at this point; PPQ things probably won't be
-    PPQ field offices/PIS are probably on GeoLocations as well - see tbl_PPQ_Facilities
-    use LocationName and Longitude + Latitude
+# Try to load shared params
+shared_params <- load_shared_params()
 
-```{r setup, include=FALSE}
-setwd(here::here("output","aqim based volume of at risk product approaching"))
-pathway_risk_summary <- readRDS(paste(params$pathway_volumes_filename, params$n_sims_for_volume, "sims",".rds", sep = ""))
+# Use shared params if available, otherwise use script-specific params
+if (!exists("params")) {
+  if (!is.null(shared_params)) {
+    params <- shared_params
+  } else {
+    # Default params specific to this script
+    params <- list(
+      n_sims_for_volume = 100,
+      affected_countries = "current", 
+      other_affected_countries = c("Country1 ISO-3 Code", "Country2 ISO-3 Code"),
+      pathway_volumes_filename = "volume_of_risk_by_pathway"
+    )
+  }
+}
+
+# Load pathway risk summary data
+pathway_risk_summary <- readRDS(here::here("output","aqim based volume of at risk product approaching", 
+                               paste(params$pathway_volumes_filename, params$n_sims_for_volume, "sims",".rds", sep = "")))
 ```
 
-# Gather geolocation data
-```{r geolocation data}
-#-- Connect to ARM ---- 
-#ARM data base version 2
+# 1. Gather Geolocation Data
+
+```{r geolocation-database-connect}
+# Connect to ARM and GeoLocations databases
 db_conn <- dbConnect(odbc::odbc(),.connection_string = 
-                      "Driver=SQL Server;
-                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
-                        Database=PPQ_AQI_ARMDMV2;
-                        trusted_connection=yes")
+                     "Driver=SQL Server;
+                      Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                      Database=PPQ_AQI_ARMDMV2;
+                      trusted_connection=yes")
 
 geo_conn <- dbConnect(odbc::odbc(),.connection_string = 
-                      "Driver=SQL Server;
-                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
-                        Database=GeoLocations;
-                        trusted_connection=yes")
+                     "Driver=SQL Server;
+                      Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                      Database=GeoLocations;
+                      trusted_connection=yes")
 
-
-brg_loc_cols <- c("ID",
-                "NAME",
-                "SITE",
-                "PHYSICAL_ADDRESS_ID",
-                "MAIL_ADDRESS_ID",
-                'CBP_PORT_NUMBER',
-                "IATA_CODE")
+# Define columns to extract from each table
+brg_loc_cols <- c("ID", "NAME", "SITE", "PHYSICAL_ADDRESS_ID", 
+                 "MAIL_ADDRESS_ID", 'CBP_PORT_NUMBER', "IATA_CODE")
 cbp_poe_cols <- c("CBP_NAME", "CBP_CODE", "LAT", "LON", "Port of Entry Name")
 ppq_facilities_cols <- c("LocationName", "PPQCode", "City", "State", "Longitude", "Latitude")
-loc_280_cols <- c("LOCATION", "ARM_InspectionLocationName", "Latitude", "Longitude")
-
-
 ```
 
+# 2. Gather Coordinates From Different Sources
 
-# gather coords from difference sources
+```{r gather-coordinates}
+# Get location data from BRG2_LOCATION table
+brg_loc <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_LOCATION]")) %>% 
+           dplyr::select(all_of(brg_loc_cols)) %>% 
+           collect()
 
-```{r}
-# BRG2_LOCATION
-brg_loc <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_LOCATION]")) |> 
-               dplyr::select(all_of(brg_loc_cols)) |> 
-              collect()
+# Get CBP Port of Entry data with coordinates
+cbp_poe <- tbl(geo_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_CBP_POEs]")) %>% 
+           dplyr::select(all_of(cbp_poe_cols)) %>% 
+           collect()
 
+# Get PPQ facilities data with coordinates
+ppq_facilities <- tbl(db_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_PPQ_Facilities]")) %>% 
+                 dplyr::select(all_of(ppq_facilities_cols)) %>% 
+                 collect()
 
-cbp_poe <- tbl(geo_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_CBP_POEs]")) |> 
-              dplyr::select(all_of(cbp_poe_cols)) |> 
-              collect()
+# Join pathway risk data with location reference
+pathway_risk_brg_loc <- pathway_risk_summary %>% 
+                       left_join(brg_loc, by = c("LOCATION_ID" = "ID"))
 
-
-ppq_facilities <- tbl(db_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_PPQ_Facilities]")) |> dplyr::select(all_of(ppq_facilities_cols)) |> collect()
-
-
-pathway_risk_brg_loc <- pathway_risk_summary |> left_join(brg_loc, by = c("LOCATION_ID" = "ID"))
-
-
-# Step 1: Join with CBP POE data first
+# Step 1: Join with CBP POE data first (preferred source)
 pathway_risk_geo <- pathway_risk_brg_loc %>%
   left_join(cbp_poe, by = c("CBP_PORT_NUMBER" = "CBP_CODE")) %>%
-  # Create initial LAT/LON columns that might be filled
   rename(
     CBP_LAT = LAT,
     CBP_LON = LON,
@@ -113,7 +138,7 @@ pathway_risk_geo <- pathway_risk_brg_loc %>%
 pathway_risk_geo <- pathway_risk_geo %>%
   left_join(
     ppq_facilities %>% 
-      dplyr::select(LocationName, Latitude, Longitude) %>%
+      dplyr::select(LocationName, Latitude, Longitude) %>% 
       rename(
         PPQ_LAT = Latitude,
         PPQ_LON = Longitude
@@ -122,75 +147,71 @@ pathway_risk_geo <- pathway_risk_geo %>%
   )
 
 # Step 3: Create combined coordinate columns, prioritizing CBP data
-pathway_risk_geo2 <- pathway_risk_geo %>%
+pathway_risk_geo <- pathway_risk_geo %>%
   mutate(
     final_LAT = coalesce(CBP_LAT, PPQ_LAT),
     final_LON = coalesce(CBP_LON, PPQ_LON)
   )
 
 # Step 4: For remaining missing coordinates, use IATA code if available
-missing_coords <- pathway_risk_geo2 %>%
+missing_coords <- pathway_risk_geo %>%
   filter(is.na(final_LAT) | is.na(final_LON)) %>%
   filter(!is.na(IATA_CODE))
 
-if(nrow(missing_coords) > 0) {
-  # Option 1: Use tidygeocoder package if available
-  if(requireNamespace("tidygeocoder", quietly = TRUE)) {
-    iata_coords <- missing_coords %>%
-      dplyr::select(IATA_CODE) %>%
-      distinct() %>%
-      mutate(
-        # Look up IATA codes - this creates lat/lng columns
-        query = paste("airport", IATA_CODE)
-      ) %>%
-      tidygeocoder::geocode(address = query, method = "osm")
-    
-    # Join the results back
-    pathway_risk_geo3 <- pathway_risk_geo2 %>%
-      left_join(
-        iata_coords %>% 
-          dplyr::select(IATA_CODE, lat, long) %>%
-          rename(IATA_LAT = lat, IATA_LON = long),
-        by = "IATA_CODE"
-      ) %>%
-      mutate(
-        final_LAT = coalesce(final_LAT, IATA_LAT),
-        final_LON = coalesce(final_LON, IATA_LON)
-      )
-  } else {
-    # Option 2: Create a simple example for manual IATA lookup
-    cat("Found", nrow(missing_coords), "rows with IATA codes but no coordinates.\n")
-    cat("Consider using the 'airportr' or 'tidygeocoder' package to look up these codes.\n")
-    print(missing_coords %>% dplyr::select(IATA_CODE) %>% distinct())
-  }
+# Use tidygeocoder to look up IATA airport codes if available
+if(nrow(missing_coords) > 0 && requireNamespace("tidygeocoder", quietly = TRUE)) {
+  iata_coords <- missing_coords %>%
+    dplyr::select(IATA_CODE) %>%
+    distinct() %>%
+    mutate(query = paste("airport", IATA_CODE)) %>%
+    tidygeocoder::geocode(address = query, method = "osm")
+  
+  # Join the results back
+  pathway_risk_geo <- pathway_risk_geo %>%
+    left_join(
+      iata_coords %>% 
+        dplyr::select(IATA_CODE, lat, long) %>% 
+        rename(IATA_LAT = lat, IATA_LON = long),
+      by = "IATA_CODE"
+    ) %>%
+    mutate(
+      final_LAT = coalesce(final_LAT, IATA_LAT),
+      final_LON = coalesce(final_LON, IATA_LON)
+    )
+} else if(nrow(missing_coords) > 0) {
+  cat("Found", nrow(missing_coords), "rows with IATA codes but no coordinates.\n")
+  cat("Consider installing the 'tidygeocoder' package to look up these codes.\n")
+  print(missing_coords %>% dplyr::select(IATA_CODE) %>% distinct())
 }
 
-# Step 5: Evaluate final coverage
-coords_summary <- pathway_risk_geo3 %>%
+# Close database connections when done
+dbDisconnect(db_conn)
+dbDisconnect(geo_conn)
+```
+
+# 3. Evaluate Coordinate Coverage
+
+```{r coordinate-coverage}
+# Calculate coordinate coverage statistics
+coords_summary <- pathway_risk_geo %>%
   summarize(
     total_rows = n(),
     rows_with_coords = sum(!is.na(final_LAT) & !is.na(final_LON)),
     percent_coverage = round(100 * rows_with_coords / total_rows, 1)
   )
-
 print(coords_summary)
 
-#risk coverage
-risk_summary <- pathway_risk_geo3 %>%
+# Calculate risk coverage statistics
+risk_summary <- pathway_risk_geo %>%
   summarize(
-    total_risk = sum(mean_positives, na.rm = TRUE),
-    risk_with_coords = sum(mean_positives[!is.na(final_LAT) & !is.na(final_LON)], na.rm = TRUE),
+    total_risk = sum(mean_kg, na.rm = TRUE),
+    risk_with_coords = sum(mean_kg[!is.na(final_LAT) & !is.na(final_LON)], na.rm = TRUE),
     percent_risk = round(100 * risk_with_coords / total_risk, 1)
   )
-
 print(risk_summary)
 
-# DONE!
-
-
-
-# Count which source provided the coordinates
-source_summary <- pathway_risk_geo3 %>%
+# Analyze coordinate sources
+source_summary <- pathway_risk_geo %>%
   mutate(
     coord_source = case_when(
       !is.na(CBP_LAT) & !is.na(CBP_LON) ~ "CBP",
@@ -201,97 +222,72 @@ source_summary <- pathway_risk_geo3 %>%
   ) %>%
   count(coord_source) %>%
   mutate(percent = round(100 * n / sum(n), 1))
-
 print(source_summary)
 
-# Show examples of remaining locations without coordinates
+# Check missing locations
 if(coords_summary$rows_with_coords < coords_summary$total_rows) {
   cat("\nSample of locations still missing coordinates:\n")
-  print(pathway_risk_geo3 %>% 
-          filter(is.na(final_LAT) | is.na(final_LON)) %>%
-          dplyr::select(LOCATION_NAME, PATHWAY) %>%
-          distinct())
-}
-
-```
-
-
-```{r}
-if(requireNamespace("tidygeocoder", quietly = TRUE)) {
-    iata_coords <- missing_coords %>%
-      dplyr::select(IATA_CODE) %>%
-      distinct() %>%
-      mutate(
-        # Look up IATA codes - this creates lat/lng columns
-        query = paste("airport", IATA_CODE)
-      ) %>%
-      tidygeocoder::geocode(address = query, method = "osm")
+  print(pathway_risk_geo %>% 
+        filter(is.na(final_LAT) | is.na(final_LON)) %>% 
+        dplyr::select(LOCATION_NAME, PATHWAY) %>% 
+        distinct())
 }
 ```
 
-# convert to spatial
-```{r}
-# convert to spatial
-pathway_risk_geo_sf <- pathway_risk_geo3 |> filter(!is.na(final_LAT) | !is.na(final_LON)) |> 
-  sf::st_as_sf(coords = c("final_LON", "final_LAT"), crs = 4326) |>
-  # Then transform to NAD83/Albers (EPSG:5070)
+# 4. Convert to Spatial Objects
+
+```{r convert-to-spatial}
+# Filter out rows without coordinates and convert to sf object
+pathway_risk_geo_sf <- pathway_risk_geo %>% 
+  filter(!is.na(final_LAT) & !is.na(final_LON)) %>% 
+  sf::st_as_sf(coords = c("final_LON", "final_LAT"), crs = 4326) %>%
+  # Transform to NAD83/Albers (EPSG:5070) for analysis
   sf::st_transform(crs = 5070)
-# save
-# saveRDS(pathway_risk_geo_sf, paste("pathway_risk_with_geolocation", ".rds", sep = ""))
+
+# Save spatial object for future use
+saveRDS(pathway_risk_geo_sf, here::here("output", "aqim based volume of at risk product approaching", 
+                                       "pathway_risk_with_geolocation.rds"))
 ```
 
-# Now, can plot spatially
-Just an option proof of concept
-```{r plot spatially}
-# ggplot() +
-#   geom_sf(data = pathway_risk_geo_sf, aes(size = mean_positives), color = "blue", alpha = 0.5) +
-#   theme_minimal() +
-#   labs(title = "Pathway Risk Locations with Geolocation",
-#        size = "Mean Positives") +
-#   theme(legend.position = "right")
-```
+# 5. Filter to US Boundaries
 
-# Create US boundaries
-```{r}
-# Create US boundaries with all territories
-# Get all states and territories in one call
-us_all <- tigris::states(cb = FALSE) 
+```{r us-boundaries}
+# Load US boundaries 
+us_bounds_sf <- readRDS(here::here("output", "intermediate files", "US hex grid", "us_bounds.rds"))
+us_grid <- readRDS(here::here("output", "intermediate files", "US hex grid", "us_grid.rds"))
 
-us_bounds_sf <- us_all %>%
-  st_union() %>%
-  st_transform(5070) %>%  # Use same CRS as your data
-  st_sf(geometry = .)
-
+# Filter spatial data to US boundaries
 pathway_risk_geo_sf_filtered <- pathway_risk_geo_sf %>%
   st_join(us_bounds_sf, left = TRUE) 
 
-# Count how many points were kept vs removed
+# Report filtering statistics
 total_points <- nrow(pathway_risk_geo_sf)
 kept_points <- nrow(pathway_risk_geo_sf_filtered)
 removed_points <- total_points - kept_points
 
 cat(sprintf("Filtered to %d points within US boundaries (%d removed)\n", 
-            kept_points, removed_points))
-
+          kept_points, removed_points))
 ```
 
-# Now, summarize data and separate for spatial layers
-Summarize over year, month
+# 6. Summarize Data for Spatial Layers
 
-Then, create a spatial layer for each combination of pathway, container, product_pathway, and product_subpathway, with each port have a single value for each combination, and each combination being in different layers
-```{r summarize for spatial layers}
-
+```{r summarize-for-spatial-layers}
+# Group by location and pathway combinations and summarize
 spatial_layers_summary <- pathway_risk_geo_sf_filtered %>%
-  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway) %>%
+  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, 
+           container, product_pathway, product_subpathway) %>%
   summarize(
-    total_mean_kg = sum(mean_kg, na.rm = TRUE)) |> # Assuming independence
-  ungroup() |>
-  #Filter any that are still all NA's (blanks)
+    total_mean_kg = sum(mean_kg, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  # Filter out incomplete records
   filter(!is.na(container) & !is.na(product_pathway) & !is.na(product_subpathway))
 ```
 
-# Create spatial layers
-```{r}
+# 7. Create and Save Spatial Layers Function
+
+```{r create-spatial-layers-function}
+# Function to create and save individual spatial layers for each pathway combination
 create_spatial_layers <- function(summarized_data, save_files = FALSE, output_dir = NULL) {
   # Split data by pathway combinations
   split_data <- summarized_data %>%
@@ -304,12 +300,11 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
   spatial_layers <- list()
   
   # Create scenario string based on affected_countries parameter
-  scenario_string <- case_when(
-    params$affected_countries == "current" ~ "current_affected_countries",
-    params$affected_countries == "mex_can" ~ "mex_can_ASF_only",
-    params$affected_countries == "other" ~ paste0("custom_", 
-                                                paste(params$other_affected_countries, collapse = "_")),
-    TRUE ~ "unspecified_scenario"
+  scenario_string <- dplyr::case_when(
+    params$affected_countries == "current" ~ "current",
+    params$affected_countries == "mex_can" ~ "mex_can",
+    params$affected_countries == "other" ~ "custom",
+    TRUE ~ "unspecified"
   )
   
   # Process each split
@@ -322,12 +317,12 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
       slice(1) %>%
       as.list()
     
-    # Create clean name for layer
+    # Create clean name for layer using abbreviations
     layer_name <- paste(
-      gsub("[^[:alnum:]]", "_", combo$PATHWAY),
-      gsub("[^[:alnum:]]", "_", combo$container),
-      gsub("[^[:alnum:]]", "_", combo$product_pathway),
-      gsub("[^[:alnum:]]", "_", combo$product_subpathway),
+      substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 3),
+      substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3),
+      substr(gsub("[^[:alnum:]]", "", combo$product_pathway), 1, 3),
+      substr(gsub("[^[:alnum:]]", "", combo$product_subpathway), 1, 3),
       sep = "_"
     )
     
@@ -336,25 +331,25 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
     
     # Save to file if requested
     if (save_files && !is.null(output_dir)) {
-      # Fix geometry types before saving - convert all to POINT
+      # Ensure output directory exists
+      if (!dir.exists(output_dir)) {
+        dir.create(output_dir, recursive = TRUE)
+      }
+      
+      # Convert to POINT geometry (required for GeoPackage)
       export_layer <- current_split %>%
-        st_cast("POINT")  # Convert any multi-points to simple points
+        sf::st_cast("POINT")
       
-      # Include scenario in filename
-      file_path <- file.path(output_dir, paste0(layer_name, "_", scenario_string, ".shp"))
+      # Include scenario in filename - use GeoPackage format for Shiny compatibility
+      file_path <- file.path(output_dir, paste0(layer_name, "_", scenario_string, ".gpkg"))
       
-      # Try-catch to handle potential errors
+      # Try to save the file
       tryCatch({
         sf::st_write(export_layer, file_path, delete_layer = TRUE)
         cat(sprintf("Saved layer %d/%d: %s\n", i, length(split_data), file_path))
       }, error = function(e) {
         cat(sprintf("ERROR saving layer %d/%d: %s - %s\n", 
                    i, length(split_data), layer_name, e$message))
-        
-        # Try alternative format if shapefile fails
-        geopackage_path <- file.path(output_dir, paste0(layer_name, "_", scenario_string, ".gpkg"))
-        cat(sprintf("Trying to save as GeoPackage instead: %s\n", geopackage_path))
-        st_write(current_split, geopackage_path, delete_layer = TRUE)
       })
     }
   }
@@ -372,7 +367,7 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
   cat(paste0("\nSummary of spatial layers for scenario '", scenario_string, "' (top 10 by risk):\n"))
   print(head(layer_summary, 10))
   
-  # Also save the summary table
+  # Also save the summary table as CSV for reference
   if (save_files && !is.null(output_dir)) {
     summary_path <- file.path(output_dir, paste0("layer_summary_", scenario_string, ".csv"))
     write.csv(layer_summary, summary_path, row.names = FALSE)
@@ -387,39 +382,49 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
 }
 ```
 
-## Create spatial layers and optionally save to files
-```{r}
+# 8. Create Port Risk Spatial Layers
 
-setwd(here::here("output","spatial layers","risk at ports"))
-# Apply the function to your summarized data
+```{r create-port-risk-layers}
+# Set output directory for port risk layers
+port_risk_output_dir <- here::here("output", "spatial layers", "risk at ports")
+
+# Create the spatial layers
 spatial_layers <- create_spatial_layers(
   summarized_data = spatial_layers_summary,
   save_files = TRUE,
-  output_dir = here::here("output", "spatial layers", "risk at ports")
+  output_dir = port_risk_output_dir
 )
 ```
 
-# Summarize risk entirely by pathway combination, then apply to the appropriate hex grid for final destination
+# 9. Prepare Data for Final Destination Risk Layers
 
-```{r summarize by pathway combination}
-pathway_spatial_layers_summary <- spatial_layers_summary %>% st_drop_geometry() |>
+```{r prepare-final-destination-data}
+# Summarize by pathway combination (dropping geometry)
+pathway_spatial_layers_summary <- spatial_layers_summary %>% 
+  sf::st_drop_geometry() %>%
   group_by(PATHWAY, container, product_pathway, product_subpathway) %>%
   summarize(
-    total_mean_kg = sum(total_mean_kg, na.rm = TRUE)) |> # Assuming independence
-  ungroup()
-
-#for each PATHWAY, container, product_pathway, product_subpathway combination, apply to hex grid for final destination, using the PATHWAY as the key for identifying which hex grid in 'output/proportional destination layers' folder to use
+    total_mean_kg = sum(total_mean_kg, na.rm = TRUE),
+    .groups = 'drop'
+  )
 ```
-```{r}
-# Function to distribute pathway risks to spatial grids - with proper mapping
+
+# 10. Create Final Destination Risk Layers Function
+
+```{r distribute-pathway-risks-function}
+# Function to distribute pathway risks to final destination spatial grids
 distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
-  # List all available KDE files
+  # List all available KDE files (kernel density estimation grids)
   kde_files <- list.files(path = kde_folder_path, pattern = "kde_scaled_.*\\.rds", full.names = TRUE)
   
-  # Create list to store results
-  distributed_layers <- list()
+  # Create output directory for final destination risk layers
+  output_dir <- here::here('output', 'spatial layers', 'risk at final destinations')
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+  }
   
-  # Initialize mapping_df ONCE here, outside both loops
+  # Initialize data structures
+  distributed_layers <- list()
   mapping_df <- data.frame(
     short_name = character(),
     full_name = character(),
@@ -430,9 +435,9 @@ distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
     stringsAsFactors = FALSE
   )
   
-  # Process each pathway
+  # Process each unique pathway
   for (pathway in unique(pathway_summary$PATHWAY)) {
-    # Find the matching KDE file
+    # Find the matching KDE file for this pathway
     kde_filename_pattern <- paste0("kde_scaled_", pathway, ".rds")
     matching_files <- grep(kde_filename_pattern, kde_files, value = TRUE, fixed = TRUE)
     
@@ -441,33 +446,27 @@ distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
       next
     }
     
-    # Load the KDE file
+    # Load the KDE grid for this pathway
     kde_grid <- readRDS(matching_files[1])
     
     # Get all combinations for this pathway
-    pathway_combos <- pathway_summary %>%
-      filter(PATHWAY == pathway)
+    pathway_combos <- pathway_summary %>% filter(PATHWAY == pathway)
     
     # Process each combination
-    for (i in 1:nrow(pathway_combos)) {
+    for (i in seq_len(nrow(pathway_combos))) {
       combo <- pathway_combos[i,]
-      
-      # Get the risk value for this combination
       risk_value <- combo$total_mean_kg
       
-      # Create shorter name with abbreviated components
+      # Create abbreviated name components for file naming
       pathway_abbr <- substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 3)
       container_abbr <- substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3)
       prod_path_abbr <- substr(gsub("[^[:alnum:]]", "", combo$product_pathway), 1, 3)
       prod_subpath_abbr <- substr(gsub("[^[:alnum:]]", "", combo$product_subpathway), 1, 3)
       
+      # Create short name for file (with unique index)
       short_combo_name <- paste(pathway_abbr, container_abbr, prod_path_abbr, prod_subpath_abbr, i, sep = "_")
       
-      # Apply the risk to the KDE grid
-      distributed_kde <- kde_grid %>%
-        mutate(risk_value = .data$kde_value * risk_value)
-      
-      # Create full combo name
+      # Create full descriptive name for reference
       full_combo_name <- paste(
         gsub("[^[:alnum:]]", "_", combo$PATHWAY),
         gsub("[^[:alnum:]]", "_", combo$container),
@@ -476,10 +475,14 @@ distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
         sep = "_"
       )
       
+      # Apply the risk value to the KDE grid to create distributed risk
+      distributed_kde <- kde_grid %>%
+        dplyr::mutate(risk_value = kde_value * risk_value)
+      
       # Store in layers list
       distributed_layers[[full_combo_name]] <- distributed_kde
       
-      # Create a new row for this combination and append to mapping_df
+      # Add mapping entry
       new_mapping <- data.frame(
         short_name = short_combo_name,
         full_name = full_combo_name,
@@ -489,24 +492,14 @@ distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
         product_subpathway = combo$product_subpathway,
         stringsAsFactors = FALSE
       )
-      
-      # Append to the master mapping dataframe
       mapping_df <- rbind(mapping_df, new_mapping)
       
-      # Create output directory if it doesn't exist
-      output_dir <- here::here('output','spatial layers','risk at final destinations')
-      if (!dir.exists(output_dir)) {
-        dir.create(output_dir, recursive = TRUE)
-      }
-      
-      # Save to file with shorter name
+      # Save as GeoPackage for Shiny compatibility
       output_file <- file.path(output_dir, paste0("risk_", short_combo_name, ".gpkg"))
       
-      # Write the file
       tryCatch({
-        st_write(distributed_kde, output_file, delete_layer = TRUE)
-        cat(sprintf("Processed %s → %s with risk %f\n", 
-                    full_combo_name, short_combo_name, risk_value))
+        sf::st_write(distributed_kde, output_file, delete_layer = TRUE)
+        cat(sprintf("Processed %s → %s with risk %f\n", full_combo_name, short_combo_name, risk_value))
       }, error = function(e) {
         cat(sprintf("ERROR: Could not write %s - %s\n", short_combo_name, e$message))
       })
@@ -516,45 +509,80 @@ distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
   # Save the name mapping file for reference
   write.csv(mapping_df, file.path(output_dir, "filename_mapping.csv"), row.names = FALSE)
   
+  # Create a layer catalog with additional metadata
+  layer_catalog <- mapping_df %>%
+    mutate(
+      file_path = file.path(output_dir, paste0("risk_", short_name, ".gpkg")),
+      risk_value = sapply(distributed_layers[full_name], function(x) sum(x$risk_value, na.rm=TRUE)),
+      cell_count = sapply(distributed_layers[full_name], nrow)
+    ) %>%
+    arrange(desc(risk_value))
+  
+  # Save the catalog
+  write.csv(layer_catalog, file.path(output_dir, "layer_catalog.csv"), row.names = FALSE)
+  
   return(list(
     layers = distributed_layers,
-    mapping = mapping_df
+    mapping = mapping_df,
+    catalog = layer_catalog
   ))
 }
-
-# Apply the function
-distributed_risks <- distribute_pathway_risks(
-  pathway_spatial_layers_summary,
-  here::here("output", "proportional destination layers")
-)
-
-# Create a summary of the distributed risks: Extract risk summary from the already-created catalog
-risk_summary <- layer_catalog %>%
-  select(layer_name = full_name, total_distributed_risk = risk_value, cell_count)
-
-# Print summary
-cat("\nSummary of distributed risk layers:\n")
-print(head(risk_summary, 10))
-
-# Save summary
-write.csv(risk_summary, here::here("output", "aqim total distributed risk", "distributed_risk_summary.csv"), row.names = FALSE)
-
-# 1. Save the entire object as RDS for convenience
-output_dir <- here::here('output','spatial layers','risk at final destinations')
-saveRDS(distributed_risks, file.path(output_dir, "all_distributed_risks.rds"))
-
-# 2. Save a catalog file that helps with loading specific layers
-layer_catalog <- distributed_risks$mapping %>%
-  mutate(
-    file_path = file.path(output_dir, paste0("risk_", short_name, ".gpkg")),
-    risk_value = sapply(distributed_risks$layers[full_name], function(x) sum(x$risk_value, na.rm=TRUE)),
-    cell_count = sapply(distributed_risks$layers[full_name], nrow)
-  ) %>%
-  arrange(desc(risk_value))
-
-# Save the catalog for easy reference
-write.csv(layer_catalog, file.path(output_dir, "layer_catalog.csv"), row.names = FALSE)
-
-cat("Saved distributed risk layers and catalog for future use\n")
 ```
 
+# 11. Create Final Destination Risk Layers
+
+```{r create-final-destination-layers}
+# Apply the function to distribute risks to final destinations
+distributed_risks <- distribute_pathway_risks(
+  pathway_summary = pathway_spatial_layers_summary,
+  kde_folder_path = here::here("output", "proportional destination layers")
+)
+
+# Save a compact version of the catalog for Shiny app use
+risk_summary <- distributed_risks$catalog %>%
+  dplyr::select(
+    layer_name = full_name, 
+    short_name,
+    pathway,
+    container, 
+    product_pathway,
+    product_subpathway,
+    total_risk = risk_value, 
+    cell_count
+  )
+
+# Save the summary for reference
+write.csv(risk_summary, 
+          here::here("output", "aqim total distributed risk", "distributed_risk_summary.csv"), 
+          row.names = FALSE)
+
+cat("Spatial risk layers created and ready for use in Shiny app\n")
+```
+
+```{r test open} 
+library(sf)
+
+# Open a GeoPackage file
+gpkg_data <- st_read(here::here("output", "spatial layers", "risk at final destinations", "risk_Air_bag_swi_per_2.gpkg"))
+
+# View the data
+head(gpkg_data)
+
+# If you want to see the structure
+str(gpkg_data)
+
+# Plot the spatial data
+plot(gpkg_data$geom)  # Basic plot
+plot(st_geometry(gpkg_data))  # Alternative syntax
+
+
+valid_geoms <- st_is_valid(gpkg_data)
+if(all(valid_geoms)) {
+  plot(gpkg_data)
+} else {
+  # Try to fix invalid geometries
+  fixed_gpkg <- st_make_valid(gpkg_data)
+  plot(fixed_gpkg)
+}
+
+```

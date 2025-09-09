@@ -41,21 +41,55 @@ Steps to completion
 -   KDE the points using the raster for each pathway
 
 ```{r setup, include=FALSE}
-pacman::p_load(tidyverse, magrittr, ggplot2, DT, caret, lubridate, readr, stringdist, purrr)
-pacman::p_load(DBI, odbc)
-pacman::p_load(tidygeocoder, sf, tigris, SpatialKDE)
+# Load required packages
+library(tidyverse)
+library(magrittr)
+library(ggplot2) 
+library(lubridate)
+library(readr)
+library(stringdist)
+library(purrr)
+library(DBI)
+library(odbc)
+library(tidygeocoder)
+library(sf)
+library(tigris)
+library(SpatialKDE)
+library(here)
 ```
 
-```{r params for vscode}
-if(!exists("params")) {
-  params <- list(
-    begin_date = "2000-01-01",
-    end_date = "2024-12-31",
-    US_grid_cell_size = 30000
+```{r load-params}
+# Function to load the shared parameters if available
+load_shared_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    message("Loading shared parameters from 00_asf_risk_parameters.Rmd")
+    return(readRDS(params_file))
+  } else {
+    message("Shared parameter file not found. Using script-specific parameters.")
+    return(NULL)
+  }
+}
 
-  )
+# Try to load shared params
+shared_params <- load_shared_params()
+
+# Use shared params if available, otherwise use script-specific params
+if (!exists("params")) {
+  if (!is.null(shared_params)) {
+    params <- shared_params
+  } else {
+    # Default params specific to this script
+    params <- list(
+      begin_date = "2000-01-01",
+      end_date = "2024-12-31",
+      US_grid_cell_size = 30000
+    )
+  }
 }
 ```
+
 ## Call and compile AQIM data
 
 Get all AQIM data that is relevant and make sure it is geolocated
@@ -107,7 +141,7 @@ NB_state_cd <- c("AK","ID","ME","MN","MT","NH","NY","ND","OH","PA","VT","WA")
 SB_state_cd <- c("CA","AZ","NM","TX")
 ```
 
-```{r separate land border to NB-SB}
+```{r separate ARM land border data to NB-SB}
 arm_aqim <- arm_aqim %>%
   mutate(
     PATHWAY = case_when(
@@ -199,7 +233,7 @@ ship <- aqas_aqim_func(insp_mv,
 aqas_aqim <- rbind(ped, eco, ship)
 ```
 
-```{r separate land border to NB-SB}
+```{r separate AQAS land border data to NB-SB aqas}
 aqas_aqim <- aqas_aqim %>%
   mutate(
     PATHWAY = case_when(
@@ -304,7 +338,8 @@ us_grid <- SpatialKDE::create_grid_hexagonal(
 )
 us_grid <- sf::st_intersection(us_bounds_sf, us_grid)
 
-
+saveRDS(us_bounds_sf, here::here("output","intermediate files", "US hex grid","us_bounds.rds"))
+saveRDS(us_grid, here::here("output","intermediate files", "US hex grid","us_grid.rds"))
 ```
 
 ```{r limit destinations to within US}
@@ -344,7 +379,7 @@ for (i in seq_along(pathway_groups)) {
 
 ```
 
-```{r ensure they can be read}
+<!-- ```{r ensure they can be read}
 setwd(here::here("output","proportional destination layers"))
 
 #to read use:
@@ -390,7 +425,7 @@ mapview::mapview(layer2,
                              alpha = 0,
                              alpha.regions = 0.05, #fill
                              cex = 3
-                                                 ) + mapview::mapview(kde_scaled_Vehicle)
+                                                 ) + mapview::mapview(kde_scaled_Vehicle) -->
 ```
 
 # Need to check into the KDEs vs point observations matching for each pathway
@@ -410,15 +445,6 @@ mapview::mapview(layer2,
 #     scaled = FALSE,
 #     grid = us_grid
 #   ))
-
-```
-
-```{r scale KDE to fraction (0-1)}
-# #scale to 1
-# kde_list_scaled <- lapply(kde_list, function(df) {
-#   df$kde_value <- proportions(df$kde_value)
-#   return(df)
-# })
 
 ```
 
@@ -445,9 +471,3 @@ mapview::mapview(layer2,
 # # sf_list <- readRDS("sf_list.rds")
 ```
 
-# Clear environment
-
-```{r}
-rm(list=ls())
-gc()
-```
