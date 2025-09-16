@@ -124,7 +124,7 @@ system.time(arm_aqim <- arm_aqim |> collect()
             )
 ```
 
-```{r convert state ref ID to 2 digit codes}
+```{r convert state ref ID to two digit codes}
 state_code_ref <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[REF_STATE]")) |> 
   filter(ACTIVE_FL == "Y") |>  
   dplyr::select(ID, STATE_CD) |> collect()
@@ -179,8 +179,8 @@ db_conn = DBI::dbConnect(
 
 aqas_aqim_func <- function(data, pathway_name, state_column_name, city_column_name) {
   data |> dplyr::select(AQIM_FORM_ID,
-                state_column_name,
-                city_column_name,
+                all_of(state_column_name),
+                all_of(city_column_name),
                 STATE_CD
                 ) |> 
     collect() |> 
@@ -250,8 +250,8 @@ aqas_aqim <- aqas_aqim %>%
 Bring them together in a single data set, solving for naming conventions
 
 ```{r combine AQAS and AQIM data}
-aqim_data <- rbind(aqas_aqim |> select(-STATE_CD),
-                   arm_aqim |> select(-INSPECTION_LOCATION_STATE_CODE)
+aqim_data <- rbind(aqas_aqim |> dplyr::select(-STATE_CD),
+                   arm_aqim |> dplyr::select(-INSPECTION_LOCATION_STATE_CODE)
                    )
 ```
 
@@ -343,9 +343,9 @@ saveRDS(us_grid, here::here("output","intermediate files", "US hex grid","us_gri
 ```
 
 ```{r limit destinations to within US}
-inside <- rowSums(st_within(aqim_data, us_grid, sparse = FALSE)) > 0
+# Use sparse matrix approach for memory efficiency
+inside <- lengths(st_within(aqim_data, us_grid)) > 0
 aqim_data <- aqim_data[inside, ]
-
 ```
 
 # Save grids for later use
@@ -354,9 +354,19 @@ aqim_data <- aqim_data[inside, ]
 
 # Split data by PATHWAY
 pathway_groups <- aqim_data %>% group_split(PATHWAY)
-pathway_names <- unique(aqim_data$PATHWAY)
+# First, let's get the pathway names in the same order as they appear in the groups
+# Get the pathway name for each group from the first row of each group
+pathway_names <- pathway_groups %>% 
+  purrr::map_chr(~.x$PATHWAY[1]) %>%
+  unique()
 
-bandwidth = 1*params$US_grid_cell_size #in meters
+# Verify that the order matches
+for (i in seq_along(pathway_groups)) {
+  cat("Group", i, "is", pathway_names[i], "\n")
+}
+
+
+bandwidth = 2.5*params$US_grid_cell_size #in meters
 
 setwd(here::here("output","proportional destination layers"))
 # Loop through each group and save results as soon as they're created
@@ -379,6 +389,40 @@ for (i in seq_along(pathway_groups)) {
 
 ```
 
+```{r show the spatial distribution for example pathway}
+#Check the validity of the scaled KDE layers
+
+#Where are most of the people going?
+check <- aqim_data %>% filter(PATHWAY == "Pedestrian SB") %>% count(destination) %>% arrange(desc(n))
+View(head(check, 10))
+print(head(check, 10))
+#mostly going to AZ, TX, CA
+
+#And where does the map show people going?
+setwd(here::here("output","proportional destination layers"))
+
+#to read use:
+kde_Pedestrian_SB <- readRDS("kde_Pedestrian SB.rds")
+kde_scaled_Pedestrian_SB <- readRDS("kde_scaled_Pedestrian SB.rds")
+#plot these separately
+mapview::mapview(kde_Pedestrian_SB)
+mapview::mapview(kde_scaled_Pedestrian_SB)
+test_layer <- SpatialKDE::kde(
+    points = pathway_groups[[16]], #Pedestrian SB
+    band_width = bandwidth,
+    scaled = FALSE,
+    grid = us_grid
+  )
+mapview::mapview(test_layer)
+
+scaled_test_layer <- test_layer
+scaled_test_layer$kde_value <- proportions(test_layer$kde_value)
+mapview::mapview(scaled_test_layer)
+
+
+#This is working fine
+# but it is not reflecting the data that is saved in the scaled KDE files via the for loop above
+```
 <!-- ```{r ensure they can be read}
 setwd(here::here("output","proportional destination layers"))
 

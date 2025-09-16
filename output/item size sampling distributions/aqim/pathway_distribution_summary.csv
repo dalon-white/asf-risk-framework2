@@ -1,0 +1,10 @@
+"PATHWAY","container","product_pathway","product_subpathway","distribution","mean","median","sd","min","max","n_samples","goodness_of_fit","p_value"
+"Express_courier","package","swine products/by-products","personal use or consumption","gamma",2.09,1.56,1.88,0.01,15,46,"Good fit",0.1425
+"Express_courier","package","swine products/by-products","smuggled commercial products","empirical",26,26,NA,26,26,1,"N/A (empirical)",NA
+"Express_courier","package","fomite","unspecified feed","empirical",0.67,0.5,0.29,0.5,1,3,"N/A (empirical)",NA
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption","lnorm",1.05,0.52,1.83,0.01,15,2509,"Poor fit",0
+"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption","lnorm",1.66,0.88,2.65,0.03,24,185,"Good fit",0.4715
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption","lnorm",0.71,0.37,1.18,0.05,5.6,22,"Good fit",0.5562
+"Land Border - Truck - Conveyance - CBP NB NB","baggage","swine products/by-products","personal use or consumption","gamma",0.4,0.33,0.29,0.08,1,8,"Good fit",0.9044
+"Maritime Port - Vessel - Cargo - CBP","container","swine products/by-products","commercial","empirical",11304.5,10896.5,4971.04,5655,17770,4,"N/A (empirical)",NA
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products","lnorm",31.95,29.15,14.32,20,67.4,5,"Good fit",0.2869

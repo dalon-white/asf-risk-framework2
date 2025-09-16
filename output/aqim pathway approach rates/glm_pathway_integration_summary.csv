@@ -1,0 +1,14 @@
+"pathway","pred_prob","lower_prob","upper_prob","n_locations"
+"Airport - Aircraft - Cargo - CBP",1.29140985710721e-12,0,1,25
+"Airport - Aircraft - Passenger - Predeparture",5.00753126457283e-12,0,1,13
+"Airport - Aircraft - Person - CBP",0.0123082583592011,0.00568537792561806,0.363181731402559,42
+"Airport - Aircraft - Person - Pre-Clearance",0.000380562557634603,0.000198183761046792,0.334256123069314,6
+"Cruise_ship",2.39806205362878e-12,0,1,9
+"Express_courier",0.000462564036166165,0.000331582049969599,0.667350479059003,6
+"Land Border - Truck - Cargo - CBP NB NB",2.3876638999102e-12,0,1,9
+"Land Border - Truck - Cargo - CBP SB SB",5.02577841079302e-12,0,1,8
+"Land Border - Truck - Conveyance - CBP NB NB",3.81708697853853e-05,8.01316379584273e-06,0.800196000800289,25
+"Land Border - Truck - Conveyance - CBP SB SB",2.77738740535454e-12,0,1,21
+"Maritime Port - Vessel - Cargo - CBP",0.000285752991204768,5.54439761877797e-05,0.913342991257186,34
+"Maritime Port - Vessel - Mail - CBP",0.00213963810222785,0.00157204472262401,0.253104248223261,8
+"Pedestrian SB",4.37873194387584e-12,0,1,14

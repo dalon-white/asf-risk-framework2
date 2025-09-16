@@ -478,8 +478,9 @@ print(&quot;I double checked all these commodities to ensure none of these names
 <pre class="r"><code>if (!requireNamespace(&quot;fitdistrplus&quot;, quietly = TRUE)) {
   install.packages(&quot;fitdistrplus&quot;)
 }
-library(fitdistrplus)
-library(dplyr)
+library(fitdistrplus)</code></pre>
+<pre><code>## Warning: package &#39;fitdistrplus&#39; was built under R version 4.5.1</code></pre>
+<pre class="r"><code>library(dplyr)
 
 # Create a function to fit distributions to each group
 fit_distributions &lt;- function(data) {
@@ -536,9 +537,8 @@ pathway_distributions &lt;- commodity_dat %&gt;%
 <pre><code>## Warning: There were 39 warnings in `mutate()`.
 ## The first warning was:
 ## ℹ In argument: `distribution_model = map(data, fit_distributions)`.
-## ℹ In group 1: `PATHWAY = &quot;Airport - Aircraft - Person - CBP&quot;`, `container = &quot;baggage&quot;`,
-##   `product_pathway = &quot;swine products/by-products&quot;`, `product_subpathway = &quot;personal use
-##   or consumption&quot;`.
+## ℹ In group 1: `PATHWAY = &quot;Airport - Aircraft - Person - CBP&quot;`, `container = &quot;baggage&quot;`, `product_pathway = &quot;swine products/by-products&quot;`,
+##   `product_subpathway = &quot;personal use or consumption&quot;`.
 ## Caused by warning in `dlnorm()`:
 ## ! NaNs produced
 ## ℹ Run `dplyr::last_dplyr_warnings()` to see the 38 remaining warnings.</code></pre>

@@ -407,7 +407,8 @@ if (!exists(&quot;params&quot;)) {
       wads_volume_begin_date = &quot;2021-01-01&quot;,
       wads_volume_end_date = &quot;2024-12-31&quot;,
       wads_volume_reference_filename = &quot;wads volume reference table.csv&quot;,
-      wads_volume_filename = &quot;wads_passenger_volume_by_port_pathway_month_year&quot;
+      wads_volume_filename = &quot;wads_passenger_volume_by_port_pathway_month_year&quot;,
+      wads_ECO_volume = 1066000000 # Total express courier volume to supplement WADS data if needed
     )
   }
 }</code></pre>
@@ -456,7 +457,7 @@ system.time(wads &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[A
               collect()
            )</code></pre>
 <pre><code>##    user  system elapsed 
-##    0.15    0.00    3.82</code></pre>
+##    0.06    0.00    3.67</code></pre>
 </div>
 </div>
 <div id="summarize-wads-volume-by-month-year-location-and-pathway" class="section level2">
@@ -482,6 +483,49 @@ wads_volume &lt;- wads |&gt;
   group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, year, month) |&gt; 
   summarize(COUNT = sum(COUNT, na.rm=TRUE),
             .groups = &quot;drop&quot;)</code></pre>
+</div>
+<div id="supplement-wads-eco-volume" class="section level1">
+<h1>Supplement WADS ECO volume</h1>
+<p>There isa WADS volume for Express_courier, but it sums to a few
+thousand whereas we know that ~ 1.066bn packages entered based on CBP
+reporting. So we’ll use that number to adjust the COUNT in the WADS
+volum; I’ll write it flexibly so that it’s a controlled parameter</p>
+<pre class="r"><code># Check if ECO pathway exists in WADS data
+if(!&quot;Express_courier&quot; %in% wads_volume$PATHWAY) {
+  # If not, create a new entry for ECO with the total volume
+  # Check if parameter is defined, if not use default
+  eco_volume &lt;- if(!is.null(params$wads_ECO_volume)) params$wads_ECO_volume else 1066000000
+  message(&quot;Using Express_courier volume: &quot;, eco_volume)
+  
+  eco_entry &lt;- data.frame(
+    LOCATION_ID = 0,
+    LOCATION_NAME = &quot;All Locations&quot;,
+    LOCATION_STATE_CODE = &quot;ALL&quot;,
+    PATHWAY = &quot;Express_courier&quot;,
+    year = NA,
+    month = NA,
+    COUNT = eco_volume
+  )
+  # Append ECO entries to WADS volume data
+  wads_volume &lt;- bind_rows(wads_volume, eco_entry)
+} else {
+  # Check if parameter is defined, if not use default
+  eco_volume &lt;- if(!is.null(params$wads_ECO_volume)) params$wads_ECO_volume else 1066000000
+  message(&quot;Using Express_courier volume: &quot;, eco_volume)
+  
+  #scale the existing ECO volume to match the known total. Use the COUNT to get the proportion for each location, and then scale to the known total
+  existing_eco_volume &lt;- sum(wads_volume$COUNT[wads_volume$PATHWAY == &quot;Express_courier&quot;], na.rm = TRUE)
+  if(existing_eco_volume &gt; 0) {
+    scaling_factor &lt;- eco_volume / existing_eco_volume
+    wads_volume &lt;- wads_volume %&gt;%
+      mutate(COUNT = ifelse(PATHWAY == &quot;Express_courier&quot;, round(COUNT * scaling_factor, 0), COUNT))
+    message(&quot;Scaled Express_courier volume by factor: &quot;, scaling_factor)
+  } else {
+    warning(&quot;Existing Express_courier volume is 0 or NA, cannot scale properly&quot;)
+  }
+}</code></pre>
+<pre><code>## Using Express_courier volume: 1.066e+09</code></pre>
+<pre><code>## Scaled Express_courier volume by factor: 26385.4855077845</code></pre>
 <pre class="r"><code>NB_state_cd &lt;- c(&quot;AK&quot;,&quot;ID&quot;,&quot;ME&quot;,&quot;MI&quot;,&quot;MN&quot;,&quot;MT&quot;,&quot;NH&quot;,&quot;NY&quot;,&quot;ND&quot;,&quot;OH&quot;,&quot;PA&quot;,&quot;VT&quot;,&quot;WA&quot;)
 SB_state_cd &lt;- c(&quot;CA&quot;,&quot;AZ&quot;,&quot;NM&quot;,&quot;TX&quot;)</code></pre>
 <pre class="r"><code>wads_volume &lt;- wads_volume %&gt;%
@@ -492,11 +536,15 @@ SB_state_cd &lt;- c(&quot;CA&quot;,&quot;AZ&quot;,&quot;NM&quot;,&quot;TX&quot;)
       TRUE ~ PATHWAY
     )
   )</code></pre>
-</div>
 <div id="save-summarized-wads-volume" class="section level2">
 <h2>Save summarized WADS volume</h2>
 <pre class="r"><code>setwd(here::here(&quot;output&quot;,&quot;wads&quot;,&quot;arrivals_or_entries&quot;))
 saveRDS(wads_volume, paste(params$wads_volume_filename,&quot;.rds&quot;))</code></pre>
+<pre class="r"><code>#look at wads
+setwd(here::here(&quot;output&quot;,&quot;wads&quot;,&quot;arrivals_or_entries&quot;))
+wads_volume &lt;- readRDS(paste(params$wads_volume_filename,&quot;.rds&quot;))
+View(wads_volume |&gt; filter(PATHWAY == &quot;Express_courier&quot;))</code></pre>
+</div>
 </div>
 
 

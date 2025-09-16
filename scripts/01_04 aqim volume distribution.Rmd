@@ -335,13 +335,370 @@ saveRDS(pathway_distributions, paste(params$aqim_qmi_size_distribution_filename,
 
 ```
 
+# Summarize and visualize the pathway distributions
+
+```{r summarize_distribution_models}
+# Create a function to extract key information from each distribution model
+extract_distribution_summary <- function(dist_model, data) {
+  # Initialize result with NA values
+  result <- list(
+    distribution = NA_character_,
+    mean = NA_real_, 
+    median = NA_real_,
+    sd = NA_real_,
+    min = NA_real_,
+    max = NA_real_,
+    q25 = NA_real_,
+    q75 = NA_real_,
+    n_samples = NA_integer_,
+    goodness_of_fit = NA_character_,
+    aic = NA_real_,
+    p_value = NA_real_
+  )
+  
+  # Extract the original data
+  original_data <- data$TOTAL_KG[!is.na(data$TOTAL_KG) & data$TOTAL_KG > 0]
+  
+  # Set basic summary statistics from the original data
+  result$n_samples <- length(original_data)
+  if(result$n_samples > 0) {
+    result$min <- min(original_data)
+    result$max <- max(original_data)
+    result$q25 <- quantile(original_data, 0.25)
+    result$q75 <- quantile(original_data, 0.75)
+  }
+  
+  # If the model is empirical, just return summary statistics
+  if(dist_model$distribution == "empirical") {
+    result$distribution <- "empirical"
+    if(result$n_samples > 0) {
+      result$mean <- mean(original_data)
+      result$median <- median(original_data)
+      result$sd <- sd(original_data)
+    }
+    result$goodness_of_fit <- "N/A (empirical)"
+    return(result)
+  }
+  
+  # Extract distribution type and parameters
+  result$distribution <- dist_model$distribution
+  
+  # Calculate mean, median, and SD based on the distribution
+  if(dist_model$distribution == "lnorm") {
+    meanlog <- dist_model$params$meanlog
+    sdlog <- dist_model$params$sdlog
+    result$mean <- exp(meanlog + sdlog^2/2)
+    result$median <- exp(meanlog)
+    result$sd <- sqrt((exp(sdlog^2) - 1) * exp(2*meanlog + sdlog^2))
+  } else if(dist_model$distribution == "gamma") {
+    shape <- dist_model$params$shape
+    rate <- dist_model$params$rate
+    result$mean <- shape / rate
+    result$median <- qgamma(0.5, shape = shape, rate = rate)
+    result$sd <- sqrt(shape / rate^2)
+  } else if(dist_model$distribution == "weibull") {
+    shape <- dist_model$params$shape
+    scale <- dist_model$params$scale
+    result$mean <- scale * gamma(1 + 1/shape)
+    result$median <- scale * (log(2))^(1/shape)
+    result$sd <- scale * sqrt(gamma(1 + 2/shape) - (gamma(1 + 1/shape))^2)
+  }
+  
+  # Extract goodness of fit information
+  if(!is.null(dist_model$fit_object)) {
+    result$aic <- dist_model$fit_object$aic
+    
+    # Perform KS test for goodness of fit
+    if(dist_model$distribution == "lnorm") {
+      ks_test <- ks.test(original_data, "plnorm", 
+                          meanlog = dist_model$params$meanlog,
+                          sdlog = dist_model$params$sdlog)
+    } else if(dist_model$distribution == "gamma") {
+      ks_test <- ks.test(original_data, "pgamma",
+                          shape = dist_model$params$shape,
+                          rate = dist_model$params$rate)
+    } else if(dist_model$distribution == "weibull") {
+      ks_test <- ks.test(original_data, "pweibull",
+                          shape = dist_model$params$shape,
+                          scale = dist_model$params$scale)
+    }
+    
+    result$p_value <- ks_test$p.value
+    result$goodness_of_fit <- ifelse(result$p_value > 0.05, "Good fit", "Poor fit")
+  }
+  
+  return(result)
+}
+
+# Apply the function to each group
+distribution_summary <- pathway_distributions %>%
+  mutate(summary = pmap(list(distribution_model, data), extract_distribution_summary)) %>%
+  unnest_wider(summary)
+
+# Create a more readable summary table
+readable_summary <- distribution_summary %>%
+  dplyr::select(PATHWAY, container, product_pathway, product_subpathway, 
+         distribution, mean, median, sd, min, max, n_samples, goodness_of_fit, p_value) %>%
+  # Format numbers to be more readable
+  mutate(across(c(mean, median, sd, min, max), ~round(., 2)),
+         across(p_value, ~round(., 4)),
+         across(n_samples, ~as.integer(.)))
+
+# View the summary table
+head(readable_summary, 10)
+
+# Save the summary table
+setwd(here::here("output", "item size sampling distributions", "aqim"))
+write.csv(readable_summary, "pathway_distribution_summary.csv", row.names = FALSE)
+
+# Print overall statistics
+distribution_counts <- readable_summary %>%
+  count(distribution) %>%
+  mutate(percentage = n / sum(n) * 100)
+
+goodness_counts <- readable_summary %>%
+  filter(distribution != "empirical") %>%
+  count(goodness_of_fit) %>%
+  mutate(percentage = n / sum(n) * 100)
+
+cat("Distribution Model Counts:\n")
+print(distribution_counts)
+
+cat("\nGoodness of Fit Summary (excluding empirical):\n")
+print(goodness_counts)
+
+cat("\nOverall Summary Statistics:\n")
+print(summary(readable_summary[c("mean", "median", "sd", "n_samples")]))
+```
+
+```{r visualize_distribution_models}
+# Create a function to generate a plot for a specific combination
+create_distribution_plot <- function(pathway, container, prod_pathway, prod_subpathway,
+                                    distribution_models = pathway_distributions) {
+  # Extract the specific model
+  row_data <- distribution_models %>%
+    filter(PATHWAY == pathway, 
+           container == container,
+           product_pathway == prod_pathway,
+           product_subpathway == prod_subpathway)
+  
+  if(nrow(row_data) == 0) {
+    return(ggplot() + 
+             annotate("text", x = 0, y = 0, label = "No data found for this combination") +
+             theme_minimal())
+  }
+  
+  dist_model <- row_data$distribution_model[[1]]
+  data <- row_data$data[[1]]
+  original_data <- data$TOTAL_KG[!is.na(data$TOTAL_KG) & data$TOTAL_KG > 0]
+  
+  if(length(original_data) == 0) {
+    return(ggplot() + 
+             annotate("text", x = 0, y = 0, label = "No valid data points") +
+             theme_minimal())
+  }
+  
+  # Prepare the plot data
+  max_x <- max(original_data) * 1.5
+  x_vals <- seq(0, max_x, length.out = 1000)
+  
+  # Create data frame for histogram
+  hist_data <- data.frame(x = original_data)
+  
+  # Initialize plot
+  p <- ggplot(hist_data, aes(x = x)) +
+    geom_histogram(aes(y = ..density..), binwidth = max_x/30, fill = "lightblue", color = "black", alpha = 0.7) +
+    labs(title = paste("Distribution for:", pathway),
+         subtitle = paste("Container:", container, "| Pathway:", prod_pathway, "| Subpathway:", prod_subpathway),
+         x = "Weight (kg)",
+         y = "Density") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 10),
+          plot.subtitle = element_text(size = 8))
+  
+  # Add the fitted distribution curve if available
+  if(dist_model$distribution != "empirical") {
+    # Create a data frame for the fitted line
+    if(dist_model$distribution == "lnorm") {
+      y_vals <- dlnorm(x_vals, meanlog = dist_model$params$meanlog, sdlog = dist_model$params$sdlog)
+      fit_label <- sprintf("Lognormal (μ=%.2f, σ=%.2f)", dist_model$params$meanlog, dist_model$params$sdlog)
+    } else if(dist_model$distribution == "gamma") {
+      y_vals <- dgamma(x_vals, shape = dist_model$params$shape, rate = dist_model$params$rate)
+      fit_label <- sprintf("Gamma (shape=%.2f, rate=%.2f)", dist_model$params$shape, dist_model$params$rate)
+    } else if(dist_model$distribution == "weibull") {
+      y_vals <- dweibull(x_vals, shape = dist_model$params$shape, scale = dist_model$params$scale)
+      fit_label <- sprintf("Weibull (shape=%.2f, scale=%.2f)", dist_model$params$shape, dist_model$params$scale)
+    }
+    
+    line_data <- data.frame(x = x_vals, y = y_vals)
+    
+    # Add the line to the plot
+    p <- p + 
+      geom_line(data = line_data, aes(x = x, y = y), color = "red", size = 1) +
+      annotate("text", x = max_x * 0.7, y = max(y_vals) * 0.8, 
+               label = fit_label, hjust = 0, size = 3, color = "red")
+  } else {
+    p <- p + 
+      annotate("text", x = max_x * 0.7, y = 0.9 * max(density(original_data)$y), 
+               label = "Empirical distribution (no fit)", hjust = 0, size = 3, color = "red")
+  }
+  
+  # Add summary statistics
+  summary_stats <- extract_distribution_summary(dist_model, data)
+  stats_text <- sprintf(
+    "n=%d | Mean=%.2f | Median=%.2f | SD=%.2f", 
+    summary_stats$n_samples, summary_stats$mean, summary_stats$median, summary_stats$sd
+  )
+  
+  if(summary_stats$distribution != "empirical") {
+    stats_text <- paste0(stats_text, sprintf(" | p-value=%.4f", summary_stats$p_value))
+  }
+  
+  p <- p + 
+    annotate("text", x = max_x * 0.5, y = 0, 
+             label = stats_text, hjust = 0.5, vjust = 0, size = 3)
+  
+  return(p)
+}
+
+# Identify the top combinations by sample size
+top_combinations <- readable_summary %>%
+  arrange(desc(n_samples)) %>%
+  head(12)
+
+# Create a directory for plots if it doesn't exist
+plot_dir <- here::here("output", "item size sampling distributions", "aqim", "plots")
+if(!dir.exists(plot_dir)) dir.create(plot_dir, recursive = TRUE)
+
+# Create plots for the top combinations
+library(gridExtra)
+plot_list <- list()
+
+for(i in 1:nrow(top_combinations)) {
+  row <- top_combinations[i, ]
+  plot_list[[i]] <- create_distribution_plot(
+    pathway = row$PATHWAY,
+    container = row$container,
+    prod_pathway = row$product_pathway,
+    prod_subpathway = row$product_subpathway
+  )
+}
+
+# Create a multi-panel plot for the top combinations
+combined_plot <- gridExtra::grid.arrange(grobs = plot_list, ncol = 3)
+
+# Save the combined plot
+ggsave(file.path(plot_dir, "top_combinations_plot.png"), 
+       combined_plot, width = 15, height = 10, dpi = 300)
+
+# Create a function to generate a report for each model type
+create_distribution_report <- function(dist_type) {
+  # Filter combinations by distribution type
+  filtered_combs <- readable_summary %>%
+    filter(distribution == dist_type) %>%
+    arrange(desc(n_samples))
+  
+  if(nrow(filtered_combs) == 0) {
+    return(NULL)
+  }
+  
+  # Take the top 6 by sample size
+  top_combs <- head(filtered_combs, 6)
+  
+  # Create individual plots
+  plot_list <- list()
+  for(i in 1:nrow(top_combs)) {
+    row <- top_combs[i, ]
+    plot_list[[i]] <- create_distribution_plot(
+      pathway = row$PATHWAY,
+      container = row$container,
+      prod_pathway = row$product_pathway,
+      prod_subpathway = row$product_subpathway
+    )
+  }
+  
+  # Combine plots
+  if(length(plot_list) > 0) {
+    combined_plot <- gridExtra::grid.arrange(grobs = plot_list, ncol = 2)
+    
+    # Save the combined plot
+    filename <- paste0("distribution_type_", dist_type, "_examples.png")
+    ggsave(file.path(plot_dir, filename), combined_plot, width = 10, height = 8, dpi = 300)
+  }
+}
+
+# Create reports for each distribution type
+dist_types <- unique(readable_summary$distribution)
+for(dist_type in dist_types) {
+  create_distribution_report(dist_type)
+}
+
+# Create a summary of mean weights by pathway and container
+pathway_container_summary <- pathway_distributions %>%
+  unnest(data) %>%
+  group_by(PATHWAY, container, product_pathway, product_subpathway) %>%
+  summarize(
+    mean_weight = mean(TOTAL_KG, na.rm = TRUE),
+    median_weight = median(TOTAL_KG, na.rm = TRUE),
+    total_samples = n(),
+    min_weight = min(TOTAL_KG, na.rm = TRUE),
+    max_weight = max(TOTAL_KG, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(total_samples))
+
+# Save this summary
+write.csv(pathway_container_summary, 
+          file.path(here::here("output", "item size sampling distributions", "aqim"), 
+                   "pathway_container_weight_summary.csv"), 
+          row.names = FALSE)
+
+# Plot summary by pathway with both mean and median
+pathway_summary <- pathway_container_summary %>%
+  group_by(PATHWAY) %>%
+  summarize(
+    mean_weight = weighted.mean(mean_weight, total_samples, na.rm = TRUE),
+    median_weight = median(median_weight, na.rm = TRUE),
+    total_samples = sum(total_samples),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(mean_weight))
+
+# Create a combined plot showing both mean and median
+mean_median_plot <- pathway_summary %>%
+  pivot_longer(
+    cols = c(mean_weight, median_weight),
+    names_to = "statistic",
+    values_to = "weight"
+  ) %>%
+  mutate(
+    statistic = ifelse(statistic == "mean_weight", "Mean", "Median"),
+    PATHWAY = factor(PATHWAY, levels = pathway_summary$PATHWAY)
+  ) %>%
+  ggplot(aes(x = PATHWAY, y = log1p(weight), fill = statistic)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = sprintf("%.1f kg", weight)), 
+            position = position_dodge(width = 0.9), 
+            hjust = -0.1, 
+            size = 3, 
+            angle = 90) +
+  coord_flip() +
+  labs(title = "Average Weight of ASF-Risk Commodities by Pathway",
+       subtitle = "Comparison of mean and median weights",
+       x = "Pathway",
+       y = "Weight (kg)",
+       fill = "Statistic") +
+  theme_minimal()
+
+ggsave(file.path(plot_dir, "average_weight_by_pathway_mean_median.png"), 
+       mean_median_plot, width = 12, height = 8, dpi = 300)
 
 
+```
 
-# Example usage of sampling from the distributions
+<!-- # Example usage of sampling from the distributions
 
 ```{r}
-
 # Create diagnostic plots to check the distribution fits
 plot_distribution_fit <- function(pathway, container, prod_pathway, prod_subpathway,
                                  distribution_models = pathway_distributions) {
@@ -371,6 +728,6 @@ print("warnings are based on low sample sizes. eg smuggled commercials only has 
 # sample_weights <- sample_weight(100, "Your_Pathway", "Your_Container", "Your_Prod_Pathway", "Your_Prod_Subpathway")
 # hist(sample_weights, main = "Sampled weights", xlab = "Weight (kg)")
 ```
-````
+-->
 
 

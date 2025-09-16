@@ -1,0 +1,10 @@
+"PATHWAY","container","product_pathway","product_subpathway","mean_weight","median_weight","total_samples","min_weight","max_weight"
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",1.01533878039059,0.5,2509,0.01,15
+"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption",1.66810810810811,1,185,0.03,24
+"Express_courier","package","swine products/by-products","personal use or consumption",2.08786956521739,1.4,47,0.012,15
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",0.810181818181818,0.35,22,0.054,5.6
+"Land Border - Truck - Conveyance - CBP NB NB","baggage","swine products/by-products","personal use or consumption",0.3975,0.3,8,0.08,1
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",32.48,25,5,20,67.4
+"Maritime Port - Vessel - Cargo - CBP","container","swine products/by-products","commercial",11304.5,10896.5,4,5655,17770
+"Express_courier","package","fomite","unspecified feed",0.666666666666667,0.5,3,0.5,1
+"Express_courier","package","swine products/by-products","smuggled commercial products",26,26,1,26,26

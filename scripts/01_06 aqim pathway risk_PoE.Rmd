@@ -61,6 +61,7 @@ if (!exists("params")) {
 setwd(here::here("output","wads","arrivals_or_entries"))
 wads_volume <- readRDS(paste(params$wads_volume_filename, ".rds"))
 ```
+
 # read approach rates
 ```{r read approach rates}
 setwd(here::here('output','aqim pathway approach rates')) 
@@ -293,6 +294,7 @@ pathway_risk_summary <- all_simulations %>%
   arrange(desc(mean_kg))
 
 print("Do pathways with at risk items having been found have 0 probability? For instance, there are none found in the pedestrian SB pathway.")
+print("Ah - yes, if running with current data, pedestrian SB has no positive events in AQIM data, so probability is 0. That is correct.")
 
 #write results immediately because it takes a while to run
 setwd(here::here("output","aqim based volume of at risk product approaching"))

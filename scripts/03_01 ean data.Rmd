@@ -1,0 +1,491 @@
+---
+title: "EAN data"
+author: "Dalon White"
+date: "2025-09-12"
+output: 
+
+
+params:
+  affected_countries: "current" # "current" or "mex_can" or "other"
+  other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify the countries here
+  years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
+  affected_product_file: "asf affected product name reference table.csv"
+  affected_country_file: "asf affected countries.csv"
+---
+
+-   prepped data already has the pathway, entry type, etc., and risk as no/low/med/high
+-   need to use country of origin and product origin to determine if the inspection has any asf risk
+-   then model the kg of product with asf risk by pathway, entry type, location, country of origin, product pathway, product subpathway
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(odbc)
+library(DBI)
+library(lme4)
+library(ggplot2)
+library(broom)
+library(multcomp)
+library(emmeans)
+library(sjPlot)
+library(broom.mixed)
+library(boot)
+library(here)
+```
+
+```{r load-params}
+# Function to load the shared parameters if available
+load_shared_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    message("Loading shared parameters from 00_asf_risk_parameters.Rmd")
+    return(readRDS(params_file))
+  } else {
+    message("Shared parameter file not found. Using script-specific parameters.")
+    return(NULL)
+  }
+}
+
+# Try to load shared params
+shared_params <- load_shared_params()
+
+# Use shared params if available, otherwise use script-specific params
+if (!exists("params")) {
+  if (!is.null(shared_params)) {
+    params <- shared_params
+  } else {
+    # Default params specific to this script
+    params <- list(
+      affected_countries = "current", # "current" or "mex_can" or "other" 
+      years = 2023:2024, #The years to include which countries have ASF
+      other_affected_countries = c("Country1", "Country2"),
+      affected_product_file = "asf affected product name reference table.csv",
+      affected_country_file = "asf affected countries.csv",
+    )
+  }
+}
+```
+
+
+```{r ARM AQIM data}
+
+db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+
+ean_cols <- c(
+  "ID",
+  "COMMODITY_ID",
+   "CONVEYANCE_ID",
+  "ISSUED_DATETIME",
+  "ISSUED_DATETIME_FISCAL_YEAR",
+  "ISSUED_DATETIME_FISCAL_MONTH",
+  "CATEGORY",
+  "SUBCATEGORY",
+  "PATHWAY_ID", #PATHWAY ID can distinguish commerce and express carrier; probably need a reference table because the naming conventions aren't consistent
+  "PATHWAY",
+   "REMARKS",
+   "DESTINATION_OF_ARTICLES_ID",
+     "REGULATORY_ACTION_TYPE"
+)
+
+conveyance_cols <- c(
+  "ID",
+  "INSPECTION_ID",
+  "CONVEYANCE_TYPE",
+  "AIRCRAFT_TYPE",
+  "VEHICLE_TYPE" #if !NULL, then it's a vehicle. Need to explore if it includes cargo trucks
+)
+
+inspection_cols <- c(
+  "ID",
+
+  "INSPECTION_NUMBER", 
+  "IS_AQIM", 
+  "PORT_OF_ENTRY_ID",
+  
+  "INSPECTION_DATETIME", 
+  "INSPECTION_DATETIME_FISCAL_YEAR", 
+  "INSPECTION_DATETIME_FISCAL_MONTH",
+  "INSPECTION_LOCATION_ID", 
+  "INSPECTION_LOCATION_NAME", 
+  "INSPECTION_LOCATION_STATE_CODE", 
+  "COUNTRY_OF_ORIGIN_NAME", 
+ # "COUNTRY_OF_RESIDENCE_NAME", 
+  
+ # "FINAL_DESTINATION_STATE_NAME", 
+ # "FINAL_DESTINATION_STATE_ID", 
+ # "FINAL_DESTINATION_CITY", 
+ # "PASSENGER_DISTANCE_DESTINATION_NAME",
+  "NUMBER_OF_PASSENGERS")
+
+
+commodity_cols <- c(
+  "ID",
+  "INSPECTION_ID",
+  "IS_SMUGGLED",
+  "IS_CONTAMINANT_FOUND",
+  "COMMODITY_CLASSIFICATION",
+  "COUNTRY_OF_ORIGIN_NAME", 
+  "REF_COMMODITY_ID",
+  "COMMODITY_DISPLAY_NAME",
+  "MISC_ANIMAL_COMMODITY_NAME",
+  "QUANTITY",
+  "QUANTITY_UNITS_NAME"
+)
+
+#-- Pull AQIM inspection records from ARM  ---- 
+ean <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_EAN]")) |> 
+              dplyr::select(all_of(ean_cols)) |> 
+              #rename to fit AQAS data structure
+              rename(EAN_ID = ID)
+
+inspections <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_INSPECTION]")) |> 
+              dplyr::filter(CATEGORY != "AQIM") |>
+              dplyr::select(all_of(inspection_cols)) |>
+              rename(INSPECTION_ID = ID,
+                    #rename to match AQAS data structure
+                     product_origin = COUNTRY_OF_ORIGIN_NAME)
+ 
+#-- Load Bridge Commodity dataset ----
+commodity <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_COMMODITY]")) |> 
+              dplyr::select(all_of(commodity_cols)) |>
+              rename(COMMODITY_ID = ID)
+
+conveyance <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_CONVEYANCE]")) |>
+              dplyr::select(all_of(conveyance_cols)) |>
+              rename(CONVEYANCE_ID = ID)
+            
+intersect_cols <- intersect(colnames(ean), colnames(commodity))
+ean_records_tmp <- ean |>
+  left_join(commodity, by = intersect_cols, relationship = "many-to-many")
+
+intersect_cols <- intersect(colnames(ean_records_tmp), colnames(inspections))
+ean_records_tmp <-ean_records_tmp |>
+  left_join(inspections, by = intersect_cols, relationship = "many-to-many") 
+
+intersect_cols <- intersect(colnames(ean_records_tmp), colnames(conveyance))
+ean_records <- ean_records_tmp |>
+  left_join(conveyance, by = intersect_cols, relationship = "many-to-many")
+
+
+```
+
+# Collect data
+I have played with filtering in the database vs. collecting and filtering in R. It seems that filtering in the database is much faster, especially when the dataset is large. However, for some operations that require complex manipulations or functions not supported by the database, it might be necessary to collect the data first and then filter in R. The filtering by datetime is particularly easier when done in R due to the need for lubridate functions.
+
+```{r}
+ean_records <- ean_records |> collect()
+```
+
+
+# filter to relevant records
+## filter by years
+
+### Use the ISSUED_DATETIME or the INSPECTION_DATETIME ?
+```{r}
+datetime_comparison <- ean_records %>%
+  summarize(
+    total_records = n(),
+    issued_na_count = sum(is.na(ISSUED_DATETIME)),
+    inspection_na_count = sum(is.na(INSPECTION_DATETIME)),
+    both_na_count = sum(is.na(ISSUED_DATETIME) & is.na(INSPECTION_DATETIME)),
+    only_issued_na = sum(is.na(ISSUED_DATETIME) & !is.na(INSPECTION_DATETIME)),
+    only_inspection_na = sum(!is.na(ISSUED_DATETIME) & is.na(INSPECTION_DATETIME)),
+    both_present = sum(!is.na(ISSUED_DATETIME) & !is.na(INSPECTION_DATETIME))
+  ) %>%
+  mutate(
+    issued_na_percent = round(issued_na_count / total_records * 100, 2),
+    inspection_na_percent = round(inspection_na_count / total_records * 100, 2),
+    both_na_percent = round(both_na_count / total_records * 100, 2),
+    both_present_percent = round(both_present / total_records * 100, 2)
+  )
+
+# Create a visual representation
+na_comparison <- data.frame(
+  datetime_field = c("ISSUED_DATETIME", "INSPECTION_DATETIME", "Both NA", "Both Present"),
+  na_count = c(datetime_comparison$issued_na_count, 
+               datetime_comparison$inspection_na_count,
+               datetime_comparison$both_na_count,
+               datetime_comparison$both_present),
+  percentage = c(datetime_comparison$issued_na_percent,
+                 datetime_comparison$inspection_na_percent,
+                 datetime_comparison$both_na_percent,
+                 datetime_comparison$both_present_percent)
+)
+
+# Print the detailed summary
+print(na_comparison)
+
+
+# Calculate time difference between ISSUED_DATETIME and INSPECTION_DATETIME
+datetime_diff <- head(test,10000) %>%
+  # Filter to records where both datetime fields are present
+  filter(!is.na(ISSUED_DATETIME) & !is.na(INSPECTION_DATETIME)) %>%
+  # Calculate the difference in hours
+  mutate(
+    time_diff_hours = as.numeric(difftime(ISSUED_DATETIME, INSPECTION_DATETIME, units = "hours")),
+    time_diff_days = as.numeric(difftime(ISSUED_DATETIME, INSPECTION_DATETIME, units = "days")),
+    # Create categories for analysis
+    time_diff_category = case_when(
+      time_diff_hours < 0 ~ "Issued before inspection (error?)",
+      time_diff_hours == 0 ~ "Same time",
+      time_diff_hours > 0 & time_diff_hours <= 1 ~ "Within 1 hour",
+      time_diff_hours > 1 & time_diff_hours <= 24 ~ "1-24 hours",
+      time_diff_hours > 24 & time_diff_hours <= 168 ~ "1-7 days",
+      time_diff_hours > 168 ~ "Over 7 days"
+    )
+  )
+
+  # Distribution by category
+time_diff_distribution <- datetime_diff %>%
+  group_by(time_diff_category) %>%
+  summarize(
+    count = n(),
+    percentage = n() / nrow(datetime_diff) * 100
+  ) %>%
+  arrange(factor(time_diff_category, levels = c(
+    "Issued before inspection (error?)", 
+    "Same time", 
+    "Within 1 hour", 
+    "1-24 hours", 
+    "1-7 days", 
+    "Over 7 days"
+  )))
+
+
+# Summary statistics
+time_diff_summary <- datetime_diff %>%
+  summarize(
+    n_records = n(),
+    min_diff_hours = min(time_diff_hours, na.rm = TRUE),
+    max_diff_hours = max(time_diff_hours, na.rm = TRUE),
+    median_diff_hours = median(time_diff_hours, na.rm = TRUE),
+    mean_diff_hours = mean(time_diff_hours, na.rm = TRUE),
+    sd_diff_hours = sd(time_diff_hours, na.rm = TRUE),
+    q25_diff_hours = quantile(time_diff_hours, 0.25, na.rm = TRUE),
+    q75_diff_hours = quantile(time_diff_hours, 0.75, na.rm = TRUE)
+  )
+
+
+print("Time difference summary statistics (in hours):")
+print(time_diff_summary)
+
+print("Distribution by time difference category:")
+print(time_diff_distribution)
+```
+
+
+filter using the params$years
+
+Can't just filter by the datetime because it needs lubridate() to manipulate the datetime. Instead, can filter by fiscal month and year, which are reported, but the needed datetimes need to be converted first
+
+Will call the years parameter here. The years parameter is used for the WADS codes when calculating the volume for AQIM-based pathways. By calling it here, this will ensure that we are comparing predicted volumes through AQIM+WADS for a given time to the volume of EAN-related products for the same time frame.
+  - as of right now, the years parameter is in years, whereas it is needed in months/years format here.
+```{r convert calendar dates to fiscal}
+# Load necessary libraries
+library(lubridate)
+library(dplyr)
+
+fiscal_date_to_calendar_month <- function(fiscal_date) {
+  tryCatch({
+    if(is.na(fiscal_date)) return(NA)
+    
+    # Ensure we're working with a Date object
+    if(!inherits(fiscal_date, c("Date", "POSIXct", "POSIXlt"))) {
+      fiscal_date <- as.Date(fiscal_date)
+    }
+    
+    as.character((as.integer(format(fiscal_date, "%m")) - 10) %% 12 + 1)
+  }, error = function(e) {
+    NA  # Return NA if conversion fails
+  })
+}
+
+fiscal_date_to_calendar_year <- function(fiscal_date) {
+  tryCatch({
+    if(is.na(fiscal_date)) return(NA)
+    
+    # Ensure we're working with a Date object
+    if(!inherits(fiscal_date, c("Date", "POSIXct", "POSIXlt"))) {
+      fiscal_date <- as.Date(fiscal_date)
+    }
+    
+    as.character(
+      ifelse(as.integer(format(fiscal_date, "%m")) >= 10,
+             as.integer(format(fiscal_date, "%Y")) + 1,
+             as.integer(format(fiscal_date, "%Y")))
+    )
+  }, error = function(e) {
+    NA  # Return NA if conversion fails
+  })
+}
+
+begin_year_to_date <- function(year){
+  as.Date(paste0(year,"-01-01"), format="%Y-%m-%d")
+}
+
+# Assume your data frame is called df and the date column is 'date'
+begin_date <- as.Date(year_to_date(min(params$years)))  # Ensure it's a Date type
+
+# Fiscal year: If month >= 10, fiscal year is year + 1, else year
+begin_year <- fiscal_date_to_calendar_year(begin_date)
+
+# Fiscal month: October is 1, November is 2, ..., September is 12
+begin_month <- fiscal_date_to_calendar_month(begin_date)
+
+# Convert end year to Dec 31st of that year
+end_year_to_date <- function(year){
+  as.Date(paste0(year,"-12-31"), format="%Y-%m-%d")
+}
+
+# Assume your data frame is called df and the date column is 'date'
+end_date <- as.Date(end_year_to_date(max(params$years))) # Ensure it's a Date type
+
+# Fiscal year: If month >= 10, fiscal year is year + 1, else year
+end_year <- fiscal_date_to_calendar_year(end_date)
+
+# Fiscal month: October is 1, November is 2, ..., September is 12
+end_month <- fiscal_date_to_calendar_month(end_date)
+
+```
+
+Apply to the data
+```{r}
+#filter to on or after begin date
+ean_records <- ean_records  |>
+  filter(INSPECTION_DATETIME_FISCAL_YEAR > begin_year | (INSPECTION_DATETIME_FISCAL_YEAR == begin_year & INSPECTION_DATETIME_FISCAL_MONTH >= begin_month)
+  )
+
+#filter to at or before end date
+ean_records <- ean_records |> 
+  filter(INSPECTION_DATETIME_FISCAL_YEAR < end_year | (INSPECTION_DATETIME_FISCAL_YEAR == end_year & INSPECTION_DATETIME_FISCAL_MONTH <= end_month)
+)
+```
+# determine if there is risk
+
+```{r}
+test <- ean_records |> collect()
+```
+
+## Evaluate country
+
+load country reference list
+```{r identify countries of risk}
+setwd(here::here("input","data","asf affected countries by year"))
+if(params$affected_countries == "current") {
+  affected_countries <- read.csv("asf affected countries.csv") |> 
+    mutate(Year = as.numeric(Year)) |> 
+    filter(Year %in% params$years) |> 
+    filter(Disease == "ASF") |>
+    distinct(ISO3_CODE) |> 
+    pull(ISO3_CODE)
+} else if (params$affected_countries == "mex_can") {
+  affected_countries <- c("MEX", "CAN")
+} else if (params$affected_countries == "other") {
+  affected_countries <- params$other_affected_countries
+} else {
+  stop("Invalid value for params$affected_countries")
+}
+```
+
+filter to  eans that are from that country
+```{r isolate records from risky countries}
+ean_records <- ean_records |> mutate(country_code = countrycode(COUNTRY_OF_ORIGIN_NAME, 
+                                  origin = "country.name", 
+                                  destination = "iso3c")
+                                  )
+
+ean_records <- ean_records |> filter(country_code %in% affected_countries)
+```
+
+# test collecting
+```{r}
+test <- ean_records |> collect()
+```
+## Evaluate product
+
+
+load pathway to entry type reference table
+```{r load pathway to entry type reference table}
+setwd(here::here('input', 'data', 'PATHWAY name reference'))
+# Load the pathway reference table
+pathway_ref <- read.csv("pathway to entry type reference table.csv", stringsAsFactors = FALSE)
+ean_records <- ean_records %>%
+  left_join(pathway_ref, by = "PATHWAY", relationship = "many-to-one")
+
+get_entry_type <- function(pathway_str) {
+  for (i in 1:nrow(pathway_ref)) {
+    ref_pathway <- pathway_ref$PATHWAY[i]
+    if (grepl(ref_pathway, pathway_str, fixed = TRUE)) {
+      return(pathway_ref$entry_type[i])
+    }
+  }
+  return(NA_character_)
+}
+
+# Apply the function to each pathway in ean_records
+system.time(ean_records <- ean_records %>%
+  rowwise() %>%
+  mutate(entry_type = get_entry_type(PATHWAY)) %>%
+  ungroup()
+)
+```
+
+load product reference list
+```{r identify products of risk}
+setwd(here::here("input","data","asf affected product names"))
+asf_product_ref <- read.csv(params$affected_product_file)
+match_asf_risk <- function(data, reference_table) {
+  # Try matching on COMMODITY_DISPLAY_NAME
+  asf_product_match <- data %>%
+    inner_join(reference_table, 
+               by = c("COMMODITY_DISPLAY_NAME" = "ITEM", "entry_type" = "entry_type"), 
+               relationship = "many-to-many",
+               copy = TRUE)
+  
+  # Combine matches and remove duplicates
+  asf_matches <- asf_product_match %>%
+    distinct(ID, COMMODITY_ID, .keep_all = TRUE)
+  
+  # Return the matches for further processing
+  return(asf_matches)
+}
+
+# Apply to eans
+at_risk_eans <- match_asf_risk(ean_records, asf_product_ref)
+```
+filter to eans that are that product
+```{r isolate records from risky products}
+ean_records <- ean_records |> mutate(commodity_name = toupper(COMMODITY_DISPLAY_NAME))
+ean_records <- ean_records |> filter(commodity_name %in% affected_products)
+```
+
+
+
+# separate the data into layers
+
+## pathway can separate the conveyances
+
+
+
+## Conveyance table can separate out private and commercial aircraft
+```{r}
+
+```
+
+
+
+
+
+
+# Get address
+
+## what are the address columns
+
+## Where is destination address stored?
+
+#Noah Stuart will get back to me on the addresses for EANs (Teams chat, 9/15/25)
+#Until then, I can still pull data, filter by commodity, etc. Getting a location would be last step, anyways.

@@ -53,7 +53,8 @@ asf_params <- list(
   # WADS volume settings
   wads_volume_reference_filename = "wads volume reference table.csv",
   wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year",
-  
+  wads_ECO_volume = 1066000000, # Total express courier volume to supplement WADS data if needed
+
   # Output file names
   glm_results_filename = "glmm_results_aqim fraction at risk by pathway and location",
   bootstrap_results_filename = "bootstrap_results_aqim fraction at risk by pathway and location",
@@ -63,12 +64,12 @@ asf_params <- list(
   
   # Simulation settings
   # Default is 100 for production, can be reduced for testing
-  n_sims_for_volume = 3,
+  n_sims_for_volume = 100,
   
   # Spatial settings
-  # Default is 1000000 for production, can be reduced for testing
+  # Default is 30000 for production, can be increased for testing
   # 30000 is used for high-resolution final output
-  US_grid_cell_size = 1000000
+  US_grid_cell_size = 30000
 )
 
 # Save the params object for use by other scripts
