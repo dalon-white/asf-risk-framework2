@@ -1,0 +1,502 @@
+---
+title: "EAN Product Type Analysis"
+author: "ASF Risk Framework"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  ean_data_path: "output/intermediate files/ean_records.rds"
+  huggingface_token: ""  # Optional - only needed for some models
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(here)
+library(reticulate)
+library(jsonlite)
+
+# Check if huggingfaceR is installed, if not install it
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
+if (!requireNamespace("huggingfaceR", quietly = TRUE)) {
+  remotes::install_github("farach/huggingfaceR")
+}
+library(huggingfaceR)
+```
+
+## Loading EAN Data
+
+First, we'll load the EAN data that was processed in the previous script.
+
+```{r load_data}
+# Check if the file exists
+ean_file_path <- here::here(params$ean_data_path)
+if (!file.exists(ean_file_path)) {
+  stop(paste("EAN data file not found at:", ean_file_path, 
+             "Please run the '03_01 ean data.Rmd' script first."))
+}
+
+# Load the data
+ean_records <- readRDS(ean_file_path)
+
+# Print summary of the data
+cat("Loaded", nrow(ean_records), "EAN records\n")
+cat("Number of records with REMARKS:", sum(!is.na(ean_records$REMARKS)), "\n")
+
+# Sample some remarks to see what we're working with
+if (sum(!is.na(ean_records$REMARKS)) > 0) {
+  set.seed(123)
+  sample_remarks <- ean_records %>% 
+    filter(!is.na(REMARKS)) %>% 
+    sample_n(min(5, sum(!is.na(ean_records$REMARKS))))
+  
+  cat("\nSample REMARKS:\n")
+  for (i in 1:nrow(sample_remarks)) {
+    cat(i, ": ", sample_remarks$REMARKS[i], "\n\n")
+  }
+}
+```
+
+## Set Up HuggingFace Connection
+
+We'll use a text-to-text model from HuggingFace that can process natural language and extract structured information.
+
+```{r setup_huggingface}
+# Set HuggingFace token if provided
+if (params$huggingface_token != "") {
+  Sys.setenv(HUGGINGFACEHUB_API_TOKEN = params$huggingface_token)
+}
+
+# Initialize the HuggingFace client for inference
+# We'll use a model that doesn't require an API key for basic text processing
+# FLAN-T5 is a good general-purpose model for text extraction tasks
+model_id <- "google/flan-t5-base"
+
+# Test if we can use the HuggingFace API without a token
+# If this fails, we'll need to use a local transformer model
+tryCatch({
+  hf_client <- huggingfaceR::hf_client(model_id = model_id)
+  test_prompt <- "Extract animal species: This remark mentions pork sausage."
+  test_response <- hf_client$text_generation(test_prompt, max_length = 50)
+  cat("HuggingFace API connection successful\n")
+  use_api <- TRUE
+}, error = function(e) {
+  cat("Could not connect to HuggingFace API:", e$message, "\n")
+  cat("Will use local transformers package instead\n")
+  use_api <- FALSE
+})
+```
+
+## Local Fallback Option Using Transformers Package
+
+If the HuggingFace API isn't accessible, we'll set up a local alternative using the transformers package.
+
+```{r setup_local_transformers, eval=!exists("use_api") || !use_api}
+# Install and set up the transformers package via reticulate
+py_install(packages = c("transformers", "torch"), pip = TRUE)
+
+transformers <- reticulate::import("transformers")
+
+# Load a local model for text extraction
+# We'll use a smaller model for local processing
+model_name <- "google/flan-t5-small"  # Smaller model for local use
+tokenizer <- transformers$AutoTokenizer$from_pretrained(model_name)
+model <- transformers$AutoModelForSeq2SeqLM$from_pretrained(model_name)
+
+# Function to generate responses locally
+local_generate <- function(prompt, max_length = 100) {
+  input_ids <- tokenizer(prompt, return_tensors = "pt")
+  outputs <- model$generate(
+    input_ids$input_ids,
+    max_length = as.integer(max_length),
+    num_return_sequences = as.integer(1)
+  )
+  return(tokenizer$decode(outputs[[1]], skip_special_tokens = TRUE))
+}
+
+cat("Local transformers setup complete\n")
+```
+
+## Extraction Function
+
+Now we'll create a function to extract the required information from the REMARKS field.
+
+```{r extraction_function}
+extract_product_info <- function(remark_text, use_api = TRUE) {
+  if (is.na(remark_text) || remark_text == "") {
+    return(list(
+      animal_species = "none",
+      product_type = "unknown",
+      product_subtype = "unknown",
+      quantity = NA,
+      units = NA,
+      remark = remark_text,
+      json_response = "{}"
+    ))
+  }
+  
+  # Create a structured prompt to extract the information
+  prompt <- paste0(
+    "Extract the following information from this EAN REMARK:\n",
+    "1. Animal species (must be one of: swine, other, none)\n",
+    "2. Product type (must be one of: live animal, meat, fomite, other product, feed, unknown)\n",
+    "3. Product subtype (e.g., processed-smoked, processed-cured, soil, boots, vaccine, semen)\n",
+    "4. Quantity (numeric value only)\n",
+    "5. Units (e.g., kg, g, lbs, pieces)\n\n",
+    "REMARK: ", remark_text,
+    "\n\nRespond in JSON format with these exact fields: animal_species, product_type, product_subtype, quantity, units"
+  )
+  
+  # Generate response using either API or local model
+  if (use_api && exists("hf_client")) {
+    response_text <- hf_client$text_generation(prompt, max_length = 200)
+  } else {
+    response_text <- local_generate(prompt, max_length = 200)
+  }
+  
+  # Try to parse the response as JSON
+  json_result <- tryCatch({
+    # Extract JSON from the response (it might include extra text)
+    json_pattern <- "\\{.*\\}"
+    json_text <- regmatches(response_text, regexpr(json_pattern, response_text))
+    if (length(json_text) > 0) {
+      fromJSON(json_text)
+    } else {
+      NULL
+    }
+  }, error = function(e) {
+    NULL
+  })
+  
+  # If JSON parsing failed, apply rule-based extraction as fallback
+  if (is.null(json_result)) {
+    # Rule-based fallback extraction
+    remark_lower <- tolower(remark_text)
+    
+    # Animal species detection
+    animal_species <- "none"
+    if (grepl("swine|pork|pig|hog", remark_lower)) {
+      animal_species <- "swine"
+    } else if (grepl("animal|cattle|beef|chicken|poultry|sheep|goat|duck", remark_lower)) {
+      animal_species <- "other"
+    }
+    
+    # Product type detection
+    product_type <- "unknown"
+    if (grepl("live|living", remark_lower)) {
+      product_type <- "live animal"
+    } else if (grepl("meat|flesh|muscle|sausage|ham|salami", remark_lower)) {
+      product_type <- "meat"
+    } else if (grepl("soil|boot|shoe|clothes|clothing|dirt|manure", remark_lower)) {
+      product_type <- "fomite"
+    } else if (grepl("feed|fodder|silage", remark_lower)) {
+      product_type <- "feed"
+    } else if (grepl("vaccine|semen|embryo|blood|serum", remark_lower)) {
+      product_type <- "other product"
+    }
+    
+    # Product subtype detection
+    product_subtype <- "unknown"
+    if (product_type == "meat" && grepl("processed|smoked|dried|cured|cooked|fermented", remark_lower)) {
+      subtype_patterns <- c("smoked", "dried", "cured", "cooked", "fermented")
+      for (pattern in subtype_patterns) {
+        if (grepl(pattern, remark_lower)) {
+          product_subtype <- paste0("processed-", pattern)
+          break
+        }
+      }
+      if (product_subtype == "unknown") {
+        product_subtype <- "processed-unknown"
+      }
+    } else if (product_type == "fomite") {
+      fomite_patterns <- c("soil", "boot", "shoe", "clothes", "manure", "equipment")
+      for (pattern in fomite_patterns) {
+        if (grepl(pattern, remark_lower)) {
+          product_subtype <- pattern
+          break
+        }
+      }
+    } else if (product_type == "other product") {
+      other_patterns <- c("vaccine", "semen", "embryo", "blood", "serum")
+      for (pattern in other_patterns) {
+        if (grepl(pattern, remark_lower)) {
+          product_subtype <- pattern
+          break
+        }
+      }
+    } else if (product_type == "live animal") {
+      animal_patterns <- c("pig", "swine", "cattle", "chicken", "duck", "goat", "sheep")
+      for (pattern in animal_patterns) {
+        if (grepl(pattern, remark_lower)) {
+          product_subtype <- pattern
+          break
+        }
+      }
+    }
+    
+    # Quantity and units detection
+    quantity_pattern <- "([0-9]+\\.?[0-9]*)"
+    units_pattern <- "(kg|g|gram|grams|lb|lbs|pound|pounds|oz|ounce|ounces|piece|pieces|unit|units)"
+    
+    quantity <- NA
+    units <- NA
+    
+    quantity_match <- regexpr(quantity_pattern, remark_lower)
+    if (quantity_match > 0) {
+      quantity <- as.numeric(regmatches(remark_lower, quantity_match))
+      
+      # Look for units after the quantity
+      remainder <- substr(remark_lower, quantity_match + attr(quantity_match, "match.length"), nchar(remark_lower))
+      units_match <- regexpr(units_pattern, remainder)
+      if (units_match > 0) {
+        units <- regmatches(remainder, units_match)
+      }
+    }
+    
+    # Create a JSON-like structure for consistency
+    json_result <- list(
+      animal_species = animal_species,
+      product_type = product_type,
+      product_subtype = product_subtype,
+      quantity = quantity,
+      units = units
+    )
+  }
+  
+  # Ensure the result has all required fields with proper types
+  if (!("animal_species" %in% names(json_result))) json_result$animal_species <- "none"
+  if (!("product_type" %in% names(json_result))) json_result$product_type <- "unknown"
+  if (!("product_subtype" %in% names(json_result))) json_result$product_subtype <- "unknown"
+  if (!("quantity" %in% names(json_result)) || is.null(json_result$quantity)) json_result$quantity <- NA
+  if (!("units" %in% names(json_result)) || is.null(json_result$units)) json_result$units <- NA
+  
+  # Standardize animal species
+  if (!json_result$animal_species %in% c("swine", "other", "none")) {
+    if (grepl("pig|pork|swine|hog", tolower(json_result$animal_species))) {
+      json_result$animal_species <- "swine"
+    } else if (json_result$animal_species != "") {
+      json_result$animal_species <- "other"
+    } else {
+      json_result$animal_species <- "none"
+    }
+  }
+  
+  # Standardize product type
+  valid_product_types <- c("live animal", "meat", "fomite", "other product", "feed", "unknown")
+  if (!json_result$product_type %in% valid_product_types) {
+    json_result$product_type <- "unknown"
+  }
+  
+  # Add the original remark
+  json_result$remark <- remark_text
+  
+  # Add the raw JSON response for debugging
+  json_result$json_response <- toJSON(json_result, auto_unbox = TRUE)
+  
+  return(json_result)
+}
+```
+
+## Process Sample Remarks
+
+Let's test our extraction function on a sample of remarks to see how well it works.
+
+```{r test_extraction}
+# Only run this if we have remarks to process
+if (sum(!is.na(ean_records$REMARKS)) > 0) {
+  # Get a sample of remarks to test
+  set.seed(123)
+  test_remarks <- ean_records %>% 
+    filter(!is.na(REMARKS)) %>% 
+    sample_n(min(10, sum(!is.na(ean_records$REMARKS))))
+  
+  # Process each remark
+  extracted_results <- list()
+  for (i in 1:nrow(test_remarks)) {
+    cat("Processing sample remark", i, "of", nrow(test_remarks), "\n")
+    extracted_results[[i]] <- extract_product_info(
+      test_remarks$REMARKS[i], 
+      use_api = exists("use_api") && use_api
+    )
+  }
+  
+  # Convert results to a data frame
+  results_df <- bind_rows(extracted_results)
+  
+  # Display the results
+  knitr::kable(results_df %>% select(-json_response), 
+               caption = "Sample Extraction Results")
+}
+```
+
+## Process All Remarks
+
+Now we'll process all the remarks in the dataset. This might take some time depending on the size of the dataset.
+
+```{r process_all_remarks}
+# Only process if we have remarks
+if (sum(!is.na(ean_records$REMARKS)) > 0) {
+  # Create a progress bar
+  pb <- txtProgressBar(min = 0, max = sum(!is.na(ean_records$REMARKS)), style = 3)
+  
+  # Process each remark
+  all_results <- list()
+  counter <- 0
+  
+  for (i in 1:nrow(ean_records)) {
+    if (!is.na(ean_records$REMARKS[i])) {
+      counter <- counter + 1
+      all_results[[i]] <- extract_product_info(
+        ean_records$REMARKS[i], 
+        use_api = exists("use_api") && use_api
+      )
+      setTxtProgressBar(pb, counter)
+    } else {
+      # For records with no remark, create a default entry
+      all_results[[i]] <- list(
+        animal_species = "none",
+        product_type = "unknown",
+        product_subtype = "unknown",
+        quantity = NA,
+        units = NA,
+        remark = NA,
+        json_response = "{}"
+      )
+    }
+  }
+  close(pb)
+  
+  # Convert to a data frame
+  extracted_data <- bind_rows(all_results)
+  
+  # Add to the original data
+  ean_records_with_extraction <- bind_cols(
+    ean_records,
+    extracted_data %>% select(-remark)
+  )
+  
+  # Summary of extracted data
+  cat("\nExtraction Summary:\n")
+  
+  cat("\nAnimal Species Distribution:\n")
+  print(table(extracted_data$animal_species, useNA = "ifany"))
+  
+  cat("\nProduct Type Distribution:\n")
+  print(table(extracted_data$product_type, useNA = "ifany"))
+  
+  cat("\nProduct Subtype Distribution (top 10):\n")
+  subtype_counts <- sort(table(extracted_data$product_subtype, useNA = "ifany"), decreasing = TRUE)
+  print(head(subtype_counts, 10))
+  
+  cat("\nQuantity Units Distribution:\n")
+  print(table(extracted_data$units, useNA = "ifany"))
+}
+```
+
+## Save the Results
+
+Finally, we'll save the processed data for use in subsequent analyses.
+
+```{r save_results}
+# Save the enhanced data
+if (exists("ean_records_with_extraction")) {
+  output_path <- here::here("output", "intermediate files", "ean_records_with_product_types.rds")
+  saveRDS(ean_records_with_extraction, output_path)
+  cat("Results saved to:", output_path, "\n")
+  
+  # Also save a CSV for easy viewing
+  csv_path <- here::here("output", "intermediate files", "ean_product_types_summary.csv")
+  extracted_data %>%
+    group_by(animal_species, product_type, product_subtype) %>%
+    summarize(
+      count = n(),
+      avg_quantity = mean(quantity, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    arrange(desc(count)) %>%
+    write.csv(csv_path, row.names = FALSE)
+  
+  cat("Summary saved to:", csv_path, "\n")
+}
+```
+
+## Visualization of Results
+
+Let's create some visualizations to better understand the extracted data.
+
+```{r visualize_results, fig.width=10, fig.height=8}
+if (exists("extracted_data")) {
+  # Animal species distribution
+  ggplot(extracted_data %>% filter(!is.na(animal_species)), 
+         aes(x = animal_species, fill = animal_species)) +
+    geom_bar() +
+    labs(title = "Distribution of Animal Species", 
+         x = "Animal Species",
+         y = "Count") +
+    theme_minimal() +
+    theme(legend.position = "none")
+  
+  # Product type distribution
+  ggplot(extracted_data %>% filter(product_type != "unknown"), 
+         aes(x = product_type, fill = product_type)) +
+    geom_bar() +
+    labs(title = "Distribution of Product Types", 
+         x = "Product Type",
+         y = "Count") +
+    theme_minimal() +
+    theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  # Top product subtypes
+  top_subtypes <- extracted_data %>%
+    filter(product_subtype != "unknown") %>%
+    count(product_subtype) %>%
+    top_n(10, n) %>%
+    arrange(desc(n))
+  
+  ggplot(extracted_data %>%
+           filter(product_subtype %in% top_subtypes$product_subtype), 
+         aes(x = reorder(product_subtype, table(product_subtype)[product_subtype]), 
+             fill = product_type)) +
+    geom_bar() +
+    labs(title = "Top 10 Product Subtypes", 
+         x = "Product Subtype",
+         y = "Count") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  # Quantity distribution (for non-NA quantities)
+  if (sum(!is.na(extracted_data$quantity)) > 0) {
+    ggplot(extracted_data %>% filter(!is.na(quantity)), 
+           aes(x = quantity)) +
+      geom_histogram(bins = 30, fill = "steelblue") +
+      labs(title = "Distribution of Quantities", 
+           x = "Quantity",
+           y = "Count") +
+      theme_minimal()
+  }
+  
+  # Heatmap of animal species vs product type
+  ggplot(extracted_data %>% 
+           filter(animal_species != "none" & product_type != "unknown") %>%
+           count(animal_species, product_type), 
+         aes(x = product_type, y = animal_species, fill = n)) +
+    geom_tile() +
+    scale_fill_viridis_c() +
+    labs(title = "Heatmap of Animal Species by Product Type", 
+         x = "Product Type",
+         y = "Animal Species",
+         fill = "Count") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+```
+
+## Conclusion
+
+This analysis has processed the REMARKS field from EAN records to extract structured information about animal species, product types, processing methods, quantities, and units. The results have been saved for further analysis and integration with the ASF risk framework.
+
+Next steps might include:
+1. Refining the extraction model with more training data
+2. Integrating this data with other risk factors
+3. Creating more detailed visualizations by location, pathway, or other factors

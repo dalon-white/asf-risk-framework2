@@ -381,9 +381,9 @@ load_shared_params &lt;- function() {
 }
 
 # Try to load shared params
-shared_params &lt;- load_shared_params()</code></pre>
-<pre><code>## Loading shared parameters from 00_asf_risk_parameters.Rmd</code></pre>
-<pre class="r"><code># Use shared params if available, otherwise use script-specific params
+shared_params &lt;- load_shared_params()
+
+# Use shared params if available, otherwise use script-specific params
 if (!exists(&quot;params&quot;)) {
   if (!is.null(shared_params)) {
     params &lt;- shared_params
@@ -450,14 +450,9 @@ pathway_risk_geo &lt;- pathway_risk_brg_loc %&gt;%
     CBP_LAT = LAT,
     CBP_LON = LON,
     CBP_PORT_NAME = `Port of Entry Name`
-  )</code></pre>
-<pre><code>## Warning in left_join(., cbp_poe, by = c(CBP_PORT_NUMBER = &quot;CBP_CODE&quot;)): Detected an unexpected many-to-many relationship between `x` and
-## `y`.
-## ℹ Row 127 of `x` matches multiple rows in `y`.
-## ℹ Row 163 of `y` matches multiple rows in `x`.
-## ℹ If a many-to-many relationship is expected, set `relationship =
-##   &quot;many-to-many&quot;` to silence this warning.</code></pre>
-<pre class="r"><code># Step 2: Join with PPQ facilities for rows still missing coordinates
+  )
+
+# Step 2: Join with PPQ facilities for rows still missing coordinates
 pathway_risk_geo &lt;- pathway_risk_geo %&gt;%
   left_join(
     ppq_facilities %&gt;% 
@@ -505,10 +500,9 @@ if(nrow(missing_coords) &gt; 0 &amp;&amp; requireNamespace(&quot;tidygeocoder&qu
   cat(&quot;Found&quot;, nrow(missing_coords), &quot;rows with IATA codes but no coordinates.\n&quot;)
   cat(&quot;Consider installing the &#39;tidygeocoder&#39; package to look up these codes.\n&quot;)
   print(missing_coords %&gt;% dplyr::select(IATA_CODE) %&gt;% distinct())
-}</code></pre>
-<pre><code>## Passing 24 addresses to the Nominatim single address geocoder</code></pre>
-<pre><code>## Query completed in: 29.9 seconds</code></pre>
-<pre class="r"><code># Close database connections when done
+}
+
+# Close database connections when done
 dbDisconnect(db_conn)
 dbDisconnect(geo_conn)</code></pre>
 </div>
@@ -525,7 +519,7 @@ print(coords_summary)</code></pre>
 <pre><code>## # A tibble: 1 × 3
 ##   total_rows rows_with_coords percent_coverage
 ##        &lt;int&gt;            &lt;int&gt;            &lt;dbl&gt;
-## 1       2232             2151             96.4</code></pre>
+## 1       1731             1672             96.6</code></pre>
 <pre class="r"><code># Calculate risk coverage statistics
 risk_summary &lt;- pathway_risk_geo %&gt;%
   summarize(
@@ -537,7 +531,7 @@ print(risk_summary)</code></pre>
 <pre><code>## # A tibble: 1 × 3
 ##   total_risk risk_with_coords percent_risk
 ##        &lt;dbl&gt;            &lt;dbl&gt;        &lt;dbl&gt;
-## 1   6952166.         6905217.         99.3</code></pre>
+## 1  94434609.        94415857.          100</code></pre>
 <pre class="r"><code># Analyze coordinate sources
 source_summary &lt;- pathway_risk_geo %&gt;%
   mutate(
@@ -554,9 +548,9 @@ print(source_summary)</code></pre>
 <pre><code>## # A tibble: 3 × 3
 ##   coord_source     n percent
 ##   &lt;chr&gt;        &lt;int&gt;   &lt;dbl&gt;
-## 1 CBP           1799    80.6
-## 2 IATA           352    15.8
-## 3 Missing         81     3.6</code></pre>
+## 1 CBP           1397    80.7
+## 2 IATA           275    15.9
+## 3 Missing         59     3.4</code></pre>
 <pre class="r"><code># Check missing locations
 if(coords_summary$rows_with_coords &lt; coords_summary$total_rows) {
   cat(&quot;\nSample of locations still missing coordinates:\n&quot;)
@@ -576,8 +570,8 @@ if(coords_summary$rows_with_coords &lt; coords_summary$total_rows) {
 ##  4 &quot;Hidalgo&quot;                                            Airport - Aircraft - Pe…
 ##  5 &quot;Joint Base Andrews&quot;                                 Airport - Aircraft - Pe…
 ##  6 &quot;Joint Base McGuire-Dix-Lakehurst&quot;                   Airport - Aircraft - Pe…
-##  7 &quot;Travis AFB&quot;                                         Airport - Aircraft - Pe…
-##  8 &quot;TX Fort Worth Meacham International Airport (5589)&quot; Airport - Aircraft - Pe…
+##  7 &quot;TX Fort Worth Meacham International Airport (5589)&quot; Airport - Aircraft - Pe…
+##  8 &quot;Travis AFB&quot;                                         Airport - Aircraft - Pe…
 ##  9 &quot;Dublin IE Preclearance (7541) &quot;                     Airport - Aircraft - Pe…
 ## 10 &quot;Edmonton Preclearance (7924) &quot;                      Airport - Aircraft - Pe…
 ## # ℹ 13 more rows</code></pre>
@@ -612,7 +606,7 @@ removed_points &lt;- total_points - kept_points
 
 cat(sprintf(&quot;Filtered to %d points within US boundaries (%d removed)\n&quot;, 
           kept_points, removed_points))</code></pre>
-<pre><code>## Filtered to 2151 points within US boundaries (0 removed)</code></pre>
+<pre><code>## Filtered to 1672 points within US boundaries (0 removed)</code></pre>
 </div>
 <div id="summarize-data-for-spatial-layers" class="section level1">
 <h1>6. Summarize Data for Spatial Layers</h1>
@@ -734,103 +728,39 @@ spatial_layers &lt;- create_spatial_layers(
   save_files = TRUE,
   output_dir = port_risk_output_dir
 )</code></pre>
-<pre><code>## Created 15 spatial layers for different pathway combinations</code></pre>
-<pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
+<pre><code>## Created 5 spatial layers for different pathway combinations</code></pre>
 <pre><code>## Deleting layer `Air_bag_swi_per_current&#39; using driver `GPKG&#39;
 ## Writing layer `Air_bag_swi_per_current&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 176 features with 8 fields and geometry type Point.
-## Saved layer 1/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_current.gpkg</code></pre>
-<pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
+## Saved layer 1/5: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_current.gpkg</code></pre>
 <pre><code>## Deleting layer `Air_bag_swi_smu_current&#39; using driver `GPKG&#39;
 ## Writing layer `Air_bag_swi_smu_current&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_smu_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 176 features with 8 fields and geometry type Point.
-## Saved layer 2/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_smu_current.gpkg
+## Saved layer 2/5: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_smu_current.gpkg
 ## Deleting layer `Air_bag_swi_per_current&#39; using driver `GPKG&#39;
 ## Writing layer `Air_bag_swi_per_current&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 9 features with 8 fields and geometry type Point.
-## Saved layer 3/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_current.gpkg
-## Deleting layer `Cru_bag_swi_per_current&#39; using driver `GPKG&#39;
-## Writing layer `Cru_bag_swi_per_current&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Cru_bag_swi_per_current.gpkg&#39; using driver `GPKG&#39;
-## Writing 84 features with 8 fields and geometry type Point.
-## Saved layer 4/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Cru_bag_swi_per_current.gpkg
-## Deleting layer `Cru_bag_swi_smu_current&#39; using driver `GPKG&#39;
-## Writing layer `Cru_bag_swi_smu_current&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Cru_bag_swi_smu_current.gpkg&#39; using driver `GPKG&#39;
-## Writing 84 features with 8 fields and geometry type Point.
-## Saved layer 5/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Cru_bag_swi_smu_current.gpkg</code></pre>
-<pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Deleting layer `Exp_pac_fom_per_current&#39; using driver `GPKG&#39;
-## Writing layer `Exp_pac_fom_per_current&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_fom_per_current.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 6/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_fom_per_current.gpkg</code></pre>
-<pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Deleting layer `Exp_pac_fom_smu_current&#39; using driver `GPKG&#39;
-## Writing layer `Exp_pac_fom_smu_current&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_fom_smu_current.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 7/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_fom_smu_current.gpkg</code></pre>
-<pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
+## Saved layer 3/5: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_current.gpkg</code></pre>
 <pre><code>## Deleting layer `Exp_pac_fom_uns_current&#39; using driver `GPKG&#39;
 ## Writing layer `Exp_pac_fom_uns_current&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_fom_uns_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 8/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_fom_uns_current.gpkg</code></pre>
-<pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Deleting layer `Exp_pac_oth_pla_current&#39; using driver `GPKG&#39;
-## Writing layer `Exp_pac_oth_pla_current&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_oth_pla_current.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 9/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_oth_pla_current.gpkg</code></pre>
-<pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
+## Saved layer 4/5: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_fom_uns_current.gpkg</code></pre>
 <pre><code>## Deleting layer `Exp_pac_swi_per_current&#39; using driver `GPKG&#39;
 ## Writing layer `Exp_pac_swi_per_current&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_per_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 10/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_per_current.gpkg</code></pre>
-<pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Deleting layer `Exp_pac_swi_smu_current&#39; using driver `GPKG&#39;
-## Writing layer `Exp_pac_swi_smu_current&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_smu_current.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 11/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_smu_current.gpkg
-## Deleting layer `Mar_con_swi_com_current&#39; using driver `GPKG&#39;
-## Writing layer `Mar_con_swi_com_current&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_swi_com_current.gpkg&#39; using driver `GPKG&#39;
-## Writing 53 features with 8 fields and geometry type Point.
-## Saved layer 12/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_swi_com_current.gpkg
-## Deleting layer `Ped_bag_fom_uns_current&#39; using driver `GPKG&#39;
-## Writing layer `Ped_bag_fom_uns_current&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_fom_uns_current.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 13/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_fom_uns_current.gpkg
-## Deleting layer `Ped_bag_swi_per_current&#39; using driver `GPKG&#39;
-## Writing layer `Ped_bag_swi_per_current&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_swi_per_current.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 14/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_swi_per_current.gpkg
-## Deleting layer `Ped_bag_swi_smu_current&#39; using driver `GPKG&#39;
-## Writing layer `Ped_bag_swi_smu_current&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_swi_smu_current.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 15/15: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_swi_smu_current.gpkg
+## Saved layer 5/5: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_per_current.gpkg
 ## 
 ## Summary of spatial layers for scenario &#39;current&#39; (top 10 by risk):
-##                      layer_name scenario point_count   total_risk
-## Air_bag_swi_smu Air_bag_swi_smu  current         176 4280640.0093
-## Exp_pac_swi_smu Exp_pac_swi_smu  current          29 1911898.4022
-## Exp_pac_swi_per Exp_pac_swi_per  current          29  295631.1821
-## Mar_con_swi_com Mar_con_swi_com  current          53  181947.6356
-## Exp_pac_fom_uns Exp_pac_fom_uns  current          29   94394.2448
-## Air_bag_swi_per Air_bag_swi_per  current           9     529.8593
-## Cru_bag_swi_per Cru_bag_swi_per  current          84       0.0000
-## Cru_bag_swi_smu Cru_bag_swi_smu  current          84       0.0000
-## Exp_pac_fom_per Exp_pac_fom_per  current          29       0.0000
-## Exp_pac_fom_smu Exp_pac_fom_smu  current          29       0.0000
+##                      layer_name scenario point_count  total_risk
+## Exp_pac_swi_per Exp_pac_swi_per  current          29 62390295.68
+## Air_bag_swi_smu Air_bag_swi_smu  current         176 15574772.02
+## Exp_pac_fom_uns Exp_pac_fom_uns  current          29 13907535.57
+## Air_bag_swi_per Air_bag_swi_per  current           9    21460.13
 ## 
 ## Saved summary table to: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/layer_summary_current.csv</code></pre>
 </div>
@@ -973,78 +903,26 @@ distributed_risks &lt;- distribute_pathway_risks(
 <pre><code>## Deleting layer `risk_Air_bag_swi_per_1&#39; using driver `GPKG&#39;
 ## Writing layer `risk_Air_bag_swi_per_1&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Air_bag_swi_per_1.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_personal_use_or_consumption → Air_bag_swi_per_1 with risk 140175.360544
+## Writing 3573 features with 2 fields and geometry type Unknown (any).
+## Processed Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_personal_use_or_consumption → Air_bag_swi_per_1 with risk 2521793.772998
 ## Deleting layer `risk_Air_bag_swi_smu_2&#39; using driver `GPKG&#39;
 ## Writing layer `risk_Air_bag_swi_smu_2&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Air_bag_swi_smu_2.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_smuggled_commercial_products → Air_bag_swi_smu_2 with risk 4280640.009344
+## Writing 3573 features with 2 fields and geometry type Unknown (any).
+## Processed Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_smuggled_commercial_products → Air_bag_swi_smu_2 with risk 15574772.023223
 ## Deleting layer `risk_Air_bag_swi_per_1&#39; using driver `GPKG&#39;
 ## Writing layer `risk_Air_bag_swi_per_1&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Air_bag_swi_per_1.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Airport___Aircraft___Person___Pre_Clearance_baggage_swine_products_by_products_personal_use_or_consumption → Air_bag_swi_per_1 with risk 529.859330
-## Deleting layer `risk_Cru_bag_swi_per_1&#39; using driver `GPKG&#39;
-## Writing layer `risk_Cru_bag_swi_per_1&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Cru_bag_swi_per_1.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Cruise_ship_baggage_swine_products_by_products_personal_use_or_consumption → Cru_bag_swi_per_1 with risk 0.000000
-## Deleting layer `risk_Cru_bag_swi_smu_2&#39; using driver `GPKG&#39;
-## Writing layer `risk_Cru_bag_swi_smu_2&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Cru_bag_swi_smu_2.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Cruise_ship_baggage_swine_products_by_products_smuggled_commercial_products → Cru_bag_swi_smu_2 with risk 0.000000
-## Deleting layer `risk_Exp_pac_fom_per_1&#39; using driver `GPKG&#39;
-## Writing layer `risk_Exp_pac_fom_per_1&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_fom_per_1.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_fomite_personal_effects → Exp_pac_fom_per_1 with risk 0.000000
-## Deleting layer `risk_Exp_pac_fom_smu_2&#39; using driver `GPKG&#39;
-## Writing layer `risk_Exp_pac_fom_smu_2&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_fom_smu_2.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_fomite_smuggled_commercial_products → Exp_pac_fom_smu_2 with risk 0.000000
-## Deleting layer `risk_Exp_pac_fom_uns_3&#39; using driver `GPKG&#39;
-## Writing layer `risk_Exp_pac_fom_uns_3&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_fom_uns_3.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_fomite_unspecified_feed → Exp_pac_fom_uns_3 with risk 94394.244780
-## Deleting layer `risk_Exp_pac_oth_pla_4&#39; using driver `GPKG&#39;
-## Writing layer `risk_Exp_pac_oth_pla_4&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_oth_pla_4.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_other_products_plasma → Exp_pac_oth_pla_4 with risk 0.000000
-## Deleting layer `risk_Exp_pac_swi_per_5&#39; using driver `GPKG&#39;
-## Writing layer `risk_Exp_pac_swi_per_5&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_swi_per_5.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_swine_products_by_products_personal_use_or_consumption → Exp_pac_swi_per_5 with risk 295631.182100
-## Deleting layer `risk_Exp_pac_swi_smu_6&#39; using driver `GPKG&#39;
-## Writing layer `risk_Exp_pac_swi_smu_6&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_swi_smu_6.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_swine_products_by_products_smuggled_commercial_products → Exp_pac_swi_smu_6 with risk 1911898.402162
-## Deleting layer `risk_Mar_con_swi_com_1&#39; using driver `GPKG&#39;
-## Writing layer `risk_Mar_con_swi_com_1&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Mar_con_swi_com_1.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Maritime_Port___Vessel___Cargo___CBP_container_swine_products_by_products_commercial → Mar_con_swi_com_1 with risk 181947.635556
-## Deleting layer `risk_Ped_bag_fom_uns_1&#39; using driver `GPKG&#39;
-## Writing layer `risk_Ped_bag_fom_uns_1&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Ped_bag_fom_uns_1.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Pedestrian_SB_baggage_fomite_unspecified_feed → Ped_bag_fom_uns_1 with risk 0.000000
-## Deleting layer `risk_Ped_bag_swi_per_2&#39; using driver `GPKG&#39;
-## Writing layer `risk_Ped_bag_swi_per_2&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Ped_bag_swi_per_2.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Pedestrian_SB_baggage_swine_products_by_products_personal_use_or_consumption → Ped_bag_swi_per_2 with risk 0.000000
-## Deleting layer `risk_Ped_bag_swi_smu_3&#39; using driver `GPKG&#39;
-## Writing layer `risk_Ped_bag_swi_smu_3&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Ped_bag_swi_smu_3.gpkg&#39; using driver `GPKG&#39;
-## Writing 13486 features with 2 fields and geometry type Unknown (any).
-## Processed Pedestrian_SB_baggage_swine_products_by_products_smuggled_commercial_products → Ped_bag_swi_smu_3 with risk 0.000000</code></pre>
+## Writing 3573 features with 2 fields and geometry type Unknown (any).
+## Processed Airport___Aircraft___Person___Pre_Clearance_baggage_swine_products_by_products_personal_use_or_consumption → Air_bag_swi_per_1 with risk 21460.129382
+## Writing layer `risk_Exp_pac_fom_uns_1&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_fom_uns_1.gpkg&#39; using driver `GPKG&#39;
+## Writing 3573 features with 2 fields and geometry type Unknown (any).
+## Processed Express_courier_package_fomite_unspecified_feed → Exp_pac_fom_uns_1 with risk 13907535.568613
+## Writing layer `risk_Exp_pac_swi_per_2&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_swi_per_2.gpkg&#39; using driver `GPKG&#39;
+## Writing 3573 features with 2 fields and geometry type Unknown (any).
+## Processed Express_courier_package_swine_products_by_products_personal_use_or_consumption → Exp_pac_swi_per_2 with risk 62390295.681158</code></pre>
 <pre class="r"><code># Save a compact version of the catalog for Shiny app use
 risk_summary &lt;- distributed_risks$catalog %&gt;%
   dplyr::select(

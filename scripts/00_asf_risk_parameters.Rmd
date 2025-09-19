@@ -69,7 +69,7 @@ asf_params <- list(
   # Spatial settings
   # Default is 30000 for production, can be increased for testing
   # 30000 is used for high-resolution final output
-  US_grid_cell_size = 30000
+  US_grid_cell_size = 60000
 )
 
 # Save the params object for use by other scripts
@@ -98,7 +98,7 @@ load_asf_params <- function() {
       risk_quantification = "0_1",
       n_sims_for_volume = 100,
       pathway_volumes_filename = "volume_of_risk_by_pathway",
-      US_grid_cell_size = 30000
+      US_grid_cell_size = 60000
       # Add minimal defaults needed for scripts to run independently
     )
   }

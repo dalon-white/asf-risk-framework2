@@ -2,9 +2,9 @@ PATHWAY,how_many,entry_type
 Post Entry Quarantine,,post_entry_quarantine
 Pedestrian,,passenger
 Non-Port - Non-Transport - Express Carrier - SITC,,eco
-Non-Port - Non-Transport - EPP - EPP,,enhanced_pax_processing?
-Non-Port - Non-Transport - EC - EC,,entry_conditions?
-Non-Port - Non-Transport - DPP - DPP,,some_pax_processing?
+Non-Port - Non-Transport - EPP - EPP,,unknown
+Non-Port - Non-Transport - EC - EC,,unknown
+Non-Port - Non-Transport - DPP - DPP,,unknown
 Non-Port - Non-Transport - Commerce Site - SITC,,commercial
 Maritime Port - Vessel - Mail - CBP,,mail
 Maritime Port - Vessel - Conveyance - CBP,,commercial
@@ -27,4 +27,4 @@ Airport - Aircraft - Express Carrier - CBP,,eco
 Airport - Aircraft - Conveyance - CBP,,commercial
 Airport - Aircraft - Cargo - CBP,,commercial
 Airport - Aircraft - Cargo - PIS,,commercial
-Ambiguous Pathway,,ambiguous
+Ambiguous Pathway,,unknown

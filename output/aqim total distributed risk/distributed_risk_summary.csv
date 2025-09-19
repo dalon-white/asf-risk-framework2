@@ -1,16 +1,6 @@
 "layer_name","short_name","pathway","container","product_pathway","product_subpathway","total_risk","cell_count"
-"Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_smuggled_commercial_products","Air_bag_swi_smu_2","Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",4280640.00934441,13486
-"Express_courier_package_swine_products_by_products_smuggled_commercial_products","Exp_pac_swi_smu_6","Express_courier","package","swine products/by-products","smuggled commercial products",1911898.40216198,13486
-"Express_courier_package_swine_products_by_products_personal_use_or_consumption","Exp_pac_swi_per_5","Express_courier","package","swine products/by-products","personal use or consumption",295631.182100198,13486
-"Maritime_Port___Vessel___Cargo___CBP_container_swine_products_by_products_commercial","Mar_con_swi_com_1","Maritime Port - Vessel - Cargo - CBP","container","swine products/by-products","commercial",181947.635555556,13486
-"Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_personal_use_or_consumption","Air_bag_swi_per_1","Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",140175.360544034,13486
-"Express_courier_package_fomite_unspecified_feed","Exp_pac_fom_uns_3","Express_courier","package","fomite","unspecified feed",94394.2447797619,13486
-"Airport___Aircraft___Person___Pre_Clearance_baggage_swine_products_by_products_personal_use_or_consumption","Air_bag_swi_per_1","Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",529.859329859994,13486
-"Cruise_ship_baggage_swine_products_by_products_personal_use_or_consumption","Cru_bag_swi_per_1","Cruise_ship","baggage","swine products/by-products","personal use or consumption",0,13486
-"Cruise_ship_baggage_swine_products_by_products_smuggled_commercial_products","Cru_bag_swi_smu_2","Cruise_ship","baggage","swine products/by-products","smuggled commercial products",0,13486
-"Express_courier_package_fomite_personal_effects","Exp_pac_fom_per_1","Express_courier","package","fomite","personal effects",0,13486
-"Express_courier_package_fomite_smuggled_commercial_products","Exp_pac_fom_smu_2","Express_courier","package","fomite","smuggled commercial products",0,13486
-"Express_courier_package_other_products_plasma","Exp_pac_oth_pla_4","Express_courier","package","other products","plasma",0,13486
-"Pedestrian_SB_baggage_fomite_unspecified_feed","Ped_bag_fom_uns_1","Pedestrian SB","baggage","fomite","unspecified feed",0,13486
-"Pedestrian_SB_baggage_swine_products_by_products_personal_use_or_consumption","Ped_bag_swi_per_2","Pedestrian SB","baggage","swine products/by-products","personal use or consumption",0,13486
-"Pedestrian_SB_baggage_swine_products_by_products_smuggled_commercial_products","Ped_bag_swi_smu_3","Pedestrian SB","baggage","swine products/by-products","smuggled commercial products",0,13486
+"Express_courier_package_swine_products_by_products_personal_use_or_consumption","Exp_pac_swi_per_2","Express_courier","package","swine products/by-products","personal use or consumption",62390295.6811579,3573
+"Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_smuggled_commercial_products","Air_bag_swi_smu_2","Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",15574772.0232227,3573
+"Express_courier_package_fomite_unspecified_feed","Exp_pac_fom_uns_1","Express_courier","package","fomite","unspecified feed",13907535.5686126,3573
+"Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_personal_use_or_consumption","Air_bag_swi_per_1","Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",2521793.77299786,3573
+"Airport___Aircraft___Person___Pre_Clearance_baggage_swine_products_by_products_personal_use_or_consumption","Air_bag_swi_per_1","Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",21460.1293823969,3573

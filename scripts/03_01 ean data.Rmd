@@ -68,13 +68,6 @@ if (!exists("params")) {
 
 
 ```{r ARM AQIM data}
-
-db_conn <- dbConnect(odbc::odbc(),.connection_string = 
-                      "Driver=SQL Server;
-                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
-                        Database=PPQ_AQI_ARMDMV2;
-                        trusted_connection=yes")
-
 ean_cols <- c(
   "ID",
   "COMMODITY_ID",
@@ -136,6 +129,15 @@ commodity_cols <- c(
   "QUANTITY_UNITS_NAME"
 )
 
+#columns from the brg_pathway table that have more colloquial explanations to PATHWAY
+pathway_cols <- c(
+  "PATHWAY",
+  "DISPLAY_NAME",
+  "PORT_TYPE",
+  "INSPECTION_TARGET",
+  "MODE_OF_TRANSPORT",
+  "DEFAULT_EXCLUSION_OPTIONS"
+)
 #-- Pull AQIM inspection records from ARM  ---- 
 ean <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_EAN]")) |> 
               dplyr::select(all_of(ean_cols)) |> 
@@ -157,27 +159,55 @@ commodity <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2
 conveyance <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_CONVEYANCE]")) |>
               dplyr::select(all_of(conveyance_cols)) |>
               rename(CONVEYANCE_ID = ID)
-            
+
+#-- Load Bridge Pathway dataset ----
+pathway_ref <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_PATHWAY]")) |> 
+              dplyr::select(all_of(pathway_cols))
+
+# Join ean records with commodity table info
+## Identify columns to join by
 intersect_cols <- intersect(colnames(ean), colnames(commodity))
 ean_records_tmp <- ean |>
   left_join(commodity, by = intersect_cols, relationship = "many-to-many")
 
+# Join ean and commodity with inspection details
+## identify columns to join by
 intersect_cols <- intersect(colnames(ean_records_tmp), colnames(inspections))
 ean_records_tmp <-ean_records_tmp |>
   left_join(inspections, by = intersect_cols, relationship = "many-to-many") 
 
+# Join ean, commodity, and inspection details with conveyance details
+## identify columns to join by
 intersect_cols <- intersect(colnames(ean_records_tmp), colnames(conveyance))
 ean_records <- ean_records_tmp |>
   left_join(conveyance, by = intersect_cols, relationship = "many-to-many")
 
+# Join ean, commodity, inspection, and conveyance details with pathway details
+## identify columns to join by
+intersect_cols <- intersect(colnames(ean_records), colnames(pathway_ref))
+ean_records <- ean_records |>
+  left_join(pathway_ref, by = intersect_cols, relationship = "many-to-many")
+
+#using intersect columns above will ensure that multiple overlapping columns won't create a .x and .y version of the same column
 
 ```
 
 # Collect data
-I have played with filtering in the database vs. collecting and filtering in R. It seems that filtering in the database is much faster, especially when the dataset is large. However, for some operations that require complex manipulations or functions not supported by the database, it might be necessary to collect the data first and then filter in R. The filtering by datetime is particularly easier when done in R due to the need for lubridate functions.
+I have compared filtering in the database vs. collecting and filtering in R. Collecting is only a couple of seconds, so it's fast enough and filtering is much easier for some operations that require complex manipulations or functions not supported by the SQL. The filtering by datetime is particularly easier when done in R due to the need for lubridate functions and having to otherwise manipulate the datetime fiscal year & month columns separately.
 
 ```{r}
+
+#open connection
+db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+
 ean_records <- ean_records |> collect()
+
+# Disconnect from the database
+dbDisconnect(db_conn)
 ```
 
 
@@ -221,7 +251,7 @@ print(na_comparison)
 
 
 # Calculate time difference between ISSUED_DATETIME and INSPECTION_DATETIME
-datetime_diff <- head(test,10000) %>%
+datetime_diff <- head(ean_records, 10000) %>%
   # Filter to records where both datetime fields are present
   filter(!is.na(ISSUED_DATETIME) & !is.na(INSPECTION_DATETIME)) %>%
   # Calculate the difference in hours
@@ -277,98 +307,98 @@ print("Distribution by time difference category:")
 print(time_diff_distribution)
 ```
 
+In most cases, it looks like inspection datetime and issued datetime are pretty much the same, with 5% delayed issuance dates >7 days
+So, results suggest filter by INSPECTION_DATETIME first then by ISSUED_DATETIME if needed
 
-filter using the params$years
+Filter using the params$years:
+  Will call the years parameter here. The years parameter is used for the WADS codes when calculating the volume for AQIM-based pathways. By calling it here, this will ensure that we are comparing predicted volumes through AQIM+WADS for a given time to the volume of EAN-related products for the same time frame.
 
-Can't just filter by the datetime because it needs lubridate() to manipulate the datetime. Instead, can filter by fiscal month and year, which are reported, but the needed datetimes need to be converted first
-
-Will call the years parameter here. The years parameter is used for the WADS codes when calculating the volume for AQIM-based pathways. By calling it here, this will ensure that we are comparing predicted volumes through AQIM+WADS for a given time to the volume of EAN-related products for the same time frame.
-  - as of right now, the years parameter is in years, whereas it is needed in months/years format here.
-```{r convert calendar dates to fiscal}
-# Load necessary libraries
-library(lubridate)
-library(dplyr)
-
-fiscal_date_to_calendar_month <- function(fiscal_date) {
-  tryCatch({
-    if(is.na(fiscal_date)) return(NA)
-    
-    # Ensure we're working with a Date object
-    if(!inherits(fiscal_date, c("Date", "POSIXct", "POSIXlt"))) {
-      fiscal_date <- as.Date(fiscal_date)
-    }
-    
-    as.character((as.integer(format(fiscal_date, "%m")) - 10) %% 12 + 1)
-  }, error = function(e) {
-    NA  # Return NA if conversion fails
-  })
-}
-
-fiscal_date_to_calendar_year <- function(fiscal_date) {
-  tryCatch({
-    if(is.na(fiscal_date)) return(NA)
-    
-    # Ensure we're working with a Date object
-    if(!inherits(fiscal_date, c("Date", "POSIXct", "POSIXlt"))) {
-      fiscal_date <- as.Date(fiscal_date)
-    }
-    
-    as.character(
-      ifelse(as.integer(format(fiscal_date, "%m")) >= 10,
-             as.integer(format(fiscal_date, "%Y")) + 1,
-             as.integer(format(fiscal_date, "%Y")))
+### Filter by INSPECTION_DATETIME then ISSUED_DATETIME
+```{r}
+# Filter to records within specified years
+filter_years <- function(data) {
+  # First ensure we have at least one datetime field
+  filtered_data <- data %>% 
+    filter(!is.na(INSPECTION_DATETIME) | !is.na(ISSUED_DATETIME))
+  
+  # Extract years from datetime fields
+  filtered_data <- filtered_data %>%
+    mutate(
+      inspection_year = year(INSPECTION_DATETIME),
+      issued_year = year(ISSUED_DATETIME)
     )
-  }, error = function(e) {
-    NA  # Return NA if conversion fails
-  })
+  
+  # Filter by year using logical OR approach
+  filtered_data <- filtered_data %>%
+    filter(
+      # Keep if INSPECTION_DATETIME year is in range
+      (!is.na(inspection_year) & inspection_year %in% params$years) |
+      # OR if INSPECTION_DATETIME is NA but ISSUED_DATETIME year is in range
+      (is.na(inspection_year) & !is.na(issued_year) & issued_year %in% params$years)
+    )
+  
+  # Remove the temporary year columns
+  filtered_data <- filtered_data %>%
+    dplyr::select(-inspection_year, -issued_year)
+  
+  return(filtered_data)
 }
 
-begin_year_to_date <- function(year){
-  as.Date(paste0(year,"-01-01"), format="%Y-%m-%d")
-}
-
-# Assume your data frame is called df and the date column is 'date'
-begin_date <- as.Date(year_to_date(min(params$years)))  # Ensure it's a Date type
-
-# Fiscal year: If month >= 10, fiscal year is year + 1, else year
-begin_year <- fiscal_date_to_calendar_year(begin_date)
-
-# Fiscal month: October is 1, November is 2, ..., September is 12
-begin_month <- fiscal_date_to_calendar_month(begin_date)
-
-# Convert end year to Dec 31st of that year
-end_year_to_date <- function(year){
-  as.Date(paste0(year,"-12-31"), format="%Y-%m-%d")
-}
-
-# Assume your data frame is called df and the date column is 'date'
-end_date <- as.Date(end_year_to_date(max(params$years))) # Ensure it's a Date type
-
-# Fiscal year: If month >= 10, fiscal year is year + 1, else year
-end_year <- fiscal_date_to_calendar_year(end_date)
-
-# Fiscal month: October is 1, November is 2, ..., September is 12
-end_month <- fiscal_date_to_calendar_month(end_date)
-
+# Apply the function
+ean_records <- filter_years(ean_records)
 ```
 
-Apply to the data
+## separate the data into layers
+
+This is to separate the data into layers that can be used to model risk. The layers are provided i nthe entry type reference table. This converts the PATHWAY to specific modes of entry
+ - passenger
+ - eco
+ - mail
+ - commercial
+ - unknown
+"unknown" need to be defined. There's 'Ambiguous', and some non-port/non-transport that end in EPP, DPP, and EC. Not sure if any are relevant to this analysis. For now they are coded just as unknown in the reference file.
+
+Load pathway to entry type reference table:
+
+```{r load pathway to entry type reference table}
+setwd(here::here('input', 'data', 'PATHWAY name reference'))
+# Load the pathway reference table
+pathway_ref <- read.csv("pathway to entry type reference table.csv", stringsAsFactors = FALSE)
+ean_records <- ean_records %>%
+  left_join(pathway_ref, by = "PATHWAY", relationship = "many-to-one")
+
+get_entry_type <- function(pathway_str) {
+  for (i in 1:nrow(pathway_ref)) {
+    ref_pathway <- pathway_ref$PATHWAY[i]
+    if (grepl(ref_pathway, pathway_str, fixed = TRUE)) {
+      return(pathway_ref$entry_type[i])
+    }
+  }
+  return(NA_character_)
+}
+
+# Apply the function to each pathway in ean_records
+ean_records <- ean_records %>%
+  rowwise() %>%
+  mutate(entry_type = get_entry_type(PATHWAY)) %>%
+  ungroup()
+```
+
+### use brg_pathway to separate
+
+### Conveyance table can separate out private and commercial aircraft
 ```{r}
-#filter to on or after begin date
-ean_records <- ean_records  |>
-  filter(INSPECTION_DATETIME_FISCAL_YEAR > begin_year | (INSPECTION_DATETIME_FISCAL_YEAR == begin_year & INSPECTION_DATETIME_FISCAL_MONTH >= begin_month)
-  )
-
-#filter to at or before end date
-ean_records <- ean_records |> 
-  filter(INSPECTION_DATETIME_FISCAL_YEAR < end_year | (INSPECTION_DATETIME_FISCAL_YEAR == end_year & INSPECTION_DATETIME_FISCAL_MONTH <= end_month)
-)
+ean_records <- ean_records |> mutate(MODE_OF_TRANSPORT = 
+case_when(
+  CONVEYANCE_TYPE == "AIRCRAFT" & !is.na(AIRCRAFT_TYPE) ~ paste(MODE_OF_TRANSPORT, AIRCRAFT_TYPE, sep = " - "),
+  .default = MODE_OF_TRANSPORT
+  ))
 ```
-# determine if there is risk
 
-```{r}
-test <- ean_records |> collect()
-```
+
+# Determine if there is risk
+
+Next step is to determine if there is any risk associated with the EAN record. This is through both the country of origin and the commodity type.
 
 ## Evaluate country
 
@@ -393,7 +423,7 @@ if(params$affected_countries == "current") {
 
 filter to  eans that are from that country
 ```{r isolate records from risky countries}
-ean_records <- ean_records |> mutate(country_code = countrycode(COUNTRY_OF_ORIGIN_NAME, 
+ean_records <- ean_records |> mutate(country_code = countrycode::countrycode(COUNTRY_OF_ORIGIN_NAME, 
                                   origin = "country.name", 
                                   destination = "iso3c")
                                   )
@@ -401,38 +431,23 @@ ean_records <- ean_records |> mutate(country_code = countrycode(COUNTRY_OF_ORIGI
 ean_records <- ean_records |> filter(country_code %in% affected_countries)
 ```
 
-# test collecting
-```{r}
-test <- ean_records |> collect()
-```
+
 ## Evaluate product
+The type of product will be stored in COMMODITY_DISPLAY_NAME, just like in AQIM data.
 
+```{r what kind of products descriptions for eans}
+ View(ean_records |> filter(grepl("swine|porcine|pork|hooves|meat|ASF|CSF|blood|manure|dirt|feed",tolower(COMMODITY_DISPLAY_NAME))) |> count(REMARKS))
 
-load pathway to entry type reference table
-```{r load pathway to entry type reference table}
-setwd(here::here('input', 'data', 'PATHWAY name reference'))
-# Load the pathway reference table
-pathway_ref <- read.csv("pathway to entry type reference table.csv", stringsAsFactors = FALSE)
-ean_records <- ean_records %>%
-  left_join(pathway_ref, by = "PATHWAY", relationship = "many-to-one")
-
-get_entry_type <- function(pathway_str) {
-  for (i in 1:nrow(pathway_ref)) {
-    ref_pathway <- pathway_ref$PATHWAY[i]
-    if (grepl(ref_pathway, pathway_str, fixed = TRUE)) {
-      return(pathway_ref$entry_type[i])
-    }
-  }
-  return(NA_character_)
-}
-
-# Apply the function to each pathway in ean_records
-system.time(ean_records <- ean_records %>%
-  rowwise() %>%
-  mutate(entry_type = get_entry_type(PATHWAY)) %>%
-  ungroup()
-)
+print("most dont have a descriptive COMMODITY_DISPLAY_NAME like AQIM data")
 ```
+
+```{r save for remarks analysis}
+setwd(here::here("output","intermediate files"))
+saveRDS(ean_records, "ean_records.rds")
+
+```
+
+
 
 load product reference list
 ```{r identify products of risk}
@@ -462,6 +477,7 @@ filter to eans that are that product
 ean_records <- ean_records |> mutate(commodity_name = toupper(COMMODITY_DISPLAY_NAME))
 ean_records <- ean_records |> filter(commodity_name %in% affected_products)
 ```
+
 
 
 

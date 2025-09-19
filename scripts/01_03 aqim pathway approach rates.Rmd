@@ -793,7 +793,8 @@ for (i in 1:nrow(product_combos)) {
       adjusted_product_risk$adjusted_upper[full_indices] <- pmin(
         adjusted_product_risk$adjusted_upper[full_indices],
         replacement_value * 2
-      )      # Log the replacements      cat(sprintf(
+      )      # Log the replacements
+      cat(sprintf(
         "Replaced %d near-zero values for %s/%s/%s/%s with %g (half of 25th percentile %g)\n",
         length(full_indices),
         current_combo$pathway,
@@ -802,7 +803,7 @@ for (i in 1:nrow(product_combos)) {
         current_combo$product_subpathway,
         replacement_value,
         perc_25
-
+           ))
     } else {
       # If all values in this combination are below threshold
       cat(sprintf(
@@ -849,7 +850,8 @@ adjusted_risk_summary <- adjusted_product_risk %>%
     n_locations = n(),
     .groups = "drop"
   ) %>%
-  # Add additional fields needed by the pipeline  mutate(
+  # Add additional fields needed by the pipeline 
+  mutate(
     scenario = params$affected_countries,
     date_created = Sys.Date(),
     method = "glm",
