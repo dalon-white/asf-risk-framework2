@@ -329,24 +329,16 @@ case_when(
 Next step is to determine if there is any risk associated with the EAN record. This is through both the country of origin and the commodity type.
 
 ## Evaluate country
-
+ - this only makes sense to use the current list of asf affected countries; otherwise, EANs wouldn't exist.
 load country reference list
 ```{r identify countries of risk}
 setwd(here::here("input","data","asf affected countries by year"))
-if(params$affected_countries == "current") {
-  affected_countries <- read.csv("asf affected countries.csv") |> 
+affected_countries <- read.csv("asf affected countries.csv") |> 
     mutate(Year = as.numeric(Year)) |> 
     filter(Year %in% params$years) |> 
     filter(Disease == "ASF") |>
     distinct(ISO3_CODE) |> 
     pull(ISO3_CODE)
-} else if (params$affected_countries == "mex_can") {
-  affected_countries <- c("MEX", "CAN")
-} else if (params$affected_countries == "other") {
-  affected_countries <- params$other_affected_countries
-} else {
-  stop("Invalid value for params$affected_countries")
-}
 ```
 
 filter to  eans that are from that country
