@@ -772,11 +772,6 @@ dat <- aqim_data %>%
   left_join(asf_matches_aqim, relationship = "many-to-many") %>%
   mutate(IS_ASF_RISK = ifelse(is.na(IS_ASF_RISK), "NO", IS_ASF_RISK))
 
-# # Apply risk classification to ARM records separately
-# dat_arm <- arm_aqim_records %>% 
-#   left_join(asf_matches, by = c("ID", "COMMODITY_ID"), relationship = "many-to-many") %>% 
-#   mutate(IS_ASF_RISK = ifelse(is.na(IS_ASF_RISK), "NO", IS_ASF_RISK))
-
 ```
 ## Convert the entry_type to commercial if size is large
 

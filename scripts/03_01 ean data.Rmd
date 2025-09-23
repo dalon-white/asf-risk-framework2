@@ -135,11 +135,6 @@ inspection_cols <- c(
   "NUMBER_OF_PASSENGERS"
   )
 
-ean_records |> count("CARGO_DESTINATION_ZIP_CODE",
-  "POSTMARK_COUNTRY_NAME",
-  "STATE_OF_ORIGIN_NAME",
-  "SUBSITE_LOCATION_NAME")
-
 commodity_cols <- c(
   "ID",
   "INSPECTION_ID",
@@ -517,4 +512,11 @@ write.csv(at_risk_eans, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/a
 saveRDS(at_risk_eans, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed.csv")
 
 print("Processed EAN records saved to large file data folder for further analysis.")
+```
+# Report out what unit types were considered to have ASF
+
+```{r save unit types}
+setwd(here::here('output','units reported in ARM'))
+ean_units_summary <- at_risk_eans |> filter(TOTAL_KG > 0) |> count(QUANTITY_UNITS_NAME)
+write.csv(ean_units_summary, paste0('units converted in EAN data_',params$affected_countries,'.csv'))
 ```

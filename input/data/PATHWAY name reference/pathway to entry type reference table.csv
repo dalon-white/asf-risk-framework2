@@ -1,6 +1,6 @@
 PATHWAY,how_many,entry_type,aqim_based
 Post Entry Quarantine,,post_entry_quarantine,
-Pedestrian,north and south,passenger,1
+Pedestrian,,passenger,1
 Non-Port - Non-Transport - Express Carrier - SITC,,eco,
 Non-Port - Non-Transport - EPP - EPP,,unknown,
 Non-Port - Non-Transport - EC - EC,,unknown,

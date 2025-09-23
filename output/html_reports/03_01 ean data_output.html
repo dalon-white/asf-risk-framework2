@@ -11,9 +11,9 @@
 
 <meta name="author" content="Dalon White" />
 
-<meta name="date" content="2025-07-27" />
+<meta name="date" content="2025-09-12" />
 
-<title>aqim pathway approach rates</title>
+<title>EAN data</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,32 +350,21 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">aqim pathway approach rates</h1>
+<h1 class="title toc-ignore">EAN data</h1>
 <h4 class="author">Dalon White</h4>
-<h4 class="date">2025-07-27</h4>
+<h4 class="date">2025-09-12</h4>
 
 </div>
 
 
 <ul>
-<li>% estimate of each pathway type for each
-AQIM-conveyance/pathway</li>
+<li>prepped data already has the pathway, entry type, etc., and risk as
+no/low/med/high</li>
+<li>need to use country of origin and product origin to determine if the
+inspection has any asf risk</li>
+<li>then model the kg of product with asf risk by pathway, entry type,
+location, country of origin, product pathway, product subpathway</li>
 </ul>
-<!-- -->
-<ul>
-<li><p>Only use 2022-2024 data</p>
-<ul>
-<li><p>Use the reference table (at risk product names.csv) to assign
-every commodity intercepted to a pathway &amp; subpathway</p></li>
-<li><p>Further modify the reference table that identifies every product
-with additional columns for PoE, Conveyance, Subconveyance, Edge as
-possible</p></li>
-<li><p>For each PoE, Conveyance, Subconveyance, Edge, Subpathway,
-Pathway, estimate the rate of entry</p></li>
-</ul></li>
-</ul>
-<div id="setup" class="section level1">
-<h1>setup</h1>
 <pre class="r"><code># Function to load the shared parameters if available
 load_shared_params &lt;- function() {
   params_file &lt;- here::here(&quot;output&quot;, &quot;intermediate files&quot;, &quot;asf_risk_params.rds&quot;)
@@ -399,105 +388,51 @@ if (!exists(&quot;params&quot;)) {
   } else {
     # Default params specific to this script
     params &lt;- list(
-      begin_date = &quot;2021-01-01&quot;,
-      end_date = &quot;2024-12-31&quot;,
+      affected_countries = &quot;current&quot;, # &quot;current&quot; or &quot;mex_can&quot; or &quot;other&quot; 
+      years = 2023:2024, #The years to include which countries have ASF
+      other_affected_countries = c(&quot;Country1&quot;, &quot;Country2&quot;),
       affected_product_file = &quot;asf affected product name reference table.csv&quot;,
       affected_country_file = &quot;asf affected countries.csv&quot;,
-      quantity_units_to_kg = &quot;quantity units to kilograms reference table.csv&quot;,
-      pathway_volume_smuggling_reference_table_filename = &quot;product pathway by volume reference table&quot;
+      pathway_volume_smuggling_reference_table_filename = &quot;product pathway by volume reference table&quot;,
+      quantity_units_to_kg = &quot;quantity units to kilograms reference table.csv&quot;
     )
   }
 }</code></pre>
-<pre class="r"><code>NB_state_cd &lt;- c(&quot;AK&quot;,&quot;ID&quot;,&quot;ME&quot;,&quot;MI&quot;,&quot;MN&quot;,&quot;MT&quot;,&quot;NH&quot;,&quot;NY&quot;,&quot;ND&quot;,&quot;OH&quot;,&quot;PA&quot;,&quot;VT&quot;,&quot;WA&quot;)
-SB_state_cd &lt;- c(&quot;CA&quot;,&quot;AZ&quot;,&quot;NM&quot;,&quot;TX&quot;)</code></pre>
-<div id="filtering-by-dates-within-the-dplyr-package" class="section level2">
-<h2>Filtering by dates within the dplyr package</h2>
-<p>Can’t just filter by the datetime because it needs lubridate() to
-manipulate the datetime. Instead, can filter by fiscal month and year,
-which are reported, but the needed datetimes need to be converted
-first</p>
-<pre class="r"><code># Load necessary libraries
-library(lubridate)
-library(dplyr)
-
-fiscal_date_to_calendar_month &lt;- function(fiscal_date) {
-  tryCatch({
-    if(is.na(fiscal_date)) return(NA)
-    
-    # Ensure we&#39;re working with a Date object
-    if(!inherits(fiscal_date, c(&quot;Date&quot;, &quot;POSIXct&quot;, &quot;POSIXlt&quot;))) {
-      fiscal_date &lt;- as.Date(fiscal_date)
-    }
-    
-    as.character((as.integer(format(fiscal_date, &quot;%m&quot;)) - 10) %% 12 + 1)
-  }, error = function(e) {
-    NA  # Return NA if conversion fails
-  })
-}
-
-fiscal_date_to_calendar_year &lt;- function(fiscal_date) {
-  tryCatch({
-    if(is.na(fiscal_date)) return(NA)
-    
-    # Ensure we&#39;re working with a Date object
-    if(!inherits(fiscal_date, c(&quot;Date&quot;, &quot;POSIXct&quot;, &quot;POSIXlt&quot;))) {
-      fiscal_date &lt;- as.Date(fiscal_date)
-    }
-    
-    as.character(
-      ifelse(as.integer(format(fiscal_date, &quot;%m&quot;)) &gt;= 10,
-             as.integer(format(fiscal_date, &quot;%Y&quot;)) + 1,
-             as.integer(format(fiscal_date, &quot;%Y&quot;)))
-    )
-  }, error = function(e) {
-    NA  # Return NA if conversion fails
-  })
-}
-
-# Assume your data frame is called df and the date column is &#39;date&#39;
-begin_date &lt;- as.Date(params$begin_date)  # Ensure it&#39;s a Date type
-
-# Fiscal year: If month &gt;= 10, fiscal year is year + 1, else year
-begin_year &lt;- fiscal_date_to_calendar_year(begin_date)
-
-# Fiscal month: October is 1, November is 2, ..., September is 12
-begin_month &lt;- fiscal_date_to_calendar_month(begin_date)
-
-# Assume your data frame is called df and the date column is &#39;date&#39;
-end_date &lt;- as.Date(params$end_date)  # Ensure it&#39;s a Date type
-
-# Fiscal year: If month &gt;= 10, fiscal year is year + 1, else year
-end_year &lt;- fiscal_date_to_calendar_year(end_date)
-
-# Fiscal month: October is 1, November is 2, ..., September is 12
-end_month &lt;- fiscal_date_to_calendar_month(end_date)</code></pre>
-<pre class="r"><code># Load ASF affected country name reference table
-setwd(here::here(&#39;input&#39;, &#39;data&#39;, &#39;asf affected countries by year&#39;))
-asf_country_ref &lt;- read.csv(params$affected_country_file, stringsAsFactors = FALSE)
-
-
-# Load ASF affected product name reference table
-setwd(here::here(&#39;input&#39;, &#39;data&#39;, &#39;asf affected product names&#39;))
-asf_product_ref &lt;- read.csv(params$affected_product_file, stringsAsFactors = FALSE)
-quantity_units_to_kg &lt;- read.csv(params$quantity_units_to_kg, stringsAsFactors = FALSE)</code></pre>
-</div>
-<div id="arm-aqim-data" class="section level2">
-<h2>ARM AQIM data</h2>
-<p>get arm data</p>
-<pre class="r"><code>db_conn &lt;- dbConnect(odbc::odbc(),.connection_string = 
+<pre class="r"><code>#open connection
+db_conn &lt;- dbConnect(odbc::odbc(),.connection_string = 
                       &quot;Driver=SQL Server;
                         Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
                         Database=PPQ_AQI_ARMDMV2;
-                        trusted_connection=yes&quot;)
+                        trusted_connection=yes&quot;)</code></pre>
+<pre class="r"><code>ean_cols &lt;- c(
+  &quot;ID&quot;,
+  &quot;COMMODITY_ID&quot;,
+   &quot;CONVEYANCE_ID&quot;,
+  &quot;ISSUED_DATETIME&quot;,
+  &quot;ISSUED_DATETIME_FISCAL_YEAR&quot;,
+  &quot;ISSUED_DATETIME_FISCAL_MONTH&quot;,
+  &quot;CATEGORY&quot;,
+  &quot;SUBCATEGORY&quot;,
+  &quot;PATHWAY_ID&quot;, #PATHWAY ID can distinguish commerce and express carrier; probably need a reference table because the naming conventions aren&#39;t consistent
+  &quot;PATHWAY&quot;,
+   &quot;REMARKS&quot;,
+   &quot;DESTINATION_OF_ARTICLES_ID&quot;,
+     &quot;REGULATORY_ACTION_TYPE&quot;
+)
+
+conveyance_cols &lt;- c(
+  &quot;ID&quot;,
+  &quot;INSPECTION_ID&quot;,
+  &quot;CONVEYANCE_TYPE&quot;,
+  &quot;AIRCRAFT_TYPE&quot;,
+  &quot;VEHICLE_TYPE&quot; #if !NULL, then it&#39;s a vehicle. Need to explore if it includes cargo trucks
+)
 
 inspection_cols &lt;- c(
-  &quot;ID&quot;, 
+  &quot;ID&quot;,
+
   &quot;INSPECTION_NUMBER&quot;, 
-  &quot;CATEGORY&quot;, 
-  &quot;SUBCATEGORY&quot;, 
   &quot;IS_AQIM&quot;, 
-  &quot;PATHWAY_ID&quot;, 
-  &quot;PATHWAY&quot;,
   &quot;PORT_OF_ENTRY_ID&quot;,
   
   &quot;INSPECTION_DATETIME&quot;, 
@@ -509,12 +444,18 @@ inspection_cols &lt;- c(
   &quot;COUNTRY_OF_ORIGIN_NAME&quot;, 
  # &quot;COUNTRY_OF_RESIDENCE_NAME&quot;, 
   
+# All of these destination fields are empty for EANs; I checked.
  # &quot;FINAL_DESTINATION_STATE_NAME&quot;, 
  # &quot;FINAL_DESTINATION_STATE_ID&quot;, 
  # &quot;FINAL_DESTINATION_CITY&quot;, 
  # &quot;PASSENGER_DISTANCE_DESTINATION_NAME&quot;,
-  &quot;NUMBER_OF_PASSENGERS&quot;)
-
+  # &quot;CARGO_DESTINATION_ZIP_CODE&quot;,
+  # &quot;POSTMARK_COUNTRY_NAME&quot;,
+  # &quot;STATE_OF_ORIGIN_NAME&quot;,
+  # &quot;SUBSITE_LOCATION_NAME&quot;,
+ 
+  &quot;NUMBER_OF_PASSENGERS&quot;
+  )
 
 commodity_cols &lt;- c(
   &quot;ID&quot;,
@@ -530,399 +471,266 @@ commodity_cols &lt;- c(
   &quot;QUANTITY_UNITS_NAME&quot;
 )
 
-
-#-- Pull AQIM inspection records from ARM  ---- 
-system.time(arm_aqim &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_INSPECTION]&quot;)) |&gt; 
-              dplyr::filter(CATEGORY == &quot;AQIM&quot;) |&gt;
-              dplyr::select(inspection_cols) |&gt; 
-              #rename to fit AQAS data structure
-              rename(edge_origin = COUNTRY_OF_ORIGIN_NAME,
-                      group_size = NUMBER_OF_PASSENGERS
-           )
-)</code></pre>
-<pre><code>##    user  system elapsed 
-##    0.00    0.00    0.06</code></pre>
-<pre class="r"><code>#-- Load Bridge Commodity dataset ----
-system.time(commodity &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_COMMODITY]&quot;)) |&gt; 
-              dplyr::select(commodity_cols) |&gt; 
-              dplyr::rename(COMMODITY_ID = ID,
-              #rename to match AQAS data structure
-                            product_origin = COUNTRY_OF_ORIGIN_NAME)
-            )</code></pre>
-<pre><code>##    user  system elapsed 
-##    0.02    0.00    0.02</code></pre>
-<pre class="r"><code>arm_aqim_records &lt;- arm_aqim |&gt; left_join(commodity, by = c(&quot;ID&quot; = &quot;INSPECTION_ID&quot;), relationship = &quot;many-to-many&quot;)
-
-# #filter to pathway of interest
-# system.time(arm_aqim_records &lt;- arm_aqim_records |&gt; dplyr::filter(PATHWAY %in% params$pathway)
-# )
-
-#filter to on or after begin date
-system.time(arm_aqim_records &lt;- arm_aqim_records  |&gt;
-  filter(INSPECTION_DATETIME_FISCAL_YEAR &gt; begin_year | (INSPECTION_DATETIME_FISCAL_YEAR == begin_year &amp; INSPECTION_DATETIME_FISCAL_MONTH &gt;= begin_month)
-  )
-)</code></pre>
-<pre><code>##    user  system elapsed 
-##    0.01    0.00    0.02</code></pre>
-<pre class="r"><code>#filter to at or before end date
-system.time(arm_aqim_records &lt;- arm_aqim_records |&gt; 
-  filter(INSPECTION_DATETIME_FISCAL_YEAR &lt; end_year | (INSPECTION_DATETIME_FISCAL_YEAR == end_year &amp; INSPECTION_DATETIME_FISCAL_MONTH &lt;= end_month)
-  )
-)</code></pre>
-<pre><code>##    user  system elapsed 
-##       0       0       0</code></pre>
-<pre class="r"><code>#collect records
-system.time(arm_aqim_records &lt;- arm_aqim_records |&gt; collect()
-            )</code></pre>
-<pre><code>##    user  system elapsed 
-##    1.75    0.19   26.75</code></pre>
-<pre class="r"><code>system.time(arm_aqim_records &lt;- arm_aqim_records %&gt;%
-  mutate(
-    CALENDAR_MONTH = lubridate::month(INSPECTION_DATETIME),
-    CALENDAR_YEAR = lubridate::year(INSPECTION_DATETIME )
-  )
-)</code></pre>
-<pre><code>##    user  system elapsed 
-##   15.38    0.04   16.78</code></pre>
-<pre class="r"><code>arm_aqim_records &lt;- arm_aqim_records %&gt;%
-  mutate(
-    PATHWAY = case_when(
-      INSPECTION_LOCATION_STATE_CODE %in% NB_state_cd &amp; grepl(&quot;Land Border&quot;, PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, &quot; NB&quot;),
-      INSPECTION_LOCATION_STATE_CODE %in% SB_state_cd &amp; grepl(&quot;Land Border&quot;, PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, &quot; SB&quot;),
-      TRUE ~ PATHWAY
-    )
-  )</code></pre>
-<pre class="r"><code>arm_aqim_records &lt;- arm_aqim_records %&gt;% 
-  mutate(
-    edge_origin = countrycode(edge_origin, 
-                                  origin = &quot;country.name&quot;, 
-                                  destination = &quot;iso3c&quot;),
-    product_origin = countrycode(product_origin, 
-                                    origin = &quot;country.name&quot;, 
-                                    destination = &quot;iso3c&quot;)
-  )</code></pre>
-<pre><code>## Warning: There were 4 warnings in `mutate()`.
-## The first warning was:
-## ℹ In argument: `edge_origin = countrycode(edge_origin, origin = &quot;country.name&quot;, destination = &quot;iso3c&quot;)`.
-## Caused by warning:
-## ! Some values were not matched unambiguously: Kosovo, Micronesia, Netherlands Antilles, Not Specified, St. Martin, United Kingdom of Great Britain and N. Ireland, XQ
-## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
-</div>
-</div>
-<div id="aqas-aqim-data" class="section level1">
-<h1>AQAS AQIM data</h1>
-<p>Will have to get old AQAS data as well, and make sure it matches
-naming structures</p>
-<pre class="r"><code>db_conn = DBI::dbConnect(
-  odbc::odbc(),
-  .connection_string =
-    &quot;Driver=SQL Server;
-                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
-                        Database=PPQ_AQI_AQAS_DW;
-                        trusted_connection=yes&quot;
-  )</code></pre>
-</div>
-<div id="function-to-collect-aqas-data-for-each-pathway" class="section level1">
-<h1>Function to collect AQAS data for each pathway</h1>
-<p>This function will collect the AQAS data for each pathway, and then
-join it with the commodity data. It will also rename the columns to
-match the ARM AQIM data structure. It will also filter the data to only
-include the relevant columns and add a PATHWAY column to identify the
-pathway type. It will also convert the quantity units to kilograms if
-they are labeled “Each” and calculate the total kilograms for each
-commodity on the assumption that “Each” weights 0.5kg (the instructions
-given for labeling kg if a fruit).</p>
-<pre class="r"><code>aqas_aqim_func &lt;- function(insp_data, commod_data, pathway_name, 
-                           month, year, group_size, action_count, qmi_count, clean_treat_count,
-                           passenger_origin, item_origin) {
-  # First check if the group_size column exists in the data
-  avail_cols &lt;- colnames(insp_data)
-  
-  # Create a select_cols vector with columns that definitely exist
-  select_cols &lt;- c(&quot;AQIM_FORM_ID&quot;, &quot;LOCATION&quot;, &quot;PORT_CD&quot;, &quot;STATE_CD&quot;, month, year, action_count)
-  
-  # Conditionally add columns that may or may not exist
-  if(group_size %in% avail_cols) {
-    select_cols &lt;- c(select_cols, group_size)
-  }
-  if(&quot;LOCATION_ID&quot; %in% avail_cols) {
-    select_cols &lt;- c(select_cols, &quot;LOCATION_ID&quot;)
-  }
-  if(qmi_count %in% avail_cols) {
-    select_cols &lt;- c(select_cols, qmi_count)
-  }
-  if(clean_treat_count %in% avail_cols) {
-    select_cols &lt;- c(select_cols, clean_treat_count)
-  }
-  if(passenger_origin %in% avail_cols) {
-    select_cols &lt;- c(select_cols, passenger_origin)
-  }
-  if(item_origin %in% avail_cols) {
-    select_cols &lt;- c(select_cols, item_origin)
-  }
-
-  
-  # Now select only the columns that actually exist
-  insp_df &lt;- insp_data %&gt;% 
-    dplyr::select(all_of(select_cols)) %&gt;%
-    mutate(PATHWAY = pathway_name) %&gt;%
-    relocate(PATHWAY, .after = AQIM_FORM_ID)
-  
-  # Create a list of rename mappings, including only those that exist
-  rename_list &lt;- list(
-    &quot;CALENDAR_MONTH&quot; = month,
-    &quot;CALENDAR_YEAR&quot; = year,
-    &quot;INSPECTION_LOCATION_NAME&quot; = &quot;LOCATION&quot;,
-    &quot;INSPECTION_LOCATION_STATE_CODE&quot; = &quot;STATE_CD&quot;
-  )
-  
-  # Add conditional renames
-  if(group_size %in% avail_cols) {
-    rename_list[[&quot;group_size&quot;]] &lt;- group_size
-  }
-  if(&quot;LOCATION_ID&quot; %in% avail_cols) {
-    rename_list[[&quot;INSPECTION_LOCATION_ID&quot;]] &lt;- &quot;LOCATION_ID&quot;
-  }
-  if(action_count %in% avail_cols) {
-    rename_list[[&quot;actions&quot;]] &lt;- action_count
-  }
-  if(qmi_count %in% avail_cols) {
-    rename_list[[&quot;qmis&quot;]] &lt;- qmi_count
-  }
-  if(clean_treat_count %in% avail_cols) {
-    rename_list[[&quot;ct_count&quot;]] &lt;- clean_treat_count
-  }
-  if(passenger_origin %in% avail_cols) {
-    rename_list[[&quot;edge_origin&quot;]] &lt;- passenger_origin
-  }
-  if(item_origin %in% avail_cols) {
-    rename_list[[&quot;product_origin&quot;]] &lt;- item_origin
-  }
-  
-  # Apply the renames that are applicable
-  insp_df &lt;- insp_df %&gt;% rename(!!!rename_list)
-  
-  # Process commodity data as before
-  commod_df &lt;- commod_data %&gt;% 
-    dplyr::select(AQIM_FORM_ID, ITEM, QUANTITY, UNIT, ACTN_TAKEN) %&gt;%
-    filter(!ACTN_TAKEN == &quot;Inspected and Released&quot;)
-  
-  # Join the data as before
-  df &lt;- insp_df %&gt;%
-    left_join(commod_df, by = &quot;AQIM_FORM_ID&quot;, relationship = &quot;many-to-many&quot;) %&gt;%
-    rename(&quot;ID&quot; = &quot;AQIM_FORM_ID&quot;)
-  
-  return(df)
-}</code></pre>
-<pre class="r"><code>insp_data &lt;- tbl(db_conn,sql(&#39;SELECT
-                      *
-                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_PEDESTRIAN_MV]&#39;))
-
-commod_data &lt;- tbl(db_conn,sql(&#39;SELECT
-                      *
-                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_PEDESTRIAN_ITEM_MV]&#39;))
-
-ped &lt;- aqas_aqim_func(insp_data,
-                      commod_data,
-                      pathway_name = &quot;Pedestrian&quot;,
-                      month = &quot;MON&quot;,
-                      year = &quot;CALENDAR_YR&quot;,
-                      group_size = &quot;NUM_GRP&quot;,
-                      action_count = &quot;ACTION_CNT&quot;,
-                      qmi_count = &quot;QMI_CNT&quot;,
-                      clean_treat_count = &quot;CT_CNT&quot;,
-                      passenger_origin = &quot;PAX_ORIGIN_CD&quot;,
-                      item_origin = &quot;ITEM_ORIGIN_CD&quot;)
-
-ped &lt;- collect(ped)
-
-##NB pedestrian does not exist
-#View(ped %&gt;% count(INSPECTION_LOCATION_STATE_CODE))</code></pre>
-<pre class="r"><code>insp_data &lt;- tbl(db_conn,sql(&#39;SELECT
-                      *
-                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_EXP_CARRIER_MV]&#39;))
-                     
-commod_data &lt;- tbl(db_conn,sql(&#39;SELECT
-                      *
-                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_EXP_CARRIER_ITEM_MV]&#39;))
-
-eco &lt;- aqas_aqim_func(insp_data,
-                      commod_data,
-                      pathway_name = &quot;Express_courier&quot;,
-                      month = &quot;MON&quot;,
-                      year = &quot;CALENDAR_YR&quot;,
-                      group_size = &quot;NUM_GRP&quot;,
-                      action_count = &quot;ACTION_CNT&quot;,
-                      qmi_count = &quot;QMI_CNT&quot;,
-                      clean_treat_count = &quot;CT_CNT&quot;,
-                      passenger_origin = &quot;COUNTRY_CD&quot;,
-                      item_origin = &quot;PARCEL_ORIGIN_CD&quot;)
-
-eco &lt;- collect(eco)</code></pre>
-<pre class="r"><code>insp_data &lt;- tbl(db_conn,sql(&#39;SELECT
-                      *
-                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_SHIP_MV]&#39;))
-                     
-commod_data &lt;- tbl(db_conn,sql(&#39;SELECT
-                      *
-                     FROM [PPQ_AQI_AQAS_DW].[DW_AQAS].[AQIM_SHIP_ITEM_MV]&#39;))
-
-ship &lt;- aqas_aqim_func(insp_data,
-                      commod_data,
-                      pathway_name = &quot;Cruise_ship&quot;,
-                      month = &quot;MON&quot;,
-                      year = &quot;CALENDAR_YR&quot;,
-                      group_size = &quot;NUM_PAX&quot;,
-                      action_count = &quot;ACTION_CNT&quot;,
-                      qmi_count = &quot;QMI_CNT&quot;,
-                      clean_treat_count = &quot;CT_CNT&quot;,
-                      passenger_origin = &quot;COUNTRY_CD&quot;,
-                      item_origin = &quot;PARCEL_ORIGIN_CD&quot;)
-
-ship &lt;- collect(ship)</code></pre>
-<div id="bind-aqas-aqim-data-together" class="section level2">
-<h2>Bind aqas aqim data together</h2>
-<pre class="r"><code>aqas_aqim &lt;- dplyr::bind_rows(ped, eco, ship)
-
-# change ITEM name to fit ARM data structure
-aqas_aqim &lt;- aqas_aqim %&gt;%
-  rename(COMMODITY_DISPLAY_NAME = ITEM)</code></pre>
-</div>
-<div id="correct-location-names-to-be-compatible-with-arm-wads-location-names" class="section level2">
-<h2>Correct location names to be compatible with ARM WADS location
-names</h2>
-<pre class="r"><code>setwd(here::here(&#39;input&#39;, &#39;data&#39;, &#39;aqas to arm port location name crosswalk&#39;))
-aqas_location_ref &lt;- read.csv(&quot;aqas to arm port location name crosswalk.csv&quot;, stringsAsFactors = FALSE)
-aqas_aqim &lt;- aqas_aqim %&gt;%
-  left_join(aqas_location_ref, by = c(&quot;INSPECTION_LOCATION_NAME&quot; = &quot;AQAS_location_name&quot;), relationship = &quot;many-to-one&quot;) 
-
-aqas_aqim &lt;- aqas_aqim %&gt;%
-  mutate(INSPECTION_LOCATION_NAME = coalesce(ARM_location_name, INSPECTION_LOCATION_NAME)) %&gt;%
-  dplyr::select(-ARM_location_name, port_type)
-
-#View(aqas_aqim)</code></pre>
-<pre class="r"><code># Count observations by year and pathway, then filter out low-count combinations
-low_data_combinations &lt;- aqas_aqim %&gt;%
-  count(PATHWAY, CALENDAR_YEAR) %&gt;%
-  filter(n &lt; 500)
-
-# Apply the filter to remove low-observation year-pathway combinations
-aqas_aqim_filtered &lt;- aqas_aqim %&gt;%
-  anti_join(low_data_combinations, by = c(&quot;PATHWAY&quot;, &quot;CALENDAR_YEAR&quot;))
-
-# Quick summary of records removed
-records_before &lt;- nrow(aqas_aqim)
-records_after &lt;- nrow(aqas_aqim_filtered)
-percent_kept &lt;- round(records_after / records_before * 100, 1)
-
-cat(sprintf(&quot;Filtered out %d observations (%.1f%% data retained)\n&quot;, 
-            records_before - records_after,
-            percent_kept))</code></pre>
-<pre><code>## Filtered out 307 observations (99.9% data retained)</code></pre>
-<pre class="r"><code>aqas_aqim &lt;- aqas_aqim_filtered</code></pre>
-</div>
-<div id="separate-land-border-to-nb-sb" class="section level2">
-<h2>Separate land border to NB-SB</h2>
-<p>This will separate the land border pathway into NB and SB pathways
-based on the STATE_CD of the inspection location. It will append “NB” or
-“SB” to the PATHWAY name.</p>
-<pre class="r"><code>aqas_aqim &lt;- aqas_aqim %&gt;%
-  mutate(
-    PATHWAY = case_when(
-      INSPECTION_LOCATION_STATE_CODE %in% NB_state_cd &amp; grepl(&quot;Pedestrian&quot;, PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, &quot; NB&quot;),
-      INSPECTION_LOCATION_STATE_CODE %in% SB_state_cd &amp; grepl(&quot;Pedestrian&quot;, PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, &quot; SB&quot;),
-      TRUE ~ PATHWAY
-    )
-  )</code></pre>
-</div>
-<div id="standardize-unit-column-name" class="section level2">
-<h2>standardize unit column name</h2>
-<pre class="r"><code>aqas_aqim &lt;- aqas_aqim %&gt;%
-  rename(QUANTITY_UNITS_NAME = UNIT)</code></pre>
-</div>
-</div>
-<div id="combine-aqas-and-aqim-data" class="section level1">
-<h1>Combine AQAS and AQIM data</h1>
-<pre class="r"><code># Find matching columns between the two dataframes
-matching_columns &lt;- intersect(names(aqas_aqim), names(arm_aqim_records))
-
-# See which columns are unique to each dataframe
-aqas_only_columns &lt;- setdiff(names(aqas_aqim), names(arm_aqim_records))
-arm_only_columns &lt;- setdiff(names(arm_aqim_records), names(aqas_aqim))
-
-# Print the results for inspection
-print(&quot;Common columns between both datasets:&quot;)</code></pre>
-<pre><code>## [1] &quot;Common columns between both datasets:&quot;</code></pre>
-<pre class="r"><code>print(matching_columns)</code></pre>
-<pre><code>##  [1] &quot;ID&quot;                             &quot;PATHWAY&quot;                       
-##  [3] &quot;INSPECTION_LOCATION_NAME&quot;       &quot;INSPECTION_LOCATION_STATE_CODE&quot;
-##  [5] &quot;CALENDAR_MONTH&quot;                 &quot;CALENDAR_YEAR&quot;                 
-##  [7] &quot;group_size&quot;                     &quot;INSPECTION_LOCATION_ID&quot;        
-##  [9] &quot;edge_origin&quot;                    &quot;COMMODITY_DISPLAY_NAME&quot;        
-## [11] &quot;QUANTITY&quot;                       &quot;QUANTITY_UNITS_NAME&quot;           
-## [13] &quot;product_origin&quot;</code></pre>
-<pre class="r"><code>print(&quot;Columns only in AQAS data:&quot;)</code></pre>
-<pre><code>## [1] &quot;Columns only in AQAS data:&quot;</code></pre>
-<pre class="r"><code>print(aqas_only_columns)</code></pre>
-<pre><code>## [1] &quot;PORT_CD&quot;    &quot;actions&quot;    &quot;qmis&quot;       &quot;ct_count&quot;   &quot;ACTN_TAKEN&quot;
-## [6] &quot;port_type&quot;</code></pre>
-<pre class="r"><code>print(&quot;Columns only in ARM data:&quot;)</code></pre>
-<pre><code>## [1] &quot;Columns only in ARM data:&quot;</code></pre>
-<pre class="r"><code>print(arm_only_columns)</code></pre>
-<pre><code>##  [1] &quot;INSPECTION_NUMBER&quot;                &quot;CATEGORY&quot;                        
-##  [3] &quot;SUBCATEGORY&quot;                      &quot;IS_AQIM&quot;                         
-##  [5] &quot;PATHWAY_ID&quot;                       &quot;PORT_OF_ENTRY_ID&quot;                
-##  [7] &quot;INSPECTION_DATETIME&quot;              &quot;INSPECTION_DATETIME_FISCAL_YEAR&quot; 
-##  [9] &quot;INSPECTION_DATETIME_FISCAL_MONTH&quot; &quot;COMMODITY_ID&quot;                    
-## [11] &quot;IS_SMUGGLED&quot;                      &quot;IS_CONTAMINANT_FOUND&quot;            
-## [13] &quot;COMMODITY_CLASSIFICATION&quot;         &quot;REF_COMMODITY_ID&quot;                
-## [15] &quot;MISC_ANIMAL_COMMODITY_NAME&quot;</code></pre>
-<pre class="r"><code>column_types &lt;- data.frame(
-  column_name = matching_columns,
-  aqas_type = sapply(matching_columns, function(col) class(aqas_aqim[[col]])[1]),
-  arm_type = sapply(matching_columns, function(col) class(arm_aqim_records[[col]])[1]),
-  stringsAsFactors = FALSE
+#columns from the brg_pathway table that have more colloquial explanations to PATHWAY
+pathway_cols &lt;- c(
+  &quot;PATHWAY&quot;,
+  &quot;DISPLAY_NAME&quot;,
+  &quot;PORT_TYPE&quot;,
+  &quot;INSPECTION_TARGET&quot;,
+  &quot;MODE_OF_TRANSPORT&quot;,
+  &quot;DEFAULT_EXCLUSION_OPTIONS&quot;
 )
+#-- Pull AQIM inspection records from ARM  ---- 
+ean &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_EAN]&quot;)) |&gt; 
+              dplyr::select(all_of(ean_cols)) |&gt; 
+              #rename to fit AQAS data structure
+              rename(EAN_ID = ID)
 
-# Identify columns with mismatched types
-mismatched_columns &lt;- column_types[column_types$aqas_type != column_types$arm_type, ]
-print(&quot;Columns with mismatched types:&quot;)</code></pre>
-<pre><code>## [1] &quot;Columns with mismatched types:&quot;</code></pre>
-<pre class="r"><code>print(mismatched_columns)</code></pre>
-<pre><code>##                                   column_name aqas_type  arm_type
-## ID                                         ID character integer64
-## group_size                         group_size   numeric integer64
-## INSPECTION_LOCATION_ID INSPECTION_LOCATION_ID   numeric integer64</code></pre>
-<pre class="r"><code># Fix mismatched columns
-for (i in 1:nrow(mismatched_columns)) {
-  col &lt;- mismatched_columns$column_name[i]
-  aqas_type &lt;- mismatched_columns$aqas_type[i]
-  arm_type &lt;- mismatched_columns$arm_type[i]
+inspections &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_FACT_INSPECTION]&quot;)) |&gt; 
+              dplyr::filter(CATEGORY != &quot;AQIM&quot;) |&gt;
+              dplyr::select(all_of(inspection_cols)) |&gt;
+              rename(INSPECTION_ID = ID,
+                    #rename to match AQAS data structure
+                     product_origin = COUNTRY_OF_ORIGIN_NAME)
+ 
+#-- Load Bridge Commodity dataset ----
+commodity &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_COMMODITY]&quot;)) |&gt; 
+              dplyr::select(all_of(commodity_cols)) |&gt;
+              rename(COMMODITY_ID = ID)
+
+conveyance &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_CONVEYANCE]&quot;)) |&gt;
+              dplyr::select(all_of(conveyance_cols)) |&gt;
+              rename(CONVEYANCE_ID = ID)
+
+#-- Load Bridge Pathway dataset ----
+pathway_tbl &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_PATHWAY]&quot;)) |&gt; 
+              dplyr::select(all_of(pathway_cols))
+
+# Join ean records with commodity table info
+## Identify columns to join by
+intersect_cols &lt;- intersect(colnames(ean), colnames(commodity))
+ean_records_tmp1 &lt;- ean |&gt;
+  left_join(commodity, by = intersect_cols, relationship = &quot;many-to-many&quot;)
+
+# Join ean and commodity with inspection details
+## identify columns to join by
+intersect_cols &lt;- intersect(colnames(ean_records_tmp1), colnames(inspections))
+ean_records_tmp2 &lt;- ean_records_tmp1 |&gt;
+  left_join(inspections, by = intersect_cols, relationship = &quot;many-to-many&quot;) 
+
+# Join ean, commodity, and inspection details with conveyance details
+## identify columns to join by
+intersect_cols &lt;- intersect(colnames(ean_records_tmp2), colnames(conveyance))
+ean_records_tmp3 &lt;- ean_records_tmp2 |&gt;
+  left_join(conveyance, by = intersect_cols, relationship = &quot;many-to-many&quot;)
+
+# Join ean, commodity, inspection, and conveyance details with pathway details
+## identify columns to join by
+intersect_cols &lt;- intersect(colnames(ean_records_tmp3), colnames(pathway_tbl))
+ean_records &lt;- ean_records_tmp3 |&gt;
+  left_join(pathway_tbl, by = intersect_cols, relationship = &quot;many-to-many&quot;)
+
+#using intersect columns above will ensure that multiple overlapping columns won&#39;t create a .x and .y version of the same column</code></pre>
+<div id="collect-data" class="section level1">
+<h1>Collect data</h1>
+<p>I have compared filtering in the database vs. collecting and
+filtering in R. Collecting is only a couple of seconds, so it’s fast
+enough and filtering is much easier for some operations that require
+complex manipulations or functions not supported by the SQL. The
+filtering by datetime is particularly easier when done in R due to the
+need for lubridate functions and having to otherwise manipulate the
+datetime fiscal year &amp; month columns separately.</p>
+<pre class="r"><code># Collect data into R
+system.time(ean_records &lt;- ean_records |&gt; collect())</code></pre>
+<pre><code>##    user  system elapsed 
+##    1.12    0.16   48.38</code></pre>
+<pre class="r"><code># Disconnect from the database
+dbDisconnect(db_conn)</code></pre>
+</div>
+<div id="filter-to-relevant-records" class="section level1">
+<h1>filter to relevant records</h1>
+<div id="filter-by-years" class="section level2">
+<h2>filter by years</h2>
+<div id="see-00_03-to-find-why-filter-by-inspection_datetime-then-issued_datetime" class="section level3">
+<h3>see 00_03 to find why filter by INSPECTION_DATETIME then
+ISSUED_DATETIME</h3>
+<p>In most cases, it looks like inspection datetime and issued datetime
+are pretty much the same, with 5% delayed EAN-issuance dates &gt;7 days
+later than the inspection date So, results suggest filter by
+INSPECTION_DATETIME first then by ISSUED_DATETIME if needed</p>
+<p>Additionally: Filter using the params$years: Will call the years
+parameter here. The years parameter is used for the WADS codes when
+calculating the volume for AQIM-based pathways. By calling it here, this
+will ensure that we are comparing predicted volumes through AQIM+WADS
+for a given time to the volume of EAN-related products for the same time
+frame.</p>
+</div>
+<div id="filter-by-inspection_datetime-then-issued_datetime" class="section level3">
+<h3>Filter by INSPECTION_DATETIME then ISSUED_DATETIME</h3>
+<pre class="r"><code># Filter to records within specified years
+filter_years &lt;- function(data) {
+  # First ensure we have at least one datetime field
+  filtered_data &lt;- data %&gt;% 
+    filter(!is.na(INSPECTION_DATETIME) | !is.na(ISSUED_DATETIME))
   
-  # Choose the most appropriate type based on data needs
-  if (aqas_type == &quot;character&quot; &amp;&amp; arm_type == &quot;integer64&quot;) {
-    arm_aqim_records[[col]] &lt;- as.character(arm_aqim_records[[col]])
-  } else if (aqas_type == &quot;factor&quot; &amp;&amp; arm_type == &quot;character&quot;) {
-    aqas_aqim[[col]] &lt;- as.character(aqas_aqim[[col]])
-  } else if (aqas_type == &quot;numeric&quot; &amp;&amp; arm_type == &quot;integer64&quot;) {
-    arm_aqim_records[[col]] &lt;- as.numeric(arm_aqim_records[[col]])
-  } else if (aqas_type == &quot;integer&quot; &amp;&amp; arm_type == &quot;numeric&quot;) {
-    aqas_aqim[[col]] &lt;- as.integer(aqas_aqim[[col]])
-  } else if (aqas_type == &quot;character&quot; &amp;&amp; arm_type == &quot;double&quot;) {
-    aqas_aqim[[col]] &lt;- as.character(aqas_aqim[[col]])
-  } else if (inherits(aqas_aqim[[col]], &quot;Date&quot;) &amp;&amp; !inherits(arm_aqim_records[[col]], &quot;Date&quot;)) {
-    arm_aqim_records[[col]] &lt;- as.Date(arm_aqim_records[[col]])
-  } else if (!inherits(aqas_aqim[[col]], &quot;Date&quot;) &amp;&amp; inherits(arm_aqim_records[[col]], &quot;Date&quot;)) {
-    aqas_aqim[[col]] &lt;- as.Date(aqas_aqim[[col]])
-  }
-  # Add more conversions as needed
+  # Extract years from datetime fields
+  filtered_data &lt;- filtered_data %&gt;%
+    mutate(
+      inspection_year = year(INSPECTION_DATETIME),
+      issued_year = year(ISSUED_DATETIME)
+    )
+  
+  # Filter by year using logical OR approach
+  filtered_data &lt;- filtered_data %&gt;%
+    filter(
+      # Keep if INSPECTION_DATETIME year is in range
+      (!is.na(inspection_year) &amp; inspection_year %in% params$years) |
+      # OR if INSPECTION_DATETIME is NA but ISSUED_DATETIME year is in range
+      (is.na(inspection_year) &amp; !is.na(issued_year) &amp; issued_year %in% params$years)
+    )
+  
+  # Remove the temporary year columns
+  filtered_data &lt;- filtered_data %&gt;%
+    dplyr::select(-inspection_year, -issued_year)
+  
+  return(filtered_data)
 }
 
-aqim_data &lt;- dplyr::bind_rows(aqas_aqim, arm_aqim_records)</code></pre>
+# Apply the function
+ean_records &lt;- filter_years(ean_records)</code></pre>
+</div>
+</div>
+<div id="separate-the-data-into-layers" class="section level2">
+<h2>separate the data into layers</h2>
+<p>This is to separate the data into layers that can be used to model
+risk. The layers are provided i nthe entry type reference table. This
+converts the PATHWAY to specific modes of entry - passenger - eco - mail
+- commercial - unknown “unknown” need to be defined. There’s
+‘Ambiguous’, and some non-port/non-transport that end in EPP, DPP, and
+EC. Not sure if any are relevant to this analysis. For now they are
+coded just as unknown in the reference file.</p>
+<p>Load pathway to entry type reference table:</p>
+<pre class="r"><code>setwd(here::here(&#39;input&#39;, &#39;data&#39;, &#39;PATHWAY name reference&#39;))
+# Load the pathway reference table
+pathway_ref &lt;- read.csv(&quot;pathway to entry type reference table.csv&quot;, stringsAsFactors = FALSE)
+ean_records &lt;- ean_records %&gt;%
+  left_join(pathway_ref, by = &quot;PATHWAY&quot;, relationship = &quot;many-to-one&quot;)
+
+get_entry_type &lt;- function(pathway_str) {
+  for (i in 1:nrow(pathway_ref)) {
+    ref_pathway &lt;- pathway_ref$PATHWAY[i]
+    if (grepl(ref_pathway, pathway_str, fixed = TRUE)) {
+      return(pathway_ref$entry_type[i])
+    }
+  }
+  return(NA_character_)
+}
+
+# Apply the function to each pathway in ean_records
+ean_records &lt;- ean_records %&gt;%
+  rowwise() %&gt;%
+  mutate(entry_type = get_entry_type(PATHWAY)) %&gt;%
+  ungroup()</code></pre>
+<div id="use-brg_pathway-to-separate" class="section level3">
+<h3>use brg_pathway to separate</h3>
+<p>Conveyance table can separate out private and commercial aircraft -
+this doesn’t work within the 2023-2024 time frame; leaving it because it
+might work for some other time frames, like in the future. Not sure. See
+00_04 for more details.</p>
+<pre class="r"><code>ean_records &lt;- ean_records |&gt; mutate(MODE_OF_TRANSPORT = 
+case_when(
+  CONVEYANCE_TYPE == &quot;AIRCRAFT&quot; &amp; !is.na(AIRCRAFT_TYPE) ~ paste(MODE_OF_TRANSPORT, AIRCRAFT_TYPE, sep = &quot; - &quot;),
+  .default = MODE_OF_TRANSPORT
+  ))</code></pre>
+</div>
+</div>
+</div>
+<div id="determine-if-there-is-risk" class="section level1">
+<h1>Determine if there is risk</h1>
+<p>Next step is to determine if there is any risk associated with the
+EAN record. This is through both the country of origin and the commodity
+type.</p>
+<div id="evaluate-country" class="section level2">
+<h2>Evaluate country</h2>
+<ul>
+<li>this only makes sense to use the current list of asf affected
+countries; otherwise, EANs wouldn’t exist. load country reference
+list</li>
+</ul>
+<pre class="r"><code>setwd(here::here(&quot;input&quot;,&quot;data&quot;,&quot;asf affected countries by year&quot;))
+affected_countries &lt;- read.csv(&quot;asf affected countries.csv&quot;) |&gt; 
+    mutate(Year = as.numeric(Year)) |&gt; 
+    filter(Year %in% params$years) |&gt; 
+    filter(Disease == &quot;ASF&quot;) |&gt;
+    distinct(ISO3_CODE) |&gt; 
+    pull(ISO3_CODE)</code></pre>
+<p>filter to eans that are from that country</p>
+<pre class="r"><code>ean_records &lt;- ean_records |&gt; mutate(country_code = countrycode::countrycode(COUNTRY_OF_ORIGIN_NAME, 
+                                  origin = &quot;country.name&quot;, 
+                                  destination = &quot;iso3c&quot;),
+                                  product_origin_code = countrycode::countrycode(product_origin, 
+                                  origin = &quot;country.name&quot;,
+                                  destination = &quot;iso3c&quot;)
+                                  )</code></pre>
+<pre><code>## Warning: There were 4 warnings in `mutate()`.
+## The first warning was:
+## ℹ In argument: `country_code = countrycode::countrycode(...)`.
+## Caused by warning:
+## ! Some values were not matched unambiguously: KV, Micronesia, Not Specified, United Kingdom of Great Britain and N. Ireland
+## ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
+<pre class="r"><code>ean_records &lt;- ean_records |&gt; filter(country_code %in% affected_countries |
+                                    product_origin_code %in% affected_countries)</code></pre>
+</div>
+<div id="evaluate-product" class="section level2">
+<h2>Evaluate product</h2>
+<p>The type of product will be stored in COMMODITY_DISPLAY_NAME, just
+like in AQIM data.</p>
+<pre class="r"><code> View(ean_records |&gt; filter(grepl(&quot;swine|porcine|pork|hooves|meat|ASF|CSF|blood|manure|dirt|feed&quot;,tolower(COMMODITY_DISPLAY_NAME))) |&gt; count(REMARKS))
+
+print(&quot;most dont have a descriptive COMMODITY_DISPLAY_NAME like AQIM data&quot;)</code></pre>
+<pre><code>## [1] &quot;most dont have a descriptive COMMODITY_DISPLAY_NAME like AQIM data&quot;</code></pre>
+<pre class="r"><code>print(&quot;instead, they all use &#39;Ruminant or Swine...&#39;, so we&#39;ll have to use the REMARKS field to identify relevant products, where available&quot;)</code></pre>
+<pre><code>## [1] &quot;instead, they all use &#39;Ruminant or Swine...&#39;, so we&#39;ll have to use the REMARKS field to identify relevant products, where available&quot;</code></pre>
+<pre class="r"><code>setwd(here::here(&quot;output&quot;,&quot;intermediate files&quot;))
+saveRDS(ean_records, &quot;ean_records.rds&quot;)
+
+print(&quot;Remarks analysis done outside of this analysis, using Excel, M365 Copilot, and Ernesto R.&quot;)</code></pre>
+<pre><code>## [1] &quot;Remarks analysis done outside of this analysis, using Excel, M365 Copilot, and Ernesto R.&quot;</code></pre>
+</div>
+</div>
+<div id="match-with-the-product-reference-list-which-incldues-arms-typical-match-for-eans-which-begins-with-ruminant-or-swine" class="section level1">
+<h1>Match with the product reference list, which incldues ARM’s typical
+match for EANs, which begins with “Ruminant or Swine…”</h1>
+<p>load product reference list</p>
+<pre class="r"><code>setwd(here::here(&quot;input&quot;,&quot;data&quot;,&quot;asf affected product names&quot;))
+asf_product_ref &lt;- read.csv(params$affected_product_file)
+match_asf_risk &lt;- function(data, reference_table) {
+  # Try matching on COMMODITY_DISPLAY_NAME
+  asf_product_match &lt;- data %&gt;%
+    inner_join(reference_table, 
+               by = c(&quot;COMMODITY_DISPLAY_NAME&quot; = &quot;ITEM&quot;, &quot;entry_type&quot; = &quot;entry_type&quot;), 
+               relationship = &quot;many-to-many&quot;,
+               copy = TRUE)
+  
+  # Combine matches and remove duplicates
+  asf_matches &lt;- asf_product_match %&gt;%
+    distinct(EAN_ID, COMMODITY_ID, .keep_all = TRUE)
+  
+  # Return the matches for further processing
+  return(asf_matches)
+}
+
+# Apply to eans
+at_risk_eans &lt;- match_asf_risk(ean_records, asf_product_ref)</code></pre>
 </div>
 <div id="convert-non-kg-quantities-to-kg-units" class="section level1">
 <h1>Convert non-kg quantities to kg units</h1>
-<pre class="r"><code># Function to convert various unit formats to standardized kg values
+<pre class="r"><code># read the reference table for unit conversions
+setwd(here::here(&#39;input&#39;, &#39;data&#39;, &#39;asf affected product names&#39;))
+quantity_units_to_kg &lt;- read.csv(params$quantity_units_to_kg, stringsAsFactors = FALSE)
+
+
+# Function to convert various unit formats to standardized kg values
 convert_to_kg &lt;- function(data, reference_table) {
   # Ensure reference table unit names are lowercase for case-insensitive matching
   reference_table &lt;- reference_table %&gt;%
@@ -936,7 +744,7 @@ convert_to_kg &lt;- function(data, reference_table) {
       # Remove trailing &#39;s&#39; from units (e.g., &quot;Kilograms&quot; -&gt; &quot;Kilogram&quot;)
       QUANTITY_UNITS_LOWER = gsub(&quot;s$&quot;, &quot;&quot;, QUANTITY_UNITS_LOWER),
       # Ensure quantity is positive
-      QUANTITY = abs(QUANTITY)
+      QUANTITY = abs(as.numeric(QUANTITY))
     )
   
   # Join with reference table using the lowercase, singular version
@@ -948,7 +756,7 @@ convert_to_kg &lt;- function(data, reference_table) {
       relationship = &quot;many-to-many&quot;
     )
 
-  # Multiply the quantity observed and the est_kilo per unit to get total kg
+  # make sure estimated kilograms is read in as a number
   data &lt;- data %&gt;%
     mutate(est_kilograms = as.numeric(est_kilograms))
   
@@ -976,131 +784,26 @@ convert_to_kg &lt;- function(data, reference_table) {
 }
 
 # Apply the conversion function
-aqim_data &lt;- convert_to_kg(aqim_data, quantity_units_to_kg)
+at_risk_eans &lt;- convert_to_kg(at_risk_eans, quantity_units_to_kg)
 
 # Check how many records have missing TOTAL_KG values
-missing_kg_count &lt;- sum(is.na((aqim_data |&gt; filter(QUANTITY &gt; 0))$TOTAL_KG))
-total_records &lt;- nrow(aqim_data |&gt; filter(QUANTITY &gt; 0))
+missing_kg_count &lt;- sum(is.na((at_risk_eans |&gt; filter(QUANTITY &gt; 0))$TOTAL_KG))
+total_records &lt;- nrow(at_risk_eans |&gt; filter(QUANTITY &gt; 0))
 missing_percent &lt;- round(missing_kg_count / total_records * 100, 2)
 
 # Print summary of conversion results
 cat(sprintf(&quot;Conversion complete: %d out of %d records (%.2f%%) have valid kg values.\n&quot;, 
             total_records - missing_kg_count, total_records, 100 - missing_percent))</code></pre>
-<pre><code>## Conversion complete: 131470 out of 138623 records (94.84%) have valid kg values.</code></pre>
+<pre><code>## Conversion complete: 19614 out of 19614 records (100.00%) have valid kg values.</code></pre>
 <pre class="r"><code># If there are missing values, show the top unit types that couldn&#39;t be converted
 if(missing_kg_count &gt; 0) {
   cat(&quot;Top unit types without kg conversion:\n&quot;)
-  aqim_data |&gt; filter(QUANTITY &gt; 0) %&gt;% 
+  at_risk_eans |&gt; filter(QUANTITY &gt; 0) %&gt;% 
     filter(is.na(TOTAL_KG)) %&gt;%
     count(QUANTITY_UNITS_NAME, sort = TRUE) %&gt;%
     head(8) %&gt;%
     print()
 }</code></pre>
-<pre><code>## Top unit types without kg conversion:
-## # A tibble: 8 × 2
-##   QUANTITY_UNITS_NAME     n
-##   &lt;chr&gt;               &lt;int&gt;
-## 1 Plant Units          2963
-## 2 Stems                2952
-## 3 Pallets               968
-## 4 Bouquet               184
-## 5 Bales                  46
-## 6 Plant Unit             23
-## 7 Square Meters          14
-## 8 Bale                    2</code></pre>
-</div>
-<div id="create-a-reference-table-that-identifies-what-entry-type-each-pathway-is-associated-with" class="section level1">
-<h1>Create a reference table that identifies what entry type each
-PATHWAY is associated with</h1>
-<pre class="r"><code>setwd(here::here(&#39;input&#39;, &#39;data&#39;, &#39;PATHWAY name reference&#39;))
-# Load the pathway reference table
-pathway_ref &lt;- read.csv(&quot;pathway to entry type reference table.csv&quot;, stringsAsFactors = FALSE)
-aqim_data &lt;- aqim_data %&gt;%
-  left_join(pathway_ref, by = &quot;PATHWAY&quot;, relationship = &quot;many-to-one&quot;)
-
-get_entry_type &lt;- function(pathway_str) {
-  for (i in 1:nrow(pathway_ref)) {
-    ref_pathway &lt;- pathway_ref$PATHWAY[i]
-    if (grepl(ref_pathway, pathway_str, fixed = TRUE)) {
-      return(pathway_ref$entry_type[i])
-    }
-  }
-  return(NA_character_)
-}
-
-# Apply the function to each pathway in arm_aqim_records
-system.time(aqim_data &lt;- aqim_data %&gt;%
-  rowwise() %&gt;%
-  mutate(entry_type = get_entry_type(PATHWAY)) %&gt;%
-  ungroup()
-)</code></pre>
-<pre><code>##    user  system elapsed 
-##   86.92    0.72   92.77</code></pre>
-</div>
-<div id="assign-location" class="section level1">
-<h1>Assign location</h1>
-<pre class="r"><code># db_conn &lt;- dbConnect(odbc::odbc(),.connection_string = 
-#                       &quot;Driver=SQL Server;
-#                         Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
-#                         Database=PPQ_AQI_ARMDMV2;
-#                         trusted_connection=yes&quot;)
-
-# inspection_cols &lt;- c(
-#     &quot;ID&quot;, 
-#     &quot;CATEGORY&quot;,
-#     &quot;NAME&quot;, 
-#     &quot;PARENT_LOCATION_ID&quot;, 
-#     &quot;SITE&quot;, 
-#     &quot;LOCATION_STATE_CD&quot;, 
-#     &quot;PATHWAY_ID&quot;, 
-#     &quot;PATHWAY&quot;
-#     )
-
-
-# #-- Pull AQIM inspection records from ARM  ---- 
-# system.time(arm_aqim &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_LOCATION]&quot;)) |&gt; 
-#               dplyr::filter(CATEGORY == &quot;AQIM&quot;) |&gt;
-#               dplyr::select(inspection_cols) |&gt; 
-#               #rename to fit AQAS data structure
-#               rename(edge_origin = COUNTRY_OF_ORIGIN_NAME,
-#                       group_size = NUMBER_OF_PASSENGERS
-#            )
-# )</code></pre>
-<pre class="r"><code># Function to match commodities with ASF reference table
-match_asf_risk &lt;- function(data, reference_table) {
-  # Try matching on COMMODITY_DISPLAY_NAME
-  asf_product_match &lt;- data %&gt;%
-    inner_join(reference_table, 
-               by = c(&quot;COMMODITY_DISPLAY_NAME&quot; = &quot;ITEM&quot;, &quot;entry_type&quot; = &quot;entry_type&quot;), 
-               relationship = &quot;many-to-one&quot;)
-  
-  # Combine matches and remove duplicates
-  asf_matches &lt;- asf_product_match %&gt;%
-    distinct(ID, COMMODITY_ID, .keep_all = TRUE)
-  
-  # Return the matches for further processing
-  return(asf_matches)
-}
-
-# Apply to both datasets
-asf_matches_aqim &lt;- match_asf_risk(aqim_data, asf_product_ref)
-# asf_matches_arm &lt;- match_asf_risk(arm_aqim_records, asf_product_ref)
-
-# # Combine all matches from both sources
-# asf_matches &lt;- bind_rows(asf_matches_aqim, asf_matches_arm) %&gt;%
-#   distinct(ID, COMMODITY_ID, .keep_all = TRUE)
-
-# Apply risk classification to the full dataset
-dat &lt;- aqim_data %&gt;% 
-  left_join(asf_matches_aqim, relationship = &quot;many-to-many&quot;) %&gt;%
-  mutate(IS_ASF_RISK = ifelse(is.na(IS_ASF_RISK), &quot;NO&quot;, IS_ASF_RISK))</code></pre>
-<pre><code>## Joining with `by = join_by(ID, PATHWAY, INSPECTION_LOCATION_NAME, PORT_CD, INSPECTION_LOCATION_STATE_CODE,
-## CALENDAR_MONTH, CALENDAR_YEAR, actions, group_size, INSPECTION_LOCATION_ID, qmis, ct_count, edge_origin,
-## COMMODITY_DISPLAY_NAME, QUANTITY, QUANTITY_UNITS_NAME, ACTN_TAKEN, product_origin, port_type,
-## INSPECTION_NUMBER, CATEGORY, SUBCATEGORY, IS_AQIM, PATHWAY_ID, PORT_OF_ENTRY_ID, INSPECTION_DATETIME,
-## INSPECTION_DATETIME_FISCAL_YEAR, INSPECTION_DATETIME_FISCAL_MONTH, COMMODITY_ID, IS_SMUGGLED,
-## IS_CONTAMINANT_FOUND, COMMODITY_CLASSIFICATION, REF_COMMODITY_ID, MISC_ANIMAL_COMMODITY_NAME, unit,
-## est_volume..in.liters, est_packing.volume, est_kilograms, Notes, TOTAL_KG, how_many, entry_type, aqim_based)`</code></pre>
 <div id="convert-the-entry_type-to-commercial-if-size-is-large" class="section level2">
 <h2>Convert the entry_type to commercial if size is large</h2>
 <pre class="r"><code>#Use the reference table to convert entry_type to commercial if the size is large
@@ -1111,37 +814,33 @@ size_ref_func &lt;- function(data, reference_table){
     data %&gt;%
   left_join(reference_table, by = c(&quot;entry_type&quot; = &quot;entry_type_ref&quot;), relationship = &quot;many-to-one&quot;) %&gt;%
   mutate(
-    product_subpathway = ifelse(IS_ASF_RISK != &quot;NO&quot; &amp; !is.na(size_threshold_kg
+    product_subpathway = ifelse(
+      # IS_ASF_RISK != &quot;NO&quot; &amp; # not used in EAN analysis in the same way as AQIM
+      !is.na(size_threshold_kg
 ) &amp; !is.na(TOTAL_KG) &amp; TOTAL_KG &gt;= size_threshold_kg
 , subpathway, product_subpathway)
   ) }
 
-dat &lt;- size_ref_func(data = dat, reference_table = size_ref)
-View(dat |&gt; filter(grepl(&quot;smuggled&quot;, product_subpathway)))</code></pre>
+at_risk_eans &lt;- size_ref_func(data = at_risk_eans, reference_table = size_ref)
+
+#Can take a look at the ones that were changed to smuggled commercial product
+View(at_risk_eans |&gt; filter(grepl(&quot;smuggled&quot;, product_subpathway)))</code></pre>
 </div>
 </div>
-<div id="trouble-shooting" class="section level1">
-<h1># trouble shooting</h1>
+<div id="save-the-processed-ean-records-for-further-analysis" class="section level1">
+<h1>Save the processed EAN records for further analysis</h1>
+<pre class="r"><code>write.csv(at_risk_eans, &quot;C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed.csv&quot;, row.names = FALSE)
+
+saveRDS(at_risk_eans, &quot;C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed.csv&quot;)
+
+print(&quot;Processed EAN records saved to large file data folder for further analysis.&quot;)</code></pre>
+<pre><code>## [1] &quot;Processed EAN records saved to large file data folder for further analysis.&quot;</code></pre>
 </div>
-<div id="r-trouble-shooting" class="section level1">
-<h1>```{r trouble shooting}</h1>
-</div>
-<div id="only-one-passenger-in-san-francisco-with-a-large-quantity-of-pork-that-would-be-considered-smuggled" class="section level1">
-<h1>#Only one passenger in SAN FRANCISCO with a large quantity of pork
-that would be considered smuggled</h1>
-</div>
-<div id="viewaqim_data-filtergreplsan-franciscoinspection_location_name-countpathway-entry_type-total_kg" class="section level1">
-<h1>View(aqim_data |&gt; filter(grepl(“SAN
-FRANCISCO”,INSPECTION_LOCATION_NAME)) |&gt; count(PATHWAY, entry_type,
-TOTAL_KG))</h1>
-</div>
-<div id="so-the-0.03-approach-rate-estimate-is-not-correct" class="section level1">
-<h1># so, the 0.03 approach rate estimate is not correct</h1>
-</div>
-<div id="dat-filtergreplsan-franciscoinspection_location_name-view" class="section level1">
-<h1>dat |&gt; filter(grepl(“SAN FRANCISCO”,INSPECTION_LOCATION_NAME))
-|&gt; View()</h1>
-<pre class="r"><code>write.csv(dat, &quot;C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv&quot;, row.names = FALSE)</code></pre>
+<div id="report-out-what-unit-types-were-considered-to-have-asf" class="section level1">
+<h1>Report out what unit types were considered to have ASF</h1>
+<pre class="r"><code>setwd(here::here(&#39;output&#39;,&#39;units reported in ARM&#39;))
+ean_units_summary &lt;- at_risk_eans |&gt; filter(TOTAL_KG &gt; 0) |&gt; count(QUANTITY_UNITS_NAME)
+write.csv(ean_units_summary, paste0(&#39;units converted in EAN data_&#39;,params$affected_countries,&#39;.csv&#39;))</code></pre>
 </div>
 
 

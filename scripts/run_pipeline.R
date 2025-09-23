@@ -49,20 +49,47 @@ extract_param_names <- function(rmd_path) {
   })
 }
 
-# Function to run a specific script with filtered parameters
-run_script <- function(script_number, params_override = NULL) {
-  # Format script number with leading zero if needed
-  script_num_str <- sprintf("%02d", as.integer(script_number))
+# Get the list of pipeline scripts from set_asf_risk_parameters.Rmd
+get_pipeline_scripts <- function() {
+  # First check if we have the parameters file which should have the script list
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
   
-  # Find the script file
-  script_pattern <- paste0("^01_", script_num_str, ".*\\.Rmd$")
-  script_files <- list.files(here::here("scripts"), pattern = script_pattern)
-  
-  if (length(script_files) == 0) {
-    stop("Script not found: ", script_pattern)
+  # Try to load the scripts list
+  if (file.exists(params_file)) {
+    params <- readRDS(params_file)
+    if (!is.null(params$pipeline_scripts)) {
+      return(params$pipeline_scripts)
+    }
   }
   
-  script_file <- script_files[1]
+  # If we can't get it from params, use the hardcoded list matching set_asf_risk_parameters.Rmd
+  return(c(
+    "01_01 aqim pathway passenger layers.Rmd",
+    "01_02 aqim pathway data prep.Rmd",
+    "01_03 aqim pathway approach rates.Rmd",
+    "01_04 aqim volume distribution.Rmd",
+    "01_05 aqim pathway passenger volumes.Rmd",
+    "01_06 aqim pathway risk_PoE.Rmd",
+    "01_07 aqim volume spatial layers.Rmd",
+    "03_01 ean data.Rmd",
+    "03_02 ean geolocation.Rmd",
+    "03_03 ean port and destination layers.Rmd"
+  ))
+}
+
+# Function to run a specific script with filtered parameters
+run_script <- function(script_number, params_override = NULL) {
+  # Get the list of pipeline scripts
+  pipeline_scripts <- get_pipeline_scripts()
+  
+  # Check if script_number is valid
+  if (script_number < 1 || script_number > length(pipeline_scripts)) {
+    stop("Invalid script number: ", script_number, 
+         ". Must be between 1 and ", length(pipeline_scripts))
+  }
+  
+  # Get the script file name
+  script_file <- pipeline_scripts[script_number]
   script_path <- here::here("scripts", script_file)
   
   cat("Running script:", script_file, "\n")
@@ -123,17 +150,43 @@ run_script <- function(script_number, params_override = NULL) {
   cat("Completed running:", script_file, "\n")
 }
 
-# Function to run the entire pipeline
-run_pipeline <- function(start_script = 1, end_script = 7, params_override = NULL) {
+# Function to run the entire pipeline or a section of it
+run_pipeline <- function(start_script = 1, end_script = NULL, params_override = NULL) {
+  # Get the list of pipeline scripts
+  pipeline_scripts <- get_pipeline_scripts()
+  
+  # If end_script is not specified, run all scripts from start_script to the end
+  if (is.null(end_script)) {
+    end_script <- length(pipeline_scripts)
+  }
+  
+  # Validate script range
+  if (start_script < 1 || start_script > length(pipeline_scripts)) {
+    stop("Invalid start_script: ", start_script, 
+         ". Must be between 1 and ", length(pipeline_scripts))
+  }
+  
+  if (end_script < start_script || end_script > length(pipeline_scripts)) {
+    stop("Invalid end_script: ", end_script, 
+         ". Must be between ", start_script, " and ", length(pipeline_scripts))
+  }
+  
   # Create output directory for HTML reports
   output_dir <- here::here("output", "html_reports")
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
   }
   
+  cat(paste0("Running pipeline scripts ", start_script, " to ", end_script, ":\n"))
+  for (i in start_script:end_script) {
+    cat(paste0(i, ". ", pipeline_scripts[i], "\n"))
+  }
+  cat("\n")
+  
   # Run each script in sequence
   for (i in start_script:end_script) {
     tryCatch({
+      cat(paste0("\n--- Running script ", i, "/", end_script, " ---\n"))
       run_script(i, params_override)
     }, error = function(e) {
       cat("Error running script", i, ":", e$message, "\n")
@@ -141,13 +194,14 @@ run_pipeline <- function(start_script = 1, end_script = 7, params_override = NUL
     })
   }
   
-  cat("Pipeline execution completed.\n")
+  cat("\nPipeline execution completed.\n")
 }
 
 # Example usage:
 # Source this file: source("scripts/run_pipeline.R")
 # Then:
-# run_pipeline() - Run the entire pipeline
-# run_script(3) - Run the third script only
-# - run_pipeline() to run everything
-# - run_script(3) to run just the third script
+# - run_pipeline() - Run the entire pipeline (all 10 scripts)
+# - run_pipeline(start_script = 1, end_script = 7) - Run only the AQIM scripts (1-7)
+# - run_pipeline(start_script = 8, end_script = 10) - Run only the EAN scripts (8-10)
+# - run_script(3) - Run just script #3 (01_03 aqim pathway approach rates.Rmd)
+# - run_script(8) - Run just script #8 (03_01 ean data.Rmd)
