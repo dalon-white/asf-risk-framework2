@@ -122,7 +122,10 @@ pipeline_scripts <- c(
   "01_04 aqim volume distribution.Rmd",
   "01_05 aqim pathway passenger volumes.Rmd",
   "01_06 aqim pathway risk_PoE.Rmd",
-  "01_07 aqim volume spatial layers.Rmd"
+  "01_07 aqim volume spatial layers.Rmd",
+  "03_01 ean data.Rmd",
+  "03_02 ean geolocation.Rmd",
+  "03_03 ean port and destination layers.Rmd"
 )
 
 # You can run the pipeline using the run_pipeline.R script:

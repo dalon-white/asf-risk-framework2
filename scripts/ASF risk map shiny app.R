@@ -49,10 +49,10 @@ ui <- navbarPage(
     "Port Risk",
     fluidPage(
       sidebarLayout(
-        sidebarPanel(
-          # Scenario selection dropdown
+        sidebarPanel(          # Scenario selection dropdown
           selectInput("scenario_filter", "Select Scenario:", 
-                      choices = c("Current" = "current", 
+                      choices = c("All" = "all",
+                                  "Current" = "current", 
                                   "Mexico/Canada" = "mex_can", 
                                   "Other" = "other",
                                   "EANs" = "EAN"),
@@ -67,13 +67,19 @@ ui <- navbarPage(
           hr(),
           checkboxInput("port_auto_update", "Auto-update map", value = FALSE),
           actionButton("port_update_map", "Update Map"),
-          hr(),
-          # Point size control
+          hr(),          # Point size control
           sliderInput("point_size", "Point Size:", min = 3, max = 15, value = 8),
           # Color scheme selection
           selectInput("color_scheme", "Color Scheme:", 
                       choices = c("viridis", "magma", "plasma", "inferno", "cividis"),
-                      selected = "viridis")
+                      selected = "viridis"),
+          hr(),
+          # Risk threshold slider
+          checkboxInput("enable_risk_threshold", "Enable Risk Threshold Filter", value = FALSE),
+          sliderInput("risk_threshold", "Max Risk Value to Display:",
+                     min = 0, max = 100, value = 100, 
+                     step = 1, post = "%",
+                     animate = animationOptions(interval = 300))
         ),        mainPanel(
           leafletOutput("port_risk_map", height = "600px"),
           hr(),
@@ -299,14 +305,89 @@ server <- function(input, output, session) {
         "% of Total" = risk_percentage
       )
   })
-  
-  #=========================
+    #=========================
   # PORT RISK TAB FUNCTIONS
-  #=========================  # Load available port risk layers
+  #========================= 
+  
+  # Load available port risk layers
   available_port_layers <- reactive({
     # Get the selected scenario
     scenario <- input$scenario_filter
     
+    # Handle "all" scenario specially
+    if (scenario == "all") {
+      # Scan the directory for all files
+      port_files_dir <- here("output", "spatial layers", "risk at ports")
+      all_port_files <- list.files(path = port_files_dir, pattern = ".*\\.gpkg$", full.names = FALSE)
+      
+      # Get all unique layer names by removing scenario suffixes
+      all_layers <- character()
+      
+      # Define all possible scenarios to look for
+      all_scenarios <- c("current", "mex_can", "other", "EAN")
+      
+      # Collect all unique layers across all scenarios
+      port_catalog_list <- list()
+      
+      for (s in all_scenarios) {
+        # First try the summary file
+        port_summary_path <- here("output", "spatial layers", "risk at ports", paste0("layer_summary_", s, ".csv"))
+        
+        if (file.exists(port_summary_path)) {
+          # Read from summary file if it exists
+          this_catalog <- read.csv(port_summary_path, stringsAsFactors = FALSE)
+          this_catalog$scenario <- s
+          port_catalog_list[[length(port_catalog_list) + 1]] <- this_catalog
+        } else {
+          # Filter files by this scenario
+          scenario_pattern <- paste0("_", s, "\\.gpkg$")
+          scenario_files <- all_port_files[grepl(scenario_pattern, all_port_files)]
+          
+          if (length(scenario_files) > 0) {
+            # Create a catalog dataframe for this scenario
+            this_catalog <- data.frame(
+              filename = scenario_files,
+              layer_name = gsub(paste0("_", s, "\\.gpkg$"), "", scenario_files),
+              scenario = s,
+              point_count = NA,
+              total_risk = NA,
+              stringsAsFactors = FALSE
+            )
+            port_catalog_list[[length(port_catalog_list) + 1]] <- this_catalog
+          }
+        }
+      }
+      
+      # Combine all scenario catalogs
+      if (length(port_catalog_list) > 0) {
+        port_catalog <- bind_rows(port_catalog_list)
+      } else {
+        # Fallback if no files found for any scenario
+        port_catalog <- data.frame(
+          filename = character(),
+          layer_name = character(),
+          scenario = character(),
+          point_count = numeric(),
+          total_risk = numeric(),
+          stringsAsFactors = FALSE
+        )
+      }
+      
+      # Add components for filtering
+      port_catalog <- port_catalog %>%
+        mutate(
+          components = strsplit(as.character(layer_name), "_"),
+          pathway = sapply(components, function(x) if(length(x) > 0) x[1] else NA),
+          container = sapply(components, function(x) if(length(x) > 1) x[2] else NA),
+          product_pathway = sapply(components, function(x) if(length(x) > 2) x[3] else NA),
+          product_subpathway = sapply(components, function(x) if(length(x) > 3) x[4] else NA)
+        ) %>%
+        select(-components)
+      
+      return(port_catalog)
+    }
+    
+    # For a specific scenario (not "all")
     # First try to read the summary file
     port_summary_path <- here("output", "spatial layers", "risk at ports", paste0("layer_summary_", scenario, ".csv"))
     
@@ -436,53 +517,124 @@ server <- function(input, output, session) {
       
       # Set up step size for progress bar
       step_size <- 1 / length(selected)
-      
-      # Load the port risk layers
+        # Load the port risk layers
       port_layers <- lapply(seq_along(selected), function(i) {
         layer_name <- selected[i]
         progress$set(value = i * step_size, detail = paste("Loading", layer_name))
         
-        # Construct filename with scenario
-        file_path <- here("output", "spatial layers", "risk at ports", 
-                         paste0(layer_name, "_", scenario, ".gpkg"))
-        
-        # Check if file exists
-        if (!file.exists(file_path)) {
-          # Try without scenario suffix as fallback
+        # For "all" scenario, try to load the layer from each possible scenario
+        if (scenario == "all") {
+          # Try each possible scenario suffix
+          all_scenarios <- c("current", "mex_can", "other", "EAN")
+          
+          # Store all layers found for this layer name across scenarios
+          scenario_layers <- list()
+          
+          for (s in all_scenarios) {
+            # Construct filename with this scenario
+            file_path <- here("output", "spatial layers", "risk at ports", 
+                             paste0(layer_name, "_", s, ".gpkg"))
+            
+            # If this scenario-specific file exists, load it
+            if (file.exists(file_path)) {
+              tryCatch({
+                layer <- st_read(file_path, quiet = TRUE)
+                
+                # Verify it has geometry
+                if (nrow(layer) > 0 && st_geometry_type(layer)[1] %in% c("POINT", "MULTIPOINT")) {
+                  # Transform to WGS84 for Leaflet compatibility
+                  layer <- st_transform(layer, 4326)
+                  
+                  # Add layer name and scenario attributes for identification
+                  layer$layer_name <- layer_name
+                  layer$scenario <- s
+                  
+                  # Add to our collection
+                  scenario_layers[[length(scenario_layers) + 1]] <- layer
+                }
+              }, error = function(e) {
+                warning("Error reading ", file_path, ": ", e$message)
+              })
+            }
+          }
+          
+          # Also try without scenario suffix as fallback
           alt_file_path <- here("output", "spatial layers", "risk at ports", 
-                             paste0(layer_name, ".gpkg"))
+                              paste0(layer_name, ".gpkg"))
           
-          # If still doesn't exist, give warning and return NULL
-          if (!file.exists(alt_file_path)) {
-            warning("Port risk file not found: ", file_path)
-            return(NULL)
+          if (file.exists(alt_file_path)) {
+            tryCatch({
+              layer <- st_read(alt_file_path, quiet = TRUE)
+              
+              # Verify it has geometry
+              if (nrow(layer) > 0 && st_geometry_type(layer)[1] %in% c("POINT", "MULTIPOINT")) {
+                # Transform to WGS84 for Leaflet compatibility
+                layer <- st_transform(layer, 4326)
+                
+                # Add layer name and scenario attributes for identification
+                layer$layer_name <- layer_name
+                layer$scenario <- "unspecified"
+                
+                # Add to our collection
+                scenario_layers[[length(scenario_layers) + 1]] <- layer
+              }
+            }, error = function(e) {
+              warning("Error reading ", alt_file_path, ": ", e$message)
+            })
+          }
+          
+          # Combine all layers found for this layer name across scenarios
+          if (length(scenario_layers) > 0) {
+            combined_layer <- bind_rows(scenario_layers)
+            return(combined_layer)
           } else {
-            file_path <- alt_file_path
-          }
-        }
-        
-        # Read the layer and transform to WGS84
-        tryCatch({
-          layer <- st_read(file_path, quiet = TRUE)
-          
-          # Verify it has geometry
-          if (nrow(layer) == 0 || !st_geometry_type(layer)[1] %in% c("POINT", "MULTIPOINT")) {
-            warning("Layer has no point geometries: ", layer_name)
+            warning("No valid files found for layer: ", layer_name)
             return(NULL)
           }
+        } else {
+          # For a specific scenario, just try to load that one file
+          # Construct filename with scenario
+          file_path <- here("output", "spatial layers", "risk at ports", 
+                           paste0(layer_name, "_", scenario, ".gpkg"))
           
-          # Transform to WGS84 for Leaflet compatibility
-          layer <- st_transform(layer, 4326)
+          # Check if file exists
+          if (!file.exists(file_path)) {
+            # Try without scenario suffix as fallback
+            alt_file_path <- here("output", "spatial layers", "risk at ports", 
+                               paste0(layer_name, ".gpkg"))
+            
+            # If still doesn't exist, give warning and return NULL
+            if (!file.exists(alt_file_path)) {
+              warning("Port risk file not found: ", file_path)
+              return(NULL)
+            } else {
+              file_path <- alt_file_path
+            }
+          }
           
-          # Add layer name attribute for identification
-          layer$layer_name <- layer_name
-          layer$scenario <- scenario
-          
-          return(layer)
-        }, error = function(e) {
-          warning("Error reading ", file_path, ": ", e$message)
-          return(NULL)
-        })
+          # Read the layer and transform to WGS84
+          tryCatch({
+            layer <- st_read(file_path, quiet = TRUE)
+            
+            # Verify it has geometry
+            if (nrow(layer) == 0 || !st_geometry_type(layer)[1] %in% c("POINT", "MULTIPOINT")) {
+              warning("Layer has no point geometries: ", layer_name)
+              return(NULL)
+            }
+            
+            # Transform to WGS84 for Leaflet compatibility
+            layer <- st_transform(layer, 4326)
+            
+            # Add layer name attribute for identification
+            layer$layer_name <- layer_name
+            layer$scenario <- scenario
+            
+            return(layer)
+          }, error = function(e) {
+            warning("Error reading ", file_path, ": ", e$message)
+            return(NULL)
+          })
+        }
       })
       
       # Remove any NULL layers
@@ -525,11 +677,89 @@ server <- function(input, output, session) {
           # Count number of layers combined at this point
           layer_count = n()
         )
+        progress$set(value = 1, message = "Processing complete")
       
-      progress$set(value = 1, message = "Processing complete")
+      combined_ports_summarized <- combined_ports_summarized %>%
+        mutate(original_total_mean_kg = total_mean_kg)  # Keep the original value for reference
       
       return(combined_ports_summarized)
     })
+  })
+  
+  # Apply threshold filter to port layer data
+  filtered_port_layers_data <- reactive({
+    port_data <- port_layers_data()
+    
+    if (is.null(port_data) || !input$enable_risk_threshold) {
+      return(port_data)  # Return unfiltered data if no filter enabled
+    }
+    
+    # Find the risk column
+    possible_risk_cols <- c("total_mean_kg", "TOTAL_KG", "total_risk")
+    risk_col <- NULL
+    for (col in possible_risk_cols) {
+      if (col %in% names(port_data)) {
+        risk_col <- col
+        break
+      }
+    }
+    
+    if (is.null(risk_col)) {
+      warning("No risk column found for filtering")
+      return(port_data)
+    }
+    
+    # Calculate threshold based on percentile of the risk values
+    threshold_percentile <- input$risk_threshold / 100
+    max_risk_value <- quantile(port_data[[risk_col]], probs = threshold_percentile, na.rm = TRUE)
+    
+    # Filter data to show only points below the threshold
+    filtered_data <- port_data %>%
+      filter(!!sym(risk_col) <= max_risk_value)
+    
+    # Add metadata about filtering
+    attr(filtered_data, "threshold_value") <- max_risk_value
+    attr(filtered_data, "original_count") <- nrow(port_data)
+    attr(filtered_data, "filtered_count") <- nrow(filtered_data)
+    attr(filtered_data, "percentile") <- threshold_percentile
+    
+    return(filtered_data)
+  })
+  
+  # Update risk threshold slider based on the data
+  observe({
+    port_data <- port_layers_data()
+    
+    if (is.null(port_data)) {
+      return()
+    }
+    
+    # Find risk column
+    possible_risk_cols <- c("total_mean_kg", "TOTAL_KG", "total_risk")
+    risk_col <- NULL
+    for (col in possible_risk_cols) {
+      if (col %in% names(port_data)) {
+        risk_col <- col
+        break
+      }
+    }
+    
+    if (is.null(risk_col)) return()
+    
+    # Get min and max of the risk values
+    max_val <- max(port_data[[risk_col]], na.rm = TRUE)
+    min_val <- min(port_data[[risk_col]], na.rm = TRUE)
+    
+    # Only update if we have valid data
+    if (!is.infinite(max_val) && !is.infinite(min_val) && max_val > min_val) {
+      # Calculate a reasonable default value (showing 95% of the data)
+      default_val <- 95
+      
+      # Update slider
+      updateSliderInput(session, "risk_threshold", 
+                        min = 1, max = 100, value = default_val, 
+                        step = 1)
+    }
   })
   
   # Render the port risk map
@@ -537,10 +767,9 @@ server <- function(input, output, session) {
     leaflet() %>%
       addProviderTiles(providers$CartoDB.Positron) %>%
       setView(lng = -95, lat = 39, zoom = 4)
-  })
-  # Update port risk map when combined layer changes
+  })  # Update port risk map when combined layer changes
   observe({
-    port_data <- port_layers_data()
+    port_data <- filtered_port_layers_data()
     scenario <- input$scenario_filter
     
     if (is.null(port_data)) {
@@ -574,11 +803,13 @@ server <- function(input, output, session) {
       )
     }, port_data$LOCATION_NAME, port_data[[risk_col]], port_data$layer_name, port_data$layer_count, SIMPLIFY = FALSE)
     
-    # Scale point size based on number of layers if needed
-    # Uncomment below if you want points with more layers to be larger
-    # adjusted_size <- ifelse(port_data$layer_count > 1, 
-    #                       point_size * (1 + 0.2 * pmin(port_data$layer_count - 1, 4)), 
-    #                       point_size)
+    # Get filter info for legend title
+    filter_info <- ""
+    if (input$enable_risk_threshold && !is.null(attr(port_data, "threshold_value"))) {
+      max_value <- attr(port_data, "threshold_value")
+      percentile <- attr(port_data, "percentile") * 100
+      filter_info <- paste0(" (Filtered to ", percentile, "th percentile, max: ", round(max_value, 2), ")")
+    }
     
     leafletProxy("port_risk_map") %>%
       clearMarkers() %>%
@@ -597,28 +828,38 @@ server <- function(input, output, session) {
         position = "bottomright",
         pal = pal,
         values = port_data[[risk_col]],
-        title = paste0("Combined Risk Level (", scenario, ")"),
+        title = paste0("Combined Risk Level", filter_info),
         opacity = 0.8
       )
-  })# Scenario information text
+  })  # Scenario information text
   output$scenario_info <- renderText({
     scenario <- input$scenario_filter
     
     # Format the scenario name nicely for display
     scenario_display <- switch(scenario,
+                              "all" = "All Scenarios Combined",
                               "current" = "Current Risk Assessment",
                               "mex_can" = "Mexico/Canada Scenario",
                               "other" = "Other International Scenario",
+                              "EAN" = "Emergency Action Notifications",
                               paste("Scenario:", scenario))
     
     # Count total available layers for this scenario
     port_catalog <- available_port_layers()
     total_layers <- nrow(port_catalog)
     
-    return(paste0(scenario_display, " (", total_layers, " available layers)"))
-  })  # Active port layers count
+    # For "all" scenario, count unique layer names (ignoring scenario)
+    if (scenario == "all") {
+      unique_layers <- length(unique(port_catalog$layer_name))
+      return(paste0(scenario_display, " (", unique_layers, " unique layers across ", 
+                    length(unique(port_catalog$scenario)), " scenarios)"))
+    } else {
+      return(paste0(scenario_display, " (", total_layers, " available layers)"))
+    }
+  })# Active port layers count
   output$active_port_layers_count <- renderText({
-    port_data <- port_layers_data()
+    raw_data <- port_layers_data()
+    port_data <- filtered_port_layers_data()
     
     if (is.null(port_data)) {
       return("No active layers selected")
@@ -639,48 +880,61 @@ server <- function(input, output, session) {
       max_layers_at_one_location <- 1
     }
     
-# Check for various possible risk column names
-possible_risk_cols <- c("total_mean_kg", "TOTAL_KG", "total_risk")
+    # Check for various possible risk column names
+    possible_risk_cols <- c("total_mean_kg", "TOTAL_KG", "total_risk")
     
-# Find the first matching column that exists in the data
-risk_col <- NULL
-for (col in possible_risk_cols) {
-  if (col %in% names(port_data)) {
-    risk_col <- col
-    break
-  }
-}
-
-# If no matching column found, use a default and warn
-if (is.null(risk_col)) {
-  warning("None of the expected risk columns found in data. Using first numeric column.")
-  # Find the first numeric column as fallback
-  numeric_cols <- sapply(port_data, is.numeric)
-  if (any(numeric_cols)) {
-    risk_col <- names(port_data)[which(numeric_cols)[1]]
-  } else {
-    # Last resort - create a dummy column with zeros
-    port_data$dummy_risk <- 0
-    risk_col <- "dummy_risk"
-  }
-}
+    # Find the first matching column that exists in the data
+    risk_col <- NULL
+    for (col in possible_risk_cols) {
+      if (col %in% names(port_data)) {
+        risk_col <- col
+        break
+      }
+    }
     
-# Calculate total risk using the identified column
-total_risk <- sum(port_data[[risk_col]], na.rm = TRUE)
+    # If no matching column found, use a default and warn
+    if (is.null(risk_col)) {
+      warning("None of the expected risk columns found in data. Using first numeric column.")
+      # Find the first numeric column as fallback
+      numeric_cols <- sapply(port_data, is.numeric)
+      if (any(numeric_cols)) {
+        risk_col <- names(port_data)[which(numeric_cols)[1]]
+      } else {
+        # Last resort - create a dummy column with zeros
+        port_data$dummy_risk <- 0
+        risk_col <- "dummy_risk"
+      }
+    }
     
-    # Calculate total risk
+    # Calculate total risk using the identified column
     total_risk <- sum(port_data[[risk_col]], na.rm = TRUE)
+    
+    # Add filtering information if enabled
+    filter_info <- ""
+    if (input$enable_risk_threshold && !is.null(attr(port_data, "threshold_value"))) {
+      original_count <- attr(port_data, "original_count")
+      filtered_count <- attr(port_data, "filtered_count")
+      filtered_out <- original_count - filtered_count
+      threshold_value <- attr(port_data, "threshold_value")
+      percentile <- attr(port_data, "percentile") * 100
+      
+      filter_info <- paste0(
+        "\nFiltering applied: Showing ", filtered_count, " of ", original_count, " locations",
+        " (", filtered_out, " filtered out)",
+        "\nThreshold: ", round(threshold_value, 2), " (", percentile, "th percentile)"
+      )
+    }
     
     # Create the summary text
     return(paste0(
       total_selected_layers, " active layers at ", total_locations, " locations\n",
       multi_layer_locations, " locations have multiple layers (max: ", max_layers_at_one_location, ")\n",
-      "Total risk value: ", formatC(total_risk, format = "f", digits = 2)
+      "Total risk value: ", formatC(total_risk, format = "f", digits = 2),
+      filter_info
     ))
-  })
-    # Create data table for port risk data
+  })  # Create data table for port risk data
   output$port_data_table <- renderDT({
-    port_data <- port_layers_data()
+    port_data <- filtered_port_layers_data()
     
     if (is.null(port_data)) {
       return(NULL)
@@ -718,7 +972,11 @@ total_risk <- sum(port_data[[risk_col]], na.rm = TRUE)
                 scrollX = TRUE,
                 dom = 'ftip'
               ),
-              rownames = FALSE) %>%
+              rownames = FALSE,
+              caption = if(input$enable_risk_threshold && !is.null(attr(port_data, "threshold_value"))) {
+                paste("Filtered to", attr(port_data, "percentile")*100, "percentile,", 
+                      attr(port_data, "filtered_count"), "of", attr(port_data, "original_count"), "locations shown")
+              } else NULL) %>%
       formatRound(columns = 'Risk', digits = 4)
   })
 }
