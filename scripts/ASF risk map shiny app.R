@@ -1,6 +1,7 @@
 # app.R
 library(shiny)
 library(leaflet)
+library(leaflet.extras)
 library(sf)
 library(dplyr)
 library(here)
@@ -68,11 +69,24 @@ ui <- navbarPage(
           checkboxInput("port_auto_update", "Auto-update map", value = FALSE),
           actionButton("port_update_map", "Update Map"),
           hr(),          # Point size control
-          sliderInput("point_size", "Point Size:", min = 3, max = 15, value = 8),
+          sliderInput("point_size", "Heat Radius:", min = 5, max = 30, value = 15),
+          # Blur control for heatmap
+          sliderInput("blur_size", "Heat Blur:", min = 5, max = 30, value = 15),          # Minimum opacity for the heatmap
+          sliderInput("min_opacity", "Heat Minimum Opacity:", min = 0.1, max = 1.0, value = 0.5, step = 0.1),
           # Color scheme selection
           selectInput("color_scheme", "Color Scheme:", 
                       choices = c("viridis", "magma", "plasma", "inferno", "cividis"),
-                      selected = "viridis"),
+                      selected = "viridis"),          # Toggle heatmap visibility
+          checkboxInput("show_heatmap", "Show Heatmap", value = TRUE),
+          # Toggle visible markers when heatmap is off
+          conditionalPanel(
+            condition = "!input.show_heatmap",
+            checkboxInput("show_markers", "Show Visible Markers", value = TRUE),
+            sliderInput("marker_size", "Marker Size:", min = 3, max = 15, value = 8),
+            selectInput("marker_color_scheme", "Marker Color Scheme:", 
+                      choices = c("viridis", "magma", "plasma", "inferno", "cividis", "YlOrRd", "RdYlBu", "BuPu"),
+                      selected = "viridis")
+          ),
           hr(),
           # Risk threshold slider
           checkboxInput("enable_risk_threshold", "Enable Risk Threshold Filter", value = FALSE),
@@ -94,8 +108,7 @@ ui <- navbarPage(
                     textOutput("active_port_layers_count")
                   )
             ),
-            column(6, DTOutput("port_data_table"))
-          )
+            column(6, DTOutput("port_data_table"))          )
         )
       )
     )
@@ -771,9 +784,9 @@ server <- function(input, output, session) {
   observe({
     port_data <- filtered_port_layers_data()
     scenario <- input$scenario_filter
-    
-    if (is.null(port_data)) {
+      if (is.null(port_data)) {
       leafletProxy("port_risk_map") %>%
+        clearShapes() %>%
         clearMarkers() %>%
         clearControls()
       return()
@@ -781,9 +794,12 @@ server <- function(input, output, session) {
     
     # Find risk value column - this might vary based on your data structure
     risk_col <- "total_mean_kg"  # We're now using the summarized column
-    
-    # Create color palette based on risk values
-    pal <- colorNumeric(palette = input$color_scheme, domain = port_data[[risk_col]])
+      # Create color palette based on risk values and the selected scheme
+    heat_pal <- colorNumeric(palette = input$color_scheme, domain = port_data[[risk_col]])
+    marker_pal <- colorNumeric(palette = ifelse(!input$show_heatmap && input$show_markers, 
+                                               input$marker_color_scheme, 
+                                               input$color_scheme), 
+                              domain = port_data[[risk_col]])
     
     # Update point size from slider
     point_size <- input$point_size
@@ -792,8 +808,7 @@ server <- function(input, output, session) {
     if(!"LOCATION_NAME" %in% names(port_data)) port_data$LOCATION_NAME <- "Unknown Location"
     if(!"layer_name" %in% names(port_data)) port_data$layer_name <- "Unknown Layer"
     if(!"layer_count" %in% names(port_data)) port_data$layer_count <- 1
-    
-    # Create the popup content
+      # Create the popup content
     popup_content <- mapply(function(loc_name, risk_value, layer_name, layer_count) {
       paste0(
         "<strong>Location:</strong> ", loc_name, "<br>",
@@ -803,7 +818,13 @@ server <- function(input, output, session) {
       )
     }, port_data$LOCATION_NAME, port_data[[risk_col]], port_data$layer_name, port_data$layer_count, SIMPLIFY = FALSE)
     
-    # Get filter info for legend title
+    # Create tooltip content (simpler than popup)
+    tooltip_content <- mapply(function(loc_name, risk_value) {
+      paste0(
+        loc_name, ": ", round(risk_value, 2)
+      )
+    }, port_data$LOCATION_NAME, port_data[[risk_col]], SIMPLIFY = FALSE)
+      # Get filter info for legend title
     filter_info <- ""
     if (input$enable_risk_threshold && !is.null(attr(port_data, "threshold_value"))) {
       max_value <- attr(port_data, "threshold_value")
@@ -811,24 +832,101 @@ server <- function(input, output, session) {
       filter_info <- paste0(" (Filtered to ", percentile, "th percentile, max: ", round(max_value, 2), ")")
     }
     
-    leafletProxy("port_risk_map") %>%
+    # Build the map with conditional heatmap layer
+    map_proxy <- leafletProxy("port_risk_map") %>%
+      clearShapes() %>%
       clearMarkers() %>%
-      clearControls() %>%
-      addCircleMarkers(
-        data = port_data,
-        radius = point_size,
-        fillColor = ~pal(port_data[[risk_col]]),
-        color = "black",
-        weight = 1,
-        opacity = 1,
-        fillOpacity = 0.8,
-        popup = popup_content
-      ) %>%
+      clearControls()
+      # Only add heatmap if the toggle is on
+    if(input$show_heatmap) {      # Extract coordinates and intensities for the heatmap
+      coords <- st_coordinates(port_data$geom)
+      
+      # Create a data frame with repeated points based on risk value
+      # First create an empty data frame to store our results
+      heatmap_data <- data.frame(lat = numeric(), lng = numeric(), intensity = numeric())
+      
+      # For each location, repeat its coordinates based on rounded risk value
+      for (i in 1:nrow(port_data)) {
+        # Get the risk value and round to nearest integer
+        risk_count <- round(port_data[[risk_col]][i])
+        
+        # Make sure we have at least 1 point even for very small risk values
+        risk_count <- max(1, risk_count)
+        
+        if (risk_count > 0) {
+          # Create data frame with repeated points for this location
+          location_points <- data.frame(
+            lat = rep(coords[i,2], risk_count),  # Repeat latitude
+            lng = rep(coords[i,1], risk_count),  # Repeat longitude
+            intensity = rep(1, risk_count)       # Each point has intensity 1
+          )
+          
+          # Add these points to our main data frame
+          heatmap_data <- rbind(heatmap_data, location_points)
+        }
+      }
+      
+      map_proxy <- map_proxy %>%
+        addHeatmap(
+          data = heatmap_data,
+          lng = ~lng,
+          lat = ~lat,
+          intensity = ~intensity,
+          radius = input$point_size,  # Radius for the heatmap
+          blur = input$blur_size,  # Blur from the slider
+          max = max(port_data[[risk_col]]),  # Set max value for consistent color scaling
+          gradient = colorRampPalette(viridisLite::viridis(10, option = input$color_scheme))(100),
+          minOpacity = input$min_opacity,  # Minimum opacity from the slider
+          layerId = "port_risk_heatmap"
+        )
+    } else if (!input$show_heatmap && input$show_markers) {      # If heatmap is off but markers are enabled, add visible circle markers
+      map_proxy <- map_proxy %>%
+        addCircleMarkers(
+          data = port_data,
+          radius = input$marker_size,  # Use marker size from slider
+          fillColor = ~marker_pal(port_data[[risk_col]]),  # Color by risk value using marker palette
+          color = "black",
+          weight = 1,
+          opacity = 1,
+          fillOpacity = 0.8,
+          popup = popup_content,
+          label = tooltip_content,
+          labelOptions = labelOptions(
+            style = list("font-weight" = "normal", padding = "3px 8px"),
+            textsize = "12px",
+            direction = "auto"
+          ),
+          layerId = "port_risk_visible_markers"
+        )
+    }
+    
+    # Always add invisible circle markers for popups    # Add invisible circle markers for popups only if we're not already showing visible markers
+    if (input$show_heatmap || !input$show_markers) {
+      map_proxy <- map_proxy %>%
+        addCircleMarkers(
+          data = port_data,
+          radius = 10,  # Large enough to be clickable but not too large
+          fillColor = "transparent",
+          color = "transparent",
+          weight = 1,
+          opacity = 0,
+          fillOpacity = 0,
+          popup = popup_content,
+          label = tooltip_content,
+          labelOptions = labelOptions(
+            style = list("font-weight" = "normal", padding = "3px 8px"),
+            textsize = "12px",
+            direction = "auto"
+          ),
+          layerId = "port_risk_markers"
+        )
+    }
+      # Always add the legend with the appropriate palette
+    map_proxy <- map_proxy %>%
       addLegend(
         position = "bottomright",
-        pal = pal,
-        values = port_data[[risk_col]],
-        title = paste0("Combined Risk Level", filter_info),
+        pal = if (input$show_heatmap) heat_pal else marker_pal,  # Use appropriate palette
+        values = port_data[[risk_col]],        title = paste0("Combined Risk Level", filter_info),
         opacity = 0.8
       )
   })  # Scenario information text
