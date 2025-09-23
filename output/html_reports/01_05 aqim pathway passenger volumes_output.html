@@ -395,9 +395,9 @@ load_shared_params &lt;- function() {
 }
 
 # Try to load shared params
-shared_params &lt;- load_shared_params()
-
-# Use shared params if available, otherwise use script-specific params
+shared_params &lt;- load_shared_params()</code></pre>
+<pre><code>## Loading shared parameters from 00_asf_risk_parameters.Rmd</code></pre>
+<pre class="r"><code># Use shared params if available, otherwise use script-specific params
 if (!exists(&quot;params&quot;)) {
   if (!is.null(shared_params)) {
     params &lt;- shared_params
@@ -457,7 +457,7 @@ system.time(wads &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[A
               collect()
            )</code></pre>
 <pre><code>##    user  system elapsed 
-##    0.01    0.00    1.86</code></pre>
+##    0.05    0.00    2.66</code></pre>
 </div>
 </div>
 <div id="summarize-wads-volume-by-month-year-location-and-pathway" class="section level2">
@@ -524,6 +524,8 @@ if(!&quot;Express_courier&quot; %in% wads_volume$PATHWAY) {
     warning(&quot;Existing Express_courier volume is 0 or NA, cannot scale properly&quot;)
   }
 }</code></pre>
+<pre><code>## Using Express_courier volume: 1.066e+09</code></pre>
+<pre><code>## Scaled Express_courier volume by factor: 26245.8144573567</code></pre>
 <pre class="r"><code>NB_state_cd &lt;- c(&quot;AK&quot;,&quot;ID&quot;,&quot;ME&quot;,&quot;MI&quot;,&quot;MN&quot;,&quot;MT&quot;,&quot;NH&quot;,&quot;NY&quot;,&quot;ND&quot;,&quot;OH&quot;,&quot;PA&quot;,&quot;VT&quot;,&quot;WA&quot;)
 SB_state_cd &lt;- c(&quot;CA&quot;,&quot;AZ&quot;,&quot;NM&quot;,&quot;TX&quot;)</code></pre>
 <pre class="r"><code>wads_volume &lt;- wads_volume %&gt;%

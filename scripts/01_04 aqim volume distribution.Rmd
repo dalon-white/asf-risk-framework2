@@ -536,11 +536,17 @@ create_distribution_plot <- function(pathway, container, prod_pathway, prod_subp
     p <- p + 
       geom_line(data = line_data, aes(x = x, y = y), color = "red", size = 1) +
       annotate("text", x = max_x * 0.7, y = max(y_vals) * 0.8, 
-               label = fit_label, hjust = 0, size = 3, color = "red")
-  } else {
-    p <- p + 
-      annotate("text", x = max_x * 0.7, y = 0.9 * max(density(original_data)$y), 
-               label = "Empirical distribution (no fit)", hjust = 0, size = 3, color = "red")
+               label = fit_label, hjust = 0, size = 3, color = "red")  } else {
+    # Handle case where there's only 1 data point
+    if(length(original_data) == 1) {
+      p <- p + 
+        annotate("text", x = max_x * 0.7, y = 0.5, 
+                 label = "Empirical distribution (single point)", hjust = 0, size = 3, color = "red")
+    } else {
+      p <- p + 
+        annotate("text", x = max_x * 0.7, y = 0.9 * max(density(original_data)$y), 
+                 label = "Empirical distribution (no fit)", hjust = 0, size = 3, color = "red")
+    }
   }
   
   # Add summary statistics
@@ -695,39 +701,3 @@ ggsave(file.path(plot_dir, "average_weight_by_pathway_mean_median.png"),
 
 
 ```
-
-<!-- # Example usage of sampling from the distributions
-
-```{r}
-# Create diagnostic plots to check the distribution fits
-plot_distribution_fit <- function(pathway, container, prod_pathway, prod_subpathway,
-                                 distribution_models = pathway_distributions) {
-  dist_model <- distribution_models %>%
-    filter(PATHWAY == pathway, 
-           container == container,
-           product_pathway == prod_pathway,
-           product_subpathway == prod_subpathway) %>%
-    pull(distribution_model) %>%
-    .[[1]]
-  
-  if(dist_model$distribution == "empirical") {
-    hist(dist_model$data, main = "Empirical data only (no fit)", xlab = "Weight (kg)")
-  } else {
-    plot(dist_model$fit_object)
-  }
-}
-
-# Example usage:
-# Check a specific distribution fit
-plot_distribution_fit("Land Border - Truck - Conveyance - CBP NB", "baggage", "swine products/by-products", "personal use or consumption")
-
-plot_distribution_fit("Express_courier", "baggage", "swine products/by-products", "smuggled commercial products")
-
-print("warnings are based on low sample sizes. eg smuggled commercials only has 1 example in express courier. In such a case, the empirical distribution is used, and if n=1 it just re-samples that value.")
-# Sample from a specific distribution
-# sample_weights <- sample_weight(100, "Your_Pathway", "Your_Container", "Your_Prod_Pathway", "Your_Prod_Subpathway")
-# hist(sample_weights, main = "Sampled weights", xlab = "Weight (kg)")
-```
--->
-
-

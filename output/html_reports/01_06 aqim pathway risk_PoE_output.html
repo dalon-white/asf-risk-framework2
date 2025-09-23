@@ -398,8 +398,7 @@ wads_volume &lt;- readRDS(paste(params$wads_volume_filename, &quot;.rds&quot;))<
 <div id="read-approach-rates" class="section level1">
 <h1>read approach rates</h1>
 <pre class="r"><code>setwd(here::here(&#39;output&#39;,&#39;aqim pathway approach rates&#39;)) 
-location_probabilities_glmm &lt;- readRDS(paste(params$glm_results_filename,&quot;.rds&quot;, sep = &quot; &quot;))
-bootstrap_results &lt;- readRDS(paste(params$bootstrap_results_filename,&quot;.rds&quot;, sep = &quot; &quot;))</code></pre>
+location_probabilities_glmm &lt;- readRDS(paste0(params$glm_results_filename))</code></pre>
 </div>
 <div id="join-wads-volume-and-approach-rates" class="section level1">
 <h1>Join WADS volume and approach rates</h1>
@@ -630,7 +629,7 @@ probability</h2>
 <pre class="r"><code># The highest estimate is SF int&#39;l airport, air passenger, commercial smuggled products, baggage, 2024; 734,424 people (adjusted to 521708).  probability is 0.0311. Mean_positives is 16218, mean kg per distirbution is 32kg;
 #This leads to a total estimate of ~500k kg of at risk product approaching in this month from this one WADS entry alone
 mean(sample_weight(n=100, pathway = &quot;Airport - Aircraft - Person - CBP&quot;, container = &quot;baggage&quot;, prod_pathway = &quot;swine products/by-products&quot;, prod_subpathway = &quot;smuggled commercial products&quot;))</code></pre>
-<pre><code>## [1] 33.41825</code></pre>
+<pre><code>## [1] 103</code></pre>
 <pre class="r"><code># 3 in 100 people with smuggled products seems to be a ludicrous Check that this smuggled commercial products pathway is supposed to be such a high probability
 # Check how many actual positive events were found in this pathway in AQIM data
 dat &lt;- read.csv(&quot;C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv&quot;)
@@ -642,7 +641,7 @@ smuggled_prods_air &lt;- dat %&gt;%
   count(CALENDAR_YEAR, IS_ASF_RISK) %&gt;%
   arrange(CALENDAR_YEAR, desc(IS_ASF_RISK))
 sum(smuggled_prods_air$n)</code></pre>
-<pre><code>## [1] 16</code></pre>
+<pre><code>## [1] 17</code></pre>
 <pre class="r"><code>smuggled_prods_model &lt;- location_probabilities_glmm %&gt;%
   filter(pathway == &quot;Airport - Aircraft - Person - CBP&quot;,
          grepl(&quot;smuggled commercial products&quot;, group))

@@ -77,6 +77,31 @@ aqim_dat <- read.csv("C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-
 
 ```
 
+
+# Save group size for later calculations
+```{r save group size}
+View(aqim_dat |> count(group_size, PATHWAY))
+# If group_size is NA or 0, replace with 1
+# for each pathway, find the average group size
+group_size_summary <- aqim_dat %>%
+  mutate(group_size = case_when(
+    group_size == 0 ~ 1,
+    is.na(group_size) ~ 1,
+    .default = group_size
+  )) %>%
+  group_by(PATHWAY) %>%
+  summarize(
+    avg_group_size = mean(group_size, na.rm = TRUE),
+    median_group_size = median(group_size, na.rm = TRUE),
+    min_group_size = min(group_size, na.rm = TRUE),
+    max_group_size = max(group_size, na.rm = TRUE),
+    count = n()
+  )
+
+```
+
+
+
 # Set affected countries for analysis
 
 Within params, can choose whether to use the current affected countries or just Mexico and Canada. The current ones, are then filtered by the years specified in params$years.
@@ -855,15 +880,10 @@ adjusted_risk_summary <- adjusted_product_risk %>%
     scenario = params$affected_countries,
     date_created = Sys.Date(),
     method = "glm",
-    container_type = container,
-    product_type = product_pathway,
-    product_subtype = product_subpathway,
-    # Standardize column names for pipeline compatibility
-    PATHWAY = pathway,
     # Add group_id for pipeline integration
-    group_id = paste(pathway, container, product_pathway, product_subpathway, sep = ";")
+    group = paste(pathway, container, product_pathway, product_subpathway, sep = ";")
   ) %>%
-  arrange(PATHWAY, desc(probability))
+  arrange(pathway, desc(probability))
 
 # Save the adjusted summary in both CSV and RDS formats for pipeline compatibility
 write.csv(
@@ -873,16 +893,35 @@ write.csv(
 )
 
 # Create a new file with only the essential columns for pipeline compatibility
-pipeline_ready_data <- adjusted_risk_summary %>%
-  select(
-    PATHWAY,
-    group_id,
+pipeline_ready_data <- adjusted_product_risk %>%
+rename(location = INSPECTION_LOCATION_NAME) |>
+mutate(
+    # Using standard names that match pipeline expectations
+    probability = adjusted_prob,
+    ci_lower = adjusted_lower,
+    ci_upper = adjusted_upper,
+    n_locations = n(),
+    .groups = "drop",
+
+  # Add additional fields needed by the pipeline 
+    scenario = params$affected_countries,
+    date_created = Sys.Date(),
+    method = "glm",
+
+    # Add group for pipeline integration
+    group = paste(pathway, container, product_pathway, product_subpathway, sep = ";")
+  ) %>%
+  arrange(pathway, desc(probability)) |>
+  dplyr::select(
+    location,
+    pathway,
+    group,
     probability,
     ci_lower,
     ci_upper,
-    container_type,
-    product_type,
-    product_subtype,
+    container,
+    product_pathway,
+    product_subpathway,
     scenario,
     date_created,
     method
@@ -900,37 +939,71 @@ cat("\nPipeline-ready data saved to:",
     file.path(output_dir, paste0(params$glm_results_filename)), "\n")
 ```
 
+## save group size summary
+```{r save group size summary}
+setwd(here::here('output','aqim pathway approach rates'))
+write.csv(group_size_summary, paste(params$group_size_filename,".csv", sep=""), row.names = FALSE)
+saveRDS(group_size_summary, paste(params$group_size_filename,".rds", sep=""))
 
+```
 
-```{r save integration data}
-# Save the integration-ready data
-saveRDS(
-  integration_data,
-  file.path(output_dir, params$glm_results_filename)
-)
+## Create Summary
+This is to make sure I remember that not all these pathways have risk, so not all of them will be used in the 01_06 aqim pathway risk_PoE.Rmd script
 
-# Create a compact summary by pathway
-pathway_integration <- integration_data %>%
-  group_by(pathway) %>%
-  summarize(
-    pred_prob = mean(pred_prob),
-    lower_prob = mean(lower_prob),
-    upper_prob = mean(upper_prob),
-    n_locations = n()
-  )
+```{r}
+# Create summary statistics for combinations and risk counts
+# Count all combinations by risk status
+combinations_summary <- aqim_dat |>
+  dplyr::count(PATHWAY, container, product_pathway, product_subpathway, IS_ASF_RISK)
 
-# Display the pathway summary
-pathway_integration
+# Get key statistics
+pathway_counts <- combinations_summary |> distinct(PATHWAY) |> nrow()
+total_combinations <- combinations_summary |> distinct(PATHWAY, container, product_pathway, product_subpathway) |> nrow()
+risk_combinations <- combinations_summary |> filter(IS_ASF_RISK > 0) |> distinct(PATHWAY, container, product_pathway, product_subpathway) |> nrow()
+no_risk_combinations <- combinations_summary |> filter(IS_ASF_RISK == 0) |> distinct(PATHWAY, container, product_pathway, product_subpathway) |> nrow()
 
-# Save the pathway summary
-write.csv(
-  pathway_integration,
-  file.path(output_dir, "glm_pathway_integration_summary.csv"),
-  row.names = FALSE
-)
+# Count observations
+total_risk_count <- combinations_summary |> filter(IS_ASF_RISK > 0) |> summarize(total = sum(n)) |> pull(total)
+total_no_risk_count <- combinations_summary |> filter(IS_ASF_RISK == 0) |> summarize(total = sum(n)) |> pull(total)
+grand_total_count <- sum(combinations_summary$n)
 
-# Summary of completed analysis
-cat("\nAnalysis complete. Results saved to:", output_dir, "\n")
-cat("Number of pathways analyzed:", length(glmm_results), "\n")
-cat("Number of locations with predictions:", nrow(integration_data), "\n")
+# Create pathway-level summary
+pathway_summary <- combinations_summary |>
+  group_by(PATHWAY, IS_ASF_RISK) |>
+  summarize(count = sum(n), .groups = "drop") |>
+  pivot_wider(names_from = IS_ASF_RISK, values_from = count, 
+              names_prefix = "risk_", values_fill = 0) |>
+  mutate(total = risk_0 + risk_1,
+         risk_percent = round(100 * risk_1 / total, 1))
+
+# Print summary information
+cat("\n### Summary of AQIM Data Combinations ###\n\n")
+cat(paste("Total unique pathways:", pathway_counts, "\n"))
+cat(paste("Total unique PATHWAY-container-product combinations:", total_combinations, "\n"))
+cat(paste("- Combinations with ASF risk:", risk_combinations, 
+          sprintf("(%.1f%%)", 100 * risk_combinations/total_combinations), "\n"))
+cat(paste("- Combinations without ASF risk:", no_risk_combinations, "\n\n"))
+
+cat("### Observation Counts ###\n\n")
+cat(paste("Total observations:", format(grand_total_count, big.mark=","), "\n"))
+cat(paste("- Observations with ASF risk:", format(total_risk_count, big.mark=","), 
+          sprintf("(%.1f%%)", 100 * total_risk_count/grand_total_count), "\n"))
+cat(paste("- Observations without ASF risk:", format(total_no_risk_count, big.mark=","), "\n\n"))
+
+cat("###  Pathways by Risk Percentage ###\n\n")
+top_risk_pathways <- pathway_summary |>
+  filter(risk_1 > 0) |>
+  arrange(desc(risk_percent)) 
+
+print(top_risk_pathways |> dplyr::select(PATHWAY, risk_1, total, risk_percent))
+print("The pathway combinations that exist are in the following table:")
+View(combinations_summary)
+
+```
+
+```{r}
+setwd(here::here('output','aqim pathway approach rates'))
+#save summary tables for validating the data
+write.csv(combinations_summary, "aqim pathway by product combination summary of total vs at risk.csv", row.names = FALSE)
+write.csv(pathway_summary, "aqim pathway summary of total vs at risk.csv", row.names = FALSE)
 ```

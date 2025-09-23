@@ -1,30 +1,30 @@
-PATHWAY,how_many,entry_type
-Post Entry Quarantine,,post_entry_quarantine
-Pedestrian,,passenger
-Non-Port - Non-Transport - Express Carrier - SITC,,eco
-Non-Port - Non-Transport - EPP - EPP,,unknown
-Non-Port - Non-Transport - EC - EC,,unknown
-Non-Port - Non-Transport - DPP - DPP,,unknown
-Non-Port - Non-Transport - Commerce Site - SITC,,commercial
-Maritime Port - Vessel - Mail - CBP,,mail
-Maritime Port - Vessel - Conveyance - CBP,,commercial
-Maritime Port - Vessel - Cargo - PIS,,commercial
-Maritime Port - Vessel - Cargo - CBP,,commercial
-Land Border - Truck - Cargo - PIS,,commercial
-Land Border - Rail - Cargo - CBP,,commercial
-Land Border - Truck - Conveyance - CBP,north and south,passenger
-Land Border - Truck - Cargo - CBP,north and south,commercial
-Land Border - Rail - Conveyance - CBP,,commercial
-Land Border - Pedestrian - Cargo - PIS,,commercial
-Express_courier,,eco
-Cruise_ship,,passenger
-Airport - Aircraft - Person - Pre-Clearance,,passenger
-Airport - Aircraft - Person - CBP,,passenger
-Airport - Aircraft - Passenger - Predeparture,,passenger
-Airport - Aircraft - Mail - PIS Mail,,mail
-Airport - Aircraft - Express Carrier - PIS,,eco
-Airport - Aircraft - Express Carrier - CBP,,eco
-Airport - Aircraft - Conveyance - CBP,,commercial
-Airport - Aircraft - Cargo - CBP,,commercial
-Airport - Aircraft - Cargo - PIS,,commercial
-Ambiguous Pathway,,unknown
+PATHWAY,how_many,entry_type,aqim_based
+Post Entry Quarantine,,post_entry_quarantine,
+Pedestrian,north and south,passenger,1
+Non-Port - Non-Transport - Express Carrier - SITC,,eco,
+Non-Port - Non-Transport - EPP - EPP,,unknown,
+Non-Port - Non-Transport - EC - EC,,unknown,
+Non-Port - Non-Transport - DPP - DPP,,unknown,
+Non-Port - Non-Transport - Commerce Site - SITC,,commercial,
+Maritime Port - Vessel - Mail - CBP,,mail,1
+Maritime Port - Vessel - Conveyance - CBP,,passenger,
+Maritime Port - Vessel - Cargo - PIS,,commercial,
+Maritime Port - Vessel - Cargo - CBP,,commercial,
+Land Border - Truck - Cargo - PIS,north and south,commercial,
+Land Border - Rail - Cargo - CBP,north and south,commercial,
+Land Border - Truck - Conveyance - CBP,north and south,passenger,1
+Land Border - Truck - Cargo - CBP,north and south,commercial,1
+Land Border - Rail - Conveyance - CBP,north and south,commercial,
+Land Border - Pedestrian - Cargo - PIS,north and south,commercial,
+Express_courier,,eco,1
+Cruise_ship,,passenger,1
+Airport - Aircraft - Person - Pre-Clearance,,passenger,1
+Airport - Aircraft - Person - CBP,,passenger,1
+Airport - Aircraft - Passenger - Predeparture,,passenger,
+Airport - Aircraft - Mail - PIS Mail,,mail,
+Airport - Aircraft - Express Carrier - PIS,,eco,
+Airport - Aircraft - Express Carrier - CBP,,eco,
+Airport - Aircraft - Conveyance - CBP,,commercial,
+Airport - Aircraft - Cargo - CBP,,commercial,
+Airport - Aircraft - Cargo - PIS,,commercial,
+Ambiguous Pathway,,unknown,

@@ -1,0 +1,14 @@
+"PATHWAY","risk_0","risk_1","total","risk_percent"
+"Airport - Aircraft - Cargo - CBP",5341,0,5341,0
+"Airport - Aircraft - Passenger - Predeparture",70364,0,70364,0
+"Airport - Aircraft - Person - CBP",315212,1175,316387,0.4
+"Airport - Aircraft - Person - Pre-Clearance",52178,312,52490,0.6
+"Cruise_ship",40225,0,40225,0
+"Express_courier",67887,23,67910,0
+"Land Border - Truck - Cargo - CBP NB",8342,0,8342,0
+"Land Border - Truck - Cargo - CBP SB",1934,0,1934,0
+"Land Border - Truck - Conveyance - CBP NB",142586,896,143482,0.6
+"Land Border - Truck - Conveyance - CBP SB",262140,4099,266239,1.5
+"Maritime Port - Vessel - Cargo - CBP",13502,0,13502,0
+"Maritime Port - Vessel - Mail - CBP",64022,20,64042,0
+"Pedestrian SB",293999,564,294563,0.2

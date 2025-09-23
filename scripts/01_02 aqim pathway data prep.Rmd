@@ -10,6 +10,7 @@ params:
   affected_country_file: "asf affected countries.csv"
   affected_product_file: "asf affected product name reference table.csv"
   pathway_volume_smuggling_reference_table_filename: "product pathway by volume reference table"
+  quantity_units_to_kg: "quantity units to kilograms reference table.csv"
 ---
 
 -   \% estimate of each pathway type for each AQIM-conveyance/pathway
@@ -376,7 +377,7 @@ aqas_aqim_func <- function(insp_data, commod_data, pathway_name,
   
   # Process commodity data as before
   commod_df <- commod_data %>% 
-    select(AQIM_FORM_ID, ITEM, QUANTITY, UNIT, ACTN_TAKEN) %>%
+    dplyr::select(AQIM_FORM_ID, ITEM, QUANTITY, UNIT, ACTN_TAKEN) %>%
     filter(!ACTN_TAKEN == "Inspected and Released")
   
   # Join the data as before
@@ -411,8 +412,7 @@ ped <- aqas_aqim_func(insp_data,
                       qmi_count = "QMI_CNT",
                       clean_treat_count = "CT_CNT",
                       passenger_origin = "PAX_ORIGIN_CD",
-                      item_origin = "ITEM_ORIGIN_CD") %>%
-  correct_units_func()
+                      item_origin = "ITEM_ORIGIN_CD")
 
 ped <- collect(ped)
 
@@ -440,8 +440,7 @@ eco <- aqas_aqim_func(insp_data,
                       qmi_count = "QMI_CNT",
                       clean_treat_count = "CT_CNT",
                       passenger_origin = "COUNTRY_CD",
-                      item_origin = "PARCEL_ORIGIN_CD") %>%
-  correct_units_func()
+                      item_origin = "PARCEL_ORIGIN_CD")
 
 eco <- collect(eco)
 
@@ -466,8 +465,7 @@ ship <- aqas_aqim_func(insp_data,
                       qmi_count = "QMI_CNT",
                       clean_treat_count = "CT_CNT",
                       passenger_origin = "COUNTRY_CD",
-                      item_origin = "PARCEL_ORIGIN_CD") %>%
-  correct_units_func()
+                      item_origin = "PARCEL_ORIGIN_CD")
 
 ship <- collect(ship)
 
@@ -652,7 +650,7 @@ convert_to_kg <- function(data, reference_table) {
       )
     ) %>%
     # Clean up temporary columns
-    select(-QUANTITY_UNITS_LOWER)
+    dplyr::select(-QUANTITY_UNITS_LOWER)
   
   return(data)
 }

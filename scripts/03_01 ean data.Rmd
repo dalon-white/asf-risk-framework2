@@ -11,6 +11,8 @@ params:
   years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
   affected_product_file: "asf affected product name reference table.csv"
   affected_country_file: "asf affected countries.csv"
+  pathway_volume_smuggling_reference_table_filename: "product pathway by volume reference table"
+  quantity_units_to_kg: "quantity units to kilograms reference table.csv"
 ---
 
 -   prepped data already has the pathway, entry type, etc., and risk as no/low/med/high
@@ -61,11 +63,23 @@ if (!exists("params")) {
       other_affected_countries = c("Country1", "Country2"),
       affected_product_file = "asf affected product name reference table.csv",
       affected_country_file = "asf affected countries.csv",
+      pathway_volume_smuggling_reference_table_filename = "product pathway by volume reference table",
+      quantity_units_to_kg = "quantity units to kilograms reference table.csv"
     )
   }
 }
 ```
 
+```{r}
+
+#open connection
+db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                      "Driver=SQL Server;
+                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                        Database=PPQ_AQI_ARMDMV2;
+                        trusted_connection=yes")
+
+```
 
 ```{r ARM AQIM data}
 ean_cols <- c(
@@ -108,12 +122,23 @@ inspection_cols <- c(
   "COUNTRY_OF_ORIGIN_NAME", 
  # "COUNTRY_OF_RESIDENCE_NAME", 
   
+# All of these destination fields are empty for EANs; I checked.
  # "FINAL_DESTINATION_STATE_NAME", 
  # "FINAL_DESTINATION_STATE_ID", 
  # "FINAL_DESTINATION_CITY", 
  # "PASSENGER_DISTANCE_DESTINATION_NAME",
-  "NUMBER_OF_PASSENGERS")
+  # "CARGO_DESTINATION_ZIP_CODE",
+  # "POSTMARK_COUNTRY_NAME",
+  # "STATE_OF_ORIGIN_NAME",
+  # "SUBSITE_LOCATION_NAME",
+ 
+  "NUMBER_OF_PASSENGERS"
+  )
 
+ean_records |> count("CARGO_DESTINATION_ZIP_CODE",
+  "POSTMARK_COUNTRY_NAME",
+  "STATE_OF_ORIGIN_NAME",
+  "SUBSITE_LOCATION_NAME")
 
 commodity_cols <- c(
   "ID",
@@ -161,32 +186,32 @@ conveyance <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS
               rename(CONVEYANCE_ID = ID)
 
 #-- Load Bridge Pathway dataset ----
-pathway_ref <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_PATHWAY]")) |> 
+pathway_tbl <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_PATHWAY]")) |> 
               dplyr::select(all_of(pathway_cols))
 
 # Join ean records with commodity table info
 ## Identify columns to join by
 intersect_cols <- intersect(colnames(ean), colnames(commodity))
-ean_records_tmp <- ean |>
+ean_records_tmp1 <- ean |>
   left_join(commodity, by = intersect_cols, relationship = "many-to-many")
 
 # Join ean and commodity with inspection details
 ## identify columns to join by
-intersect_cols <- intersect(colnames(ean_records_tmp), colnames(inspections))
-ean_records_tmp <-ean_records_tmp |>
+intersect_cols <- intersect(colnames(ean_records_tmp1), colnames(inspections))
+ean_records_tmp2 <- ean_records_tmp1 |>
   left_join(inspections, by = intersect_cols, relationship = "many-to-many") 
 
 # Join ean, commodity, and inspection details with conveyance details
 ## identify columns to join by
-intersect_cols <- intersect(colnames(ean_records_tmp), colnames(conveyance))
-ean_records <- ean_records_tmp |>
+intersect_cols <- intersect(colnames(ean_records_tmp2), colnames(conveyance))
+ean_records_tmp3 <- ean_records_tmp2 |>
   left_join(conveyance, by = intersect_cols, relationship = "many-to-many")
 
 # Join ean, commodity, inspection, and conveyance details with pathway details
 ## identify columns to join by
-intersect_cols <- intersect(colnames(ean_records), colnames(pathway_ref))
-ean_records <- ean_records |>
-  left_join(pathway_ref, by = intersect_cols, relationship = "many-to-many")
+intersect_cols <- intersect(colnames(ean_records_tmp3), colnames(pathway_tbl))
+ean_records <- ean_records_tmp3 |>
+  left_join(pathway_tbl, by = intersect_cols, relationship = "many-to-many")
 
 #using intersect columns above will ensure that multiple overlapping columns won't create a .x and .y version of the same column
 
@@ -196,15 +221,8 @@ ean_records <- ean_records |>
 I have compared filtering in the database vs. collecting and filtering in R. Collecting is only a couple of seconds, so it's fast enough and filtering is much easier for some operations that require complex manipulations or functions not supported by the SQL. The filtering by datetime is particularly easier when done in R due to the need for lubridate functions and having to otherwise manipulate the datetime fiscal year & month columns separately.
 
 ```{r}
-
-#open connection
-db_conn <- dbConnect(odbc::odbc(),.connection_string = 
-                      "Driver=SQL Server;
-                        Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
-                        Database=PPQ_AQI_ARMDMV2;
-                        trusted_connection=yes")
-
-ean_records <- ean_records |> collect()
+# Collect data into R
+system.time(ean_records <- ean_records |> collect())
 
 # Disconnect from the database
 dbDisconnect(db_conn)
@@ -214,103 +232,12 @@ dbDisconnect(db_conn)
 # filter to relevant records
 ## filter by years
 
-### Use the ISSUED_DATETIME or the INSPECTION_DATETIME ?
-```{r}
-datetime_comparison <- ean_records %>%
-  summarize(
-    total_records = n(),
-    issued_na_count = sum(is.na(ISSUED_DATETIME)),
-    inspection_na_count = sum(is.na(INSPECTION_DATETIME)),
-    both_na_count = sum(is.na(ISSUED_DATETIME) & is.na(INSPECTION_DATETIME)),
-    only_issued_na = sum(is.na(ISSUED_DATETIME) & !is.na(INSPECTION_DATETIME)),
-    only_inspection_na = sum(!is.na(ISSUED_DATETIME) & is.na(INSPECTION_DATETIME)),
-    both_present = sum(!is.na(ISSUED_DATETIME) & !is.na(INSPECTION_DATETIME))
-  ) %>%
-  mutate(
-    issued_na_percent = round(issued_na_count / total_records * 100, 2),
-    inspection_na_percent = round(inspection_na_count / total_records * 100, 2),
-    both_na_percent = round(both_na_count / total_records * 100, 2),
-    both_present_percent = round(both_present / total_records * 100, 2)
-  )
+### see 00_03 to find why filter by INSPECTION_DATETIME then ISSUED_DATETIME
 
-# Create a visual representation
-na_comparison <- data.frame(
-  datetime_field = c("ISSUED_DATETIME", "INSPECTION_DATETIME", "Both NA", "Both Present"),
-  na_count = c(datetime_comparison$issued_na_count, 
-               datetime_comparison$inspection_na_count,
-               datetime_comparison$both_na_count,
-               datetime_comparison$both_present),
-  percentage = c(datetime_comparison$issued_na_percent,
-                 datetime_comparison$inspection_na_percent,
-                 datetime_comparison$both_na_percent,
-                 datetime_comparison$both_present_percent)
-)
-
-# Print the detailed summary
-print(na_comparison)
-
-
-# Calculate time difference between ISSUED_DATETIME and INSPECTION_DATETIME
-datetime_diff <- head(ean_records, 10000) %>%
-  # Filter to records where both datetime fields are present
-  filter(!is.na(ISSUED_DATETIME) & !is.na(INSPECTION_DATETIME)) %>%
-  # Calculate the difference in hours
-  mutate(
-    time_diff_hours = as.numeric(difftime(ISSUED_DATETIME, INSPECTION_DATETIME, units = "hours")),
-    time_diff_days = as.numeric(difftime(ISSUED_DATETIME, INSPECTION_DATETIME, units = "days")),
-    # Create categories for analysis
-    time_diff_category = case_when(
-      time_diff_hours < 0 ~ "Issued before inspection (error?)",
-      time_diff_hours == 0 ~ "Same time",
-      time_diff_hours > 0 & time_diff_hours <= 1 ~ "Within 1 hour",
-      time_diff_hours > 1 & time_diff_hours <= 24 ~ "1-24 hours",
-      time_diff_hours > 24 & time_diff_hours <= 168 ~ "1-7 days",
-      time_diff_hours > 168 ~ "Over 7 days"
-    )
-  )
-
-  # Distribution by category
-time_diff_distribution <- datetime_diff %>%
-  group_by(time_diff_category) %>%
-  summarize(
-    count = n(),
-    percentage = n() / nrow(datetime_diff) * 100
-  ) %>%
-  arrange(factor(time_diff_category, levels = c(
-    "Issued before inspection (error?)", 
-    "Same time", 
-    "Within 1 hour", 
-    "1-24 hours", 
-    "1-7 days", 
-    "Over 7 days"
-  )))
-
-
-# Summary statistics
-time_diff_summary <- datetime_diff %>%
-  summarize(
-    n_records = n(),
-    min_diff_hours = min(time_diff_hours, na.rm = TRUE),
-    max_diff_hours = max(time_diff_hours, na.rm = TRUE),
-    median_diff_hours = median(time_diff_hours, na.rm = TRUE),
-    mean_diff_hours = mean(time_diff_hours, na.rm = TRUE),
-    sd_diff_hours = sd(time_diff_hours, na.rm = TRUE),
-    q25_diff_hours = quantile(time_diff_hours, 0.25, na.rm = TRUE),
-    q75_diff_hours = quantile(time_diff_hours, 0.75, na.rm = TRUE)
-  )
-
-
-print("Time difference summary statistics (in hours):")
-print(time_diff_summary)
-
-print("Distribution by time difference category:")
-print(time_diff_distribution)
-```
-
-In most cases, it looks like inspection datetime and issued datetime are pretty much the same, with 5% delayed issuance dates >7 days
+In most cases, it looks like inspection datetime and issued datetime are pretty much the same, with 5% delayed EAN-issuance dates >7 days later than the inspection date
 So, results suggest filter by INSPECTION_DATETIME first then by ISSUED_DATETIME if needed
 
-Filter using the params$years:
+Additionally: Filter using the params$years:
   Will call the years parameter here. The years parameter is used for the WADS codes when calculating the volume for AQIM-based pathways. By calling it here, this will ensure that we are comparing predicted volumes through AQIM+WADS for a given time to the volume of EAN-related products for the same time frame.
 
 ### Filter by INSPECTION_DATETIME then ISSUED_DATETIME
@@ -386,7 +313,8 @@ ean_records <- ean_records %>%
 
 ### use brg_pathway to separate
 
-### Conveyance table can separate out private and commercial aircraft
+Conveyance table can separate out private and commercial aircraft
+- this doesn't work within the 2023-2024 time frame; leaving it because it might work for some other time frames, like in the future. Not sure. See 00_04 for more details.
 ```{r}
 ean_records <- ean_records |> mutate(MODE_OF_TRANSPORT = 
 case_when(
@@ -425,10 +353,14 @@ filter to  eans that are from that country
 ```{r isolate records from risky countries}
 ean_records <- ean_records |> mutate(country_code = countrycode::countrycode(COUNTRY_OF_ORIGIN_NAME, 
                                   origin = "country.name", 
+                                  destination = "iso3c"),
+                                  product_origin_code = countrycode::countrycode(product_origin, 
+                                  origin = "country.name",
                                   destination = "iso3c")
                                   )
 
-ean_records <- ean_records |> filter(country_code %in% affected_countries)
+ean_records <- ean_records |> filter(country_code %in% affected_countries |
+                                    product_origin_code %in% affected_countries)
 ```
 
 
@@ -439,16 +371,18 @@ The type of product will be stored in COMMODITY_DISPLAY_NAME, just like in AQIM 
  View(ean_records |> filter(grepl("swine|porcine|pork|hooves|meat|ASF|CSF|blood|manure|dirt|feed",tolower(COMMODITY_DISPLAY_NAME))) |> count(REMARKS))
 
 print("most dont have a descriptive COMMODITY_DISPLAY_NAME like AQIM data")
+
+print("instead, they all use 'Ruminant or Swine...', so we'll have to use the REMARKS field to identify relevant products, where available")
 ```
 
 ```{r save for remarks analysis}
 setwd(here::here("output","intermediate files"))
 saveRDS(ean_records, "ean_records.rds")
 
+print("Remarks analysis done outside of this analysis, using Excel, M365 Copilot, and Ernesto R.")
 ```
 
-
-
+# Match with the product reference list, which incldues ARM's typical match for EANs, which begins with "Ruminant or Swine..."
 load product reference list
 ```{r identify products of risk}
 setwd(here::here("input","data","asf affected product names"))
@@ -463,7 +397,7 @@ match_asf_risk <- function(data, reference_table) {
   
   # Combine matches and remove duplicates
   asf_matches <- asf_product_match %>%
-    distinct(ID, COMMODITY_ID, .keep_all = TRUE)
+    distinct(EAN_ID, COMMODITY_ID, .keep_all = TRUE)
   
   # Return the matches for further processing
   return(asf_matches)
@@ -472,36 +406,123 @@ match_asf_risk <- function(data, reference_table) {
 # Apply to eans
 at_risk_eans <- match_asf_risk(ean_records, asf_product_ref)
 ```
-filter to eans that are that product
-```{r isolate records from risky products}
-ean_records <- ean_records |> mutate(commodity_name = toupper(COMMODITY_DISPLAY_NAME))
-ean_records <- ean_records |> filter(commodity_name %in% affected_products)
+
+
+# Convert non-kg quantities to kg units
+
+```{r correct quantity}
+# read the reference table for unit conversions
+setwd(here::here('input', 'data', 'asf affected product names'))
+quantity_units_to_kg <- read.csv(params$quantity_units_to_kg, stringsAsFactors = FALSE)
+
+
+# Function to convert various unit formats to standardized kg values
+convert_to_kg <- function(data, reference_table) {
+  # Ensure reference table unit names are lowercase for case-insensitive matching
+  reference_table <- reference_table %>%
+    mutate(unit_lower = tolower(unit))
+  
+  # First, standardize the data's unit names by removing plurals and converting to lowercase
+  data <- data %>%
+    mutate(
+      # Make a lowercase version of units for matching
+      QUANTITY_UNITS_LOWER = tolower(QUANTITY_UNITS_NAME),
+      # Remove trailing 's' from units (e.g., "Kilograms" -> "Kilogram")
+      QUANTITY_UNITS_LOWER = gsub("s$", "", QUANTITY_UNITS_LOWER),
+      # Ensure quantity is positive
+      QUANTITY = abs(as.numeric(QUANTITY))
+    )
+  
+  # Join with reference table using the lowercase, singular version
+  data <- data %>%
+    left_join(
+      reference_table %>% 
+        mutate(unit_lower = gsub("s$", "", unit_lower)),
+      by = c("QUANTITY_UNITS_LOWER" = "unit_lower"),
+      relationship = "many-to-many"
+    )
+
+  # make sure estimated kilograms is read in as a number
+  data <- data %>%
+    mutate(est_kilograms = as.numeric(est_kilograms))
+  
+  # Apply conversion and handle missing values with common-sense defaults
+  data <- data %>%
+    mutate(
+      TOTAL_KG = case_when(
+        !is.na(est_kilograms) ~ QUANTITY * est_kilograms,
+        # Fallback rules for missing conversions
+        grepl("gram", QUANTITY_UNITS_LOWER) & !grepl("kilo", QUANTITY_UNITS_LOWER) ~ QUANTITY / 1000,
+        grepl("kilo", QUANTITY_UNITS_LOWER) ~ QUANTITY,
+        grepl("pound", QUANTITY_UNITS_LOWER) ~ QUANTITY * 0.453592,
+        grepl("ounce", QUANTITY_UNITS_LOWER) ~ QUANTITY * 0.0283495,
+        grepl("each", QUANTITY_UNITS_LOWER) ~ QUANTITY * 0.5, # Assuming 0.5kg per item
+        grepl("piece", QUANTITY_UNITS_LOWER) ~ QUANTITY * 0.5,
+        grepl("ton", QUANTITY_UNITS_LOWER) & !grepl("metric", QUANTITY_UNITS_LOWER) ~ QUANTITY * 907.185,
+        grepl("ton", QUANTITY_UNITS_LOWER) & grepl("metric", QUANTITY_UNITS_LOWER) ~ QUANTITY * 1000,
+        TRUE ~ NA_real_
+      )
+    ) %>%
+    # Clean up temporary columns
+    dplyr::select(-QUANTITY_UNITS_LOWER)
+  
+  return(data)
+}
+
+# Apply the conversion function
+at_risk_eans <- convert_to_kg(at_risk_eans, quantity_units_to_kg)
+
+# Check how many records have missing TOTAL_KG values
+missing_kg_count <- sum(is.na((at_risk_eans |> filter(QUANTITY > 0))$TOTAL_KG))
+total_records <- nrow(at_risk_eans |> filter(QUANTITY > 0))
+missing_percent <- round(missing_kg_count / total_records * 100, 2)
+
+# Print summary of conversion results
+cat(sprintf("Conversion complete: %d out of %d records (%.2f%%) have valid kg values.\n", 
+            total_records - missing_kg_count, total_records, 100 - missing_percent))
+
+# If there are missing values, show the top unit types that couldn't be converted
+if(missing_kg_count > 0) {
+  cat("Top unit types without kg conversion:\n")
+  at_risk_eans |> filter(QUANTITY > 0) %>% 
+    filter(is.na(TOTAL_KG)) %>%
+    count(QUANTITY_UNITS_NAME, sort = TRUE) %>%
+    head(8) %>%
+    print()
+}
+```
+
+## Convert the entry_type to commercial if size is large
+
+```{r if large interceptions then convert product_subpathway to commercial}
+#Use the reference table to convert entry_type to commercial if the size is large
+setwd(here::here('input', 'data', 'product pathway by volume key'))
+size_ref <- read.csv(paste0(params$pathway_volume_smuggling_reference_table_filename,".csv"), stringsAsFactors = FALSE)
+
+size_ref_func <- function(data, reference_table){
+    data %>%
+  left_join(reference_table, by = c("entry_type" = "entry_type_ref"), relationship = "many-to-one") %>%
+  mutate(
+    product_subpathway = ifelse(
+      # IS_ASF_RISK != "NO" & # not used in EAN analysis in the same way as AQIM
+      !is.na(size_threshold_kg
+) & !is.na(TOTAL_KG) & TOTAL_KG >= size_threshold_kg
+, subpathway, product_subpathway)
+  ) }
+
+at_risk_eans <- size_ref_func(data = at_risk_eans, reference_table = size_ref)
+
+#Can take a look at the ones that were changed to smuggled commercial product
+View(at_risk_eans |> filter(grepl("smuggled", product_subpathway)))
 ```
 
 
+# Save the processed EAN records for further analysis
+```{r save processed ean records}
 
+write.csv(at_risk_eans, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed.csv", row.names = FALSE)
 
-# separate the data into layers
+saveRDS(at_risk_eans, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed.csv")
 
-## pathway can separate the conveyances
-
-
-
-## Conveyance table can separate out private and commercial aircraft
-```{r}
-
+print("Processed EAN records saved to large file data folder for further analysis.")
 ```
-
-
-
-
-
-
-# Get address
-
-## what are the address columns
-
-## Where is destination address stored?
-
-#Noah Stuart will get back to me on the addresses for EANs (Teams chat, 9/15/25)
-#Until then, I can still pull data, filter by commodity, etc. Getting a location would be last step, anyways.

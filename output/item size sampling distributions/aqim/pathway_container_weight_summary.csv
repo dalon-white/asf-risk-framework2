@@ -1,10 +1,25 @@
 "PATHWAY","container","product_pathway","product_subpathway","mean_weight","median_weight","total_samples","min_weight","max_weight"
-"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",1.01533878039059,0.5,2509,0.01,15
-"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption",1.66810810810811,1,185,0.03,24
-"Express_courier","package","swine products/by-products","personal use or consumption",2.08786956521739,1.4,47,0.012,15
-"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",0.810181818181818,0.35,22,0.054,5.6
-"Land Border - Truck - Conveyance - CBP NB NB","baggage","swine products/by-products","personal use or consumption",0.3975,0.3,8,0.08,1
-"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",32.48,25,5,20,67.4
-"Maritime Port - Vessel - Cargo - CBP","container","swine products/by-products","commercial",11304.5,10896.5,4,5655,17770
-"Express_courier","package","fomite","unspecified feed",0.666666666666667,0.5,3,0.5,1
-"Express_courier","package","swine products/by-products","smuggled commercial products",26,26,1,26,26
+"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","personal use or consumption",2.14725555258229,1,3737,0.01,18
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",1.09033901345291,0.5,1115,0.001,16.8
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",1.24626333333333,0.65,600,0.02,15
+"Pedestrian SB","baggage","swine products/by-products","personal use or consumption",1.99165177858439,1,551,0.00013,19.81
+"Land Border - Truck - Conveyance - CBP SB","baggage","other products","animal-based feed",2.72263888888889,2,288,0.05,19.5
+"Land Border - Truck - Conveyance - CBP NB","baggage","other products","animal-based feed",1.94419928825623,1,281,0.05,18
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",0.430128676470588,0.2,272,0.01,4
+"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","smuggled commercial products",32.4475,24.5,64,20,132
+"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",1.8119298245614,1.5,57,0.1,10
+"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",0.275375,0.2,40,0.01,3
+"Express_courier","package","swine products/by-products","personal use or consumption",2.70117647058824,2,17,0.1,11
+"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption",1.8325,1.85,16,0.46,5
+"Land Border - Truck - Conveyance - CBP NB","baggage","other products","smuggled commercial products",57.5555555555556,50,9,20,200
+"Land Border - Truck - Conveyance - CBP SB","baggage","other products","smuggled commercial products",41,35,9,22,90
+"Pedestrian SB","baggage","other products","unspecified feed",1.83466666666667,1,9,0.012,6
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","smuggled commercial products",62.5,42.5,6,20,189
+"Maritime Port - Vessel - Mail - CBP","package","other products","animal-based feed",2.1,2,4,1.4,3
+"Pedestrian SB","baggage","swine products/by-products","smuggled commercial products",96.405,48,4,39.62,250
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",91.6666666666667,50,3,20,205
+"Express_courier","package","other products","plasma",3.5,3.5,2,1,6
+"Express_courier","package","other products","unspecified feed",5.2,5.2,2,5,5.4
+"Express_courier","package","fomite","personal effects",0.4,0.4,1,0.4,0.4
+"Express_courier","package","other products","smuggled commercial products",34.5,34.5,1,34.5,34.5
+"Land Border - Truck - Conveyance - CBP SB","conveyance","fomite","plant based feed",0.5,0.5,1,0.5,0.5

@@ -1,0 +1,266 @@
+---
+title: "EAN geolocation"
+author: "Dalon White"
+date: "2025-09-12"
+output: 
+
+
+params:
+  affected_countries: "current" # "current" or "mex_can" or "other"
+  other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify the countries here
+  years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
+  ean_geolocated_filename: "ean_records_geocoded"
+---
+
+```{r setup, include=FALSE}
+# Load required packages
+library(tidyverse)
+library(magrittr)
+library(ggplot2) 
+library(lubridate)
+library(readr)
+library(stringdist)
+library(purrr)
+library(DBI)
+library(odbc)
+library(tidygeocoder)
+library(sf)
+library(tigris)
+library(SpatialKDE)
+library(here)
+```
+
+```{r load-params}
+# Function to load the shared parameters if available
+load_shared_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    message("Loading shared parameters from 00_asf_risk_parameters.Rmd")
+    return(readRDS(params_file))
+  } else {
+    message("Shared parameter file not found. Using script-specific parameters.")
+    return(NULL)
+  }
+}
+
+# Try to load shared params
+shared_params <- load_shared_params()
+
+# Use shared params if available, otherwise use script-specific params
+if (!exists("params")) {
+  if (!is.null(shared_params)) {
+    params <- shared_params
+  } else {
+    # Default params specific to this script
+    params <- list(
+      begin_date = "2000-01-01",
+      end_date = "2024-12-31",
+      US_grid_cell_size = 30000,
+      ean_geolocated_filename = "ean_records_geocoded"
+    )
+  }
+}
+```
+
+
+
+# Load the processed EAN records for further analysis
+```{r read processed ean records}
+at_risk_eans <- readRDS("C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed.csv")
+```
+
+# Get location
+
+- If it is a SUBCATEGORY == 'CBP|PIS', then can use the port location data like in AQIM
+- If it is a SUBCATEGORY == "SITC", then can drop " SITC" from INSPECTION_LOCATION_NAME and geocode that location with the INSPECTION_LOCATION_STATE_CODE
+
+## Gather Geolocation Data
+### 1. POEs
+
+```{r geolocation-database-connect}
+# Connect to ARM and GeoLocations databases
+db_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                     "Driver=SQL Server;
+                      Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                      Database=PPQ_AQI_ARMDMV2;
+                      trusted_connection=yes")
+
+geo_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                     "Driver=SQL Server;
+                      Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                      Database=GeoLocations;
+                      trusted_connection=yes")
+
+# Define columns to extract from each table
+brg_loc_cols <- c("ID", "NAME", "SITE", "PHYSICAL_ADDRESS_ID", 
+                 "MAIL_ADDRESS_ID", 'CBP_PORT_NUMBER', "IATA_CODE")
+cbp_poe_cols <- c("CBP_NAME", "CBP_CODE", "LAT", "LON", "Port of Entry Name")
+ppq_facilities_cols <- c("LocationName", "PPQCode", "City", "State", "Longitude", "Latitude")
+```
+
+Gather Coordinates From Different Sources
+
+```{r gather-coordinates}
+# Get location data from BRG2_LOCATION table
+brg_loc <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_LOCATION]")) %>% 
+           dplyr::select(all_of(brg_loc_cols)) %>% 
+           collect()
+
+# Get CBP Port of Entry data with coordinates
+cbp_poe <- tbl(geo_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_CBP_POEs]")) %>% 
+           dplyr::select(all_of(cbp_poe_cols)) %>% 
+           collect()
+
+# Get PPQ facilities data with coordinates
+ppq_facilities <- tbl(db_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_PPQ_Facilities]")) %>% 
+                 dplyr::select(all_of(ppq_facilities_cols)) %>% 
+                 collect()
+
+# Join pathway risk data with location reference
+at_risk_eans_brg_loc <- at_risk_eans %>% 
+                       left_join(brg_loc, by = c("INSPECTION_LOCATION_ID" = "ID"))
+
+# Step 1: Join with CBP POE data first (preferred source)
+at_risk_eans_loc_and_poe <- at_risk_eans_brg_loc %>%
+  left_join(cbp_poe, by = c("CBP_PORT_NUMBER" = "CBP_CODE"), relationship = "many-to-many") %>%
+  rename(
+    CBP_LAT = LAT,
+    CBP_LON = LON,
+    CBP_PORT_NAME = `Port of Entry Name`
+  )
+
+# Step 2: Join with PPQ facilities for rows still missing coordinates
+at_risk_eans_geo <- at_risk_eans_loc_and_poe %>%
+  left_join(
+    ppq_facilities %>% 
+      dplyr::select(LocationName, Latitude, Longitude) %>% 
+      rename(
+        PPQ_LAT = Latitude,
+        PPQ_LON = Longitude
+      ),
+    by = c("INSPECTION_LOCATION_NAME" = "LocationName")
+  )
+
+# Step 3: Create combined coordinate columns, prioritizing CBP data
+at_risk_eans_geo <- at_risk_eans_geo %>%
+  mutate(
+    final_LAT = coalesce(CBP_LAT, PPQ_LAT),
+    final_LON = coalesce(CBP_LON, PPQ_LON)
+  )
+
+# Step 4: For remaining missing coordinates, use IATA code if available
+missing_coords <- at_risk_eans_geo %>%
+  filter(is.na(final_LAT) | is.na(final_LON)) %>%
+  filter(!is.na(IATA_CODE))
+
+# Use tidygeocoder to look up IATA airport codes if available
+if(nrow(missing_coords) > 0 && requireNamespace("tidygeocoder", quietly = TRUE)) {
+  iata_coords <- missing_coords %>%
+    dplyr::select(IATA_CODE) %>%
+    distinct() %>%
+    mutate(query = paste("airport", IATA_CODE)) %>%
+    tidygeocoder::geocode(address = query, method = "osm")
+  
+  # Join the results back
+  at_risk_eans_geo <- at_risk_eans_geo %>%
+    left_join(
+      iata_coords %>% 
+        dplyr::select(IATA_CODE, lat, long) %>% 
+        rename(IATA_LAT = lat, IATA_LON = long),
+      by = "IATA_CODE"
+    ) %>%
+    mutate(
+      final_LAT = coalesce(final_LAT, IATA_LAT),
+      final_LON = coalesce(final_LON, IATA_LON)
+    )
+} else if(nrow(missing_coords) > 0) {
+  cat("Found", nrow(missing_coords), "rows with IATA codes but no coordinates.\n")
+  cat("Consider installing the 'tidygeocoder' package to look up these codes.\n")
+  print(missing_coords %>% dplyr::select(IATA_CODE) %>% distinct())
+}
+
+# Close database connections when done
+dbDisconnect(db_conn)
+dbDisconnect(geo_conn)
+```
+
+### 2. SITC Locations
+
+```{r sitc-geocode}
+# Filter to SITC records
+sitc_sites <- at_risk_eans %>%
+  filter(SUBCATEGORY == "SITC" & !is.na(INSPECTION_LOCATION_NAME) & INSPECTION_LOCATION_NAME != "")
+# Clean INSPECTION_LOCATION_NAME by removing " SITC"
+sitc_sites <- sitc_sites %>%
+  mutate(cleaned_location = str_replace(INSPECTION_LOCATION_NAME, " SITC", ""))
+# Create a combined address for geocoding
+sitc_sites <- sitc_sites %>%
+  mutate(geocode_address = paste(cleaned_location, INSPECTION_LOCATION_STATE_CODE, "USA", sep = ", "))
+
+sitc_sites <- sitc_sites %>%
+  dplyr::select(INSPECTION_LOCATION_NAME, geocode_address) %>%
+  distinct()
+# Use tidygeocoder to geocode the addresses
+if(requireNamespace("tidygeocoder", quietly = TRUE)) {
+    sitc_sites <- sitc_sites %>%
+        tidygeocoder::geocode(address = geocode_address, method = "osm") |>
+        rename(SITC_LAT = lat, SITC_LON = long)
+    
+    # Check for any failed geocodes
+    failed_geocodes <- sitc_sites %>%
+        filter(is.na(SITC_LAT) | is.na(SITC_LON))
+    
+    if(nrow(failed_geocodes) > 0) {
+        cat("Warning: Some SITC locations failed to geocode:\n")
+        print(failed_geocodes %>% dplyr::select(INSPECTION_LOCATION_NAME, INSPECTION_LOCATION_STATE_CODE, geocode_address))
+    }
+    
+    } else {
+    cat("The 'tidygeocoder' package is not installed. Please install it to geocode SITC locations.\n")
+    }
+# Join geocoded coordinates back to the sitc_records
+at_risk_eans_geo <- at_risk_eans_geo %>%
+  left_join(sitc_sites, by = c("INSPECTION_LOCATION_NAME")) |>
+    mutate(
+      final_LAT = coalesce(final_LAT, SITC_LAT),
+      final_LON = coalesce(final_LON, SITC_LON)
+    )
+  
+# summarize how many records still missing coordinates
+at_risk_eans_geo %>%
+  summarize(
+    total_records = n(),
+    missing_coords = sum(is.na(final_LAT) | is.na(final_LON))
+  ) %>% print()
+  # which category and subcategory are missing coordinates
+at_risk_eans_geo %>%
+  filter(is.na(final_LAT) | is.na(final_LON)) %>%  
+    count(CATEGORY, SUBCATEGORY) %>% arrange(desc(n)) %>% print()
+    # what are the unique inspection location names missing coordinates
+at_risk_eans_geo %>%
+  filter(is.na(final_LAT) | is.na(final_LON)) %>%  
+    count(INSPECTION_LOCATION_NAME) %>% arrange(desc(n)) %>% print()
+# its just DHL in ATL missing coordinates
+
+# Manually assign coordinates for DHL ATLANTA HUB (1791)
+at_risk_eans_geo <- at_risk_eans_geo |> mutate(final_LAT = case_when(
+    is.na(final_LAT) | is.na(final_LON) & INSPECTION_LOCATION_NAME == "DHL ATLANTA HUB (1791)" ~ 33.6407,
+    .default = final_LAT
+)) |> mutate(final_LON = case_when(
+    is.na(final_LON) & INSPECTION_LOCATION_NAME == "DHL ATLANTA HUB (1791)" ~ -84.4277,
+    .default = final_LON
+))
+```
+
+# Save the results with geocoded coordinates
+```{r save-geocoded-results}
+saveRDS(at_risk_eans_geo, here::here("output", "intermediate files", params$ean_geolocated_filename))
+cat("Geocoded EAN records saved to 'output/intermediate files/ean_records_geocoded.rds'\n")
+
+write.csv(at_risk_eans_geo, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed_and_geolocated.csv", row.names = FALSE)
+
+```
+
+
+

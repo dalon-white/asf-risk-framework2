@@ -1,0 +1,238 @@
+---
+title: "EAN geolocation"
+author: "Dalon White"
+date: "2025-09-12"
+output: 
+
+
+params:
+  affected_countries: "current" # "current" or "mex_can" or "other"
+  other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify the countries here
+  years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
+  ean_geolocated_filename: "ean_records_geocoded"
+---
+
+
+```{r setup, include=FALSE}
+# Load required packages
+library(tidyverse)
+library(magrittr)
+library(ggplot2) 
+library(lubridate)
+library(readr)
+library(stringdist)
+library(purrr)
+library(DBI)
+library(odbc)
+library(tidygeocoder)
+library(sf)
+library(tigris)
+library(SpatialKDE)
+library(here)
+```
+
+```{r load-params}
+# Function to load the shared parameters if available
+load_shared_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    message("Loading shared parameters from 00_asf_risk_parameters.Rmd")
+    return(readRDS(params_file))
+  } else {
+    message("Shared parameter file not found. Using script-specific parameters.")
+    return(NULL)
+  }
+}
+
+# Try to load shared params
+shared_params <- load_shared_params()
+
+# Use shared params if available, otherwise use script-specific params
+if (!exists("params")) {
+  if (!is.null(shared_params)) {
+    params <- shared_params
+  } else {
+    # Default params specific to this script
+    params <- list(
+      begin_date = "2000-01-01",
+      end_date = "2024-12-31",
+      US_grid_cell_size = 30000,
+      ean_geolocated_filename = "ean_records_geocoded"
+    )
+  }
+}
+```
+
+# load data
+```{r load ean dat}
+at_risk_eans_geo <- readRDS(here::here("output", "intermediate files", params$ean_geolocated_filename))
+
+```
+# 1. Prepare Data for Geospatial Processing
+## 1.1 Convert to Spatial Objects
+
+```{r convert-to-spatial}
+# Filter out rows without coordinates and convert to sf object
+at_risk_eans_geo_sf <- at_risk_eans_geo %>% 
+  filter(!is.na(final_LAT) & !is.na(final_LON)) %>% 
+  sf::st_as_sf(coords = c("final_LON", "final_LAT"), crs = 4326) %>%
+  # Transform to NAD83/Albers (EPSG:5070) for analysis
+  sf::st_transform(crs = 5070)
+
+# Save spatial object for future use
+saveRDS(at_risk_eans_geo_sf, here::here("output", "ean data", 
+                                       paste0(params$ean_geolocated_filename,"_sf")))
+```
+
+## 1.2 Filter to US Boundaries
+
+```{r us-boundaries}
+# Load US boundaries 
+us_bounds_sf <- readRDS(here::here("output", "intermediate files", "US hex grid", "us_bounds.rds"))
+us_grid <- readRDS(here::here("output", "intermediate files", "US hex grid", "us_grid.rds"))
+
+# Filter spatial data to US boundaries
+at_risk_eans_geo_sf_filtered <- at_risk_eans_geo_sf %>%
+  st_join(us_bounds_sf, left = TRUE) 
+
+# Report filtering statistics
+total_points <- nrow(at_risk_eans_geo_sf)
+kept_points <- nrow(at_risk_eans_geo_sf_filtered)
+removed_points <- total_points - kept_points
+
+cat(sprintf("Filtered to %d points within US boundaries (%d removed)\n", 
+          kept_points, removed_points))
+```
+
+# 1.3 Summarize Data for Spatial Layers
+
+```{r summarize-for-spatial-layers}
+# Group by location and pathway combinations and summarize
+spatial_layers_summary <- at_risk_eans_geo_sf_filtered %>%
+  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, 
+           container, product_pathway, product_subpathway) %>%
+  summarize(
+    total_mean_kg = sum(TOTAL_KG, na.rm = TRUE),
+    .groups = 'drop'
+  ) %>%
+  # Filter out incomplete records
+  filter(!is.na(container) & !is.na(product_pathway) & !is.na(product_subpathway))
+```
+
+# 7. Create and Save Spatial Layers Function
+
+```{r create-spatial-layers-function}
+# Function to create and save individual spatial layers for each pathway combination
+create_spatial_layers <- function(summarized_data, save_files = FALSE, output_dir = NULL) {
+  # Split data by pathway combinations
+  split_data <- summarized_data %>%
+    group_by(PATHWAY, container, product_pathway, product_subpathway) %>%
+    group_split()
+  
+  cat(sprintf("Created %d spatial layers for different pathway combinations\n", length(split_data)))
+  
+  # Create list to store the layers
+  spatial_layers <- list()
+  
+  # Create scenario string that specifies EANs
+  scenario_string <- "EAN"
+  
+  # Process each split
+  for (i in seq_along(split_data)) {
+    current_split <- split_data[[i]]
+    
+    # Get combination values for naming
+    combo <- current_split %>%
+      dplyr::select(PATHWAY, container, product_pathway, product_subpathway) %>%
+      slice(1) %>%
+      as.list()
+    
+    # Create clean name for layer using abbreviations
+    layer_name <- paste(
+      substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 3),
+      substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3),
+      substr(gsub("[^[:alnum:]]", "", combo$product_pathway), 1, 3),
+      substr(gsub("[^[:alnum:]]", "", combo$product_subpathway), 1, 3),
+      sep = "_"
+    )
+    
+    # Store in list with clean name
+    spatial_layers[[layer_name]] <- current_split
+    
+    # Save to file if requested
+    if (save_files && !is.null(output_dir)) {
+      # Ensure output directory exists
+      if (!dir.exists(output_dir)) {
+        dir.create(output_dir, recursive = TRUE)
+      }
+      
+      # Convert to POINT geometry (required for GeoPackage)
+      export_layer <- current_split %>%
+        sf::st_cast("POINT")
+      
+      # Include scenario in filename - use GeoPackage format for Shiny compatibility
+      file_path <- file.path(output_dir, paste0(layer_name, "_", scenario_string, ".gpkg"))
+      
+      # Try to save the file
+      tryCatch({
+        sf::st_write(export_layer, file_path, delete_layer = TRUE)
+        cat(sprintf("Saved layer %d/%d: %s\n", i, length(split_data), file_path))
+      }, error = function(e) {
+        cat(sprintf("ERROR saving layer %d/%d: %s - %s\n", 
+                   i, length(split_data), layer_name, e$message))
+      })
+    }
+  }
+  
+  # Create summary table of the layers
+  layer_summary <- data.frame(
+    layer_name = names(spatial_layers),
+    scenario = scenario_string,
+    point_count = sapply(spatial_layers, nrow),
+    total_risk = sapply(spatial_layers, function(x) sum(x$TOTAL_KG, na.rm = TRUE))
+  ) %>%
+    arrange(desc(total_risk))
+  
+  # Print summary
+  cat(paste0("\nSummary of spatial layers for scenario '", scenario_string, "' (top 10 by risk):\n"))
+  print(head(layer_summary, 10))
+  
+  # Also save the summary table as CSV for reference
+  if (save_files && !is.null(output_dir)) {
+    summary_path <- file.path(output_dir, paste0("layer_summary_", scenario_string, ".csv"))
+    write.csv(layer_summary, summary_path, row.names = FALSE)
+    cat(sprintf("\nSaved summary table to: %s\n", summary_path))
+  }
+  
+  return(list(
+    layers = spatial_layers,
+    summary = layer_summary,
+    scenario = scenario_string
+  ))
+}
+```
+
+# 8. Create Port Risk Spatial Layers
+
+ - I guess just leave SITC data in here for now. What else would we do with it? It's not really a port, but the risk is certainly present and coming through a port.
+    - At least through this we are not removing this risk from the mapping
+
+```{r create-port-risk-layers}
+# Set output directory for port risk layers
+port_risk_output_dir <- here::here("output", "spatial layers", "risk at ports")
+
+# Create the spatial layers
+spatial_layers <- create_spatial_layers(
+  summarized_data = spatial_layers_summary,
+  save_files = TRUE,
+  output_dir = port_risk_output_dir
+)
+```
+
+
+
+
+
+# create destination layers
+- i dont yet know how to make destination layers because every destination I can find is empty.

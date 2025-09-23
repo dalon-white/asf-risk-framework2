@@ -70,7 +70,7 @@ load_additional_layers <- function(directory, pattern = "*.gpkg") {
 ```{r layer_overview}
 # Display catalog of available layers
 datatable(layer_catalog %>% 
-            select(short_name, pathway, container, product_pathway, product_subpathway, risk_value) %>%
+            dplyr::select(short_name, pathway, container, product_pathway, product_subpathway, risk_value) %>%
             arrange(desc(risk_value)),
           options = list(pageLength = 10),
           caption = "Available Risk Distribution Layers (Click to Select)")

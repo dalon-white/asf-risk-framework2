@@ -65,8 +65,7 @@ wads_volume <- readRDS(paste(params$wads_volume_filename, ".rds"))
 # read approach rates
 ```{r read approach rates}
 setwd(here::here('output','aqim pathway approach rates')) 
-location_probabilities_glmm <- readRDS(paste(params$glm_results_filename,".rds", sep = " "))
-bootstrap_results <- readRDS(paste(params$bootstrap_results_filename,".rds", sep = " "))
+location_probabilities_glmm <- readRDS(paste0(params$glm_results_filename))
 ```
 # Join WADS volume and approach rates
 

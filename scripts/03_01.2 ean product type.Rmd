@@ -1,0 +1,83 @@
+---
+title: "EAN Product Type Analysis"
+author: "ASF Risk Framework"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  ean_data_path: "output/intermediate files/ean_records.rds"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(here)
+# library(reticulate)
+# library(jsonlite)
+
+# # Check if huggingfaceR is installed, if not install it
+# if (!requireNamespace("remotes", quietly = TRUE)) {
+#   install.packages("remotes")
+# }
+# if (!requireNamespace("huggingfaceR", quietly = TRUE)) {
+#   remotes::install_github("farach/huggingfaceR")
+# }
+# library(huggingfaceR)
+```
+```{r load params}
+params <- list(
+  ean_data_path = "output/intermediate files/ean_records.rds"
+)
+
+```
+
+
+
+## Loading EAN Data
+
+First, we'll load the EAN data that was processed in the previous script.
+
+```{r load_data}
+
+# Check if the file exists
+ean_file_path <- here::here(params$ean_data_path)
+if (!file.exists(ean_file_path)) {
+  stop(paste("EAN data file not found at:", ean_file_path, 
+             "Please run the '03_01 ean data.Rmd' script first."))
+}
+
+# Load the data
+ean_records <- readRDS(ean_file_path)
+
+# Print summary of the data
+cat("Loaded", nrow(ean_records), "EAN records\n")
+cat("Number of records with REMARKS:", sum(!is.na(ean_records$REMARKS)), "\n")
+
+# Sample some remarks to see what we're working with
+if (sum(!is.na(ean_records$REMARKS)) > 0) {
+  set.seed(123)
+  sample_remarks <- ean_records %>% 
+    filter(!is.na(REMARKS)) %>% 
+    sample_n(min(5, sum(!is.na(ean_records$REMARKS))))
+  
+  cat("\nSample REMARKS:\n")
+  for (i in 1:nrow(sample_remarks)) {
+    cat(i, ": ", sample_remarks$REMARKS[i], "\n\n")
+  }
+}
+```
+
+# Filter to remarks
+
+```{r filter_remarks}
+remarks <- ean_records %>%
+  filter(!is.na(REMARKS) & REMARKS != "") |>
+
+  filter(grepl("swine|pig|pork|sausage|bacon|ham|jerky|salami|charcuterie|lard|fat|offal|tripe|tallow|chitterlings|chitlins|headcheese|scrapple|blood pudding|blood sausage|hay|feed|fodder|forage|silage|alfalfa|clover|grass|legume|soy|corn|maize|wheat|barley|oat|rye|bran|mash|pellet|meal|cake|oilseed|oil cake|oil meal|sunflower|canola|rapeseed|cottonseed|flaxseed|linseed|sesame seed", 
+               tolower(REMARKS))) |> pull(REMARKS)
+
+write.csv(data.frame(REMARKS=remarks), file=here::here("output","ean data","ean remarks","ean remarks to be quantified.csv"), row.names=FALSE)
+
+```
+I have passed the file to Colin F. to try to process the remarks with m365 CoPilot
+Colin returned the file with copilot having partially processed the remarks. I passed the remainder to Ernesto to complete.
+Ernesto returned the completed file. I reviewed for accuracy and made minor edits. I handed it off to Ernesto to analyze outside of this process.

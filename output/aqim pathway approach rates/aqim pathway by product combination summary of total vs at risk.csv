@@ -1,0 +1,58 @@
+"PATHWAY","container","product_pathway","product_subpathway","IS_ASF_RISK","n"
+"Airport - Aircraft - Cargo - CBP",NA,NA,NA,0,5341
+"Airport - Aircraft - Passenger - Predeparture","baggage","swine products/by-products","personal use or consumption",0,1066
+"Airport - Aircraft - Passenger - Predeparture","baggage","swine products/by-products","smuggled commercial products",0,3
+"Airport - Aircraft - Passenger - Predeparture",NA,NA,NA,0,69295
+"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",0,150
+"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",1,57
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",0,6372
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",1,1115
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",0,14
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",1,3
+"Airport - Aircraft - Person - CBP",NA,NA,NA,0,308676
+"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",0,7
+"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",1,40
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",0,563
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",1,272
+"Airport - Aircraft - Person - Pre-Clearance",NA,NA,NA,0,51608
+"Cruise_ship","baggage","swine products/by-products","personal use or consumption",0,205
+"Cruise_ship","baggage","swine products/by-products","smuggled commercial products",0,2
+"Cruise_ship",NA,NA,NA,0,40018
+"Express_courier","package","fomite","personal effects",1,1
+"Express_courier","package","other products","plasma",0,1
+"Express_courier","package","other products","plasma",1,2
+"Express_courier","package","other products","smuggled commercial products",1,1
+"Express_courier","package","other products","unspecified feed",0,9
+"Express_courier","package","other products","unspecified feed",1,2
+"Express_courier","package","swine products/by-products","personal use or consumption",0,80
+"Express_courier","package","swine products/by-products","personal use or consumption",1,17
+"Express_courier","package","swine products/by-products","smuggled commercial products",0,3
+"Express_courier",NA,NA,NA,0,67794
+"Land Border - Truck - Cargo - CBP NB",NA,NA,NA,0,8342
+"Land Border - Truck - Cargo - CBP SB",NA,NA,NA,0,1934
+"Land Border - Truck - Conveyance - CBP NB","baggage","other products","animal-based feed",0,3
+"Land Border - Truck - Conveyance - CBP NB","baggage","other products","animal-based feed",1,281
+"Land Border - Truck - Conveyance - CBP NB","baggage","other products","smuggled commercial products",1,9
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",0,11
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",1,600
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","smuggled commercial products",1,6
+"Land Border - Truck - Conveyance - CBP NB",NA,NA,NA,0,142572
+"Land Border - Truck - Conveyance - CBP SB","baggage","other products","animal-based feed",1,288
+"Land Border - Truck - Conveyance - CBP SB","baggage","other products","smuggled commercial products",1,9
+"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","personal use or consumption",0,7
+"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","personal use or consumption",1,3737
+"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","smuggled commercial products",1,64
+"Land Border - Truck - Conveyance - CBP SB","conveyance","fomite","plant based feed",1,1
+"Land Border - Truck - Conveyance - CBP SB",NA,NA,NA,0,262133
+"Maritime Port - Vessel - Cargo - CBP","container","other products","animal-based feed",0,1
+"Maritime Port - Vessel - Cargo - CBP","container","swine products/by-products","commercial",0,3
+"Maritime Port - Vessel - Cargo - CBP",NA,NA,NA,0,13498
+"Maritime Port - Vessel - Mail - CBP","package","other products","animal-based feed",0,8
+"Maritime Port - Vessel - Mail - CBP","package","other products","animal-based feed",1,4
+"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption",0,278
+"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption",1,16
+"Maritime Port - Vessel - Mail - CBP",NA,NA,NA,0,63736
+"Pedestrian SB","baggage","other products","unspecified feed",1,9
+"Pedestrian SB","baggage","swine products/by-products","personal use or consumption",1,551
+"Pedestrian SB","baggage","swine products/by-products","smuggled commercial products",1,4
+"Pedestrian SB",NA,NA,NA,0,293999

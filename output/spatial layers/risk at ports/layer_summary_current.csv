@@ -1,5 +1,10 @@
 "layer_name","scenario","point_count","total_risk"
-"Exp_pac_swi_per","current",29,62390295.6811579
-"Air_bag_swi_smu","current",176,15574772.0232227
-"Exp_pac_fom_uns","current",29,13907535.5686126
-"Air_bag_swi_per","current",9,21460.1293823969
+"Exp_pac_swi_per","current",29,196371.155873496
+"Exp_pac_swi_smu","current",29,27493.2933333333
+"Air_bag_swi_smu","current",176,4683.27252189254
+"Mar_con_swi_com","current",53,4657.06100649351
+"Exp_pac_oth_uns","current",29,4069.46625
+"Mar_con_oth_ani","current",53,1764.06198051948
+"Air_bag_swi_per","current",9,411.184134607675
+"Air_bag_oth_ani","current",9,18.737353030303
+"Lan_bag_swi_per","current",42,3.61442790129834

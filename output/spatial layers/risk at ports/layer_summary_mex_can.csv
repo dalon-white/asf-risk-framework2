@@ -1,0 +1,17 @@
+"layer_name","scenario","point_count","total_risk"
+"Lan_bag_swi_per","mex_can",32,159275.272666474
+"Exp_pac_swi_per","mex_can",29,76292.6250077183
+"Lan_bag_swi_smu","mex_can",32,38307.2162660911
+"Exp_pac_oth_smu","mex_can",29,29086.5918939394
+"Exp_pac_oth_uns","mex_can",29,17284.6915606061
+"Lan_bag_oth_ani","mex_can",32,16333.33957809
+"Ped_bag_swi_per","mex_can",29,11791.6009985801
+"Exp_pac_oth_pla","mex_can",29,11637.1764393939
+"Air_bag_swi_smu","mex_can",176,8121.03712121212
+"Lan_bag_oth_smu","mex_can",32,6925.68409119514
+"Ped_bag_swi_smu","mex_can",29,3945.76248787879
+"Air_bag_swi_per","mex_can",9,2689.96809713013
+"Exp_pac_fom_per","mex_can",29,665.346363636364
+"Air_bag_oth_ani","mex_can",9,245.627785688471
+"Ped_bag_oth_uns","mex_can",29,169.573668743569
+"Lan_con_fom_pla","mex_can",32,9.44657575757576

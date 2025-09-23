@@ -54,7 +54,8 @@ ui <- navbarPage(
           selectInput("scenario_filter", "Select Scenario:", 
                       choices = c("Current" = "current", 
                                   "Mexico/Canada" = "mex_can", 
-                                  "Other" = "other"),
+                                  "Other" = "other",
+                                  "EANs" = "EAN"),
                       selected = "current"),
           hr(),
           # Dynamic checkboxes for port layer selection
@@ -638,8 +639,34 @@ server <- function(input, output, session) {
       max_layers_at_one_location <- 1
     }
     
-    # The risk column should now be total_mean_kg from our summarization
-    risk_col <- "total_mean_kg"
+# Check for various possible risk column names
+possible_risk_cols <- c("total_mean_kg", "TOTAL_KG", "total_risk")
+    
+# Find the first matching column that exists in the data
+risk_col <- NULL
+for (col in possible_risk_cols) {
+  if (col %in% names(port_data)) {
+    risk_col <- col
+    break
+  }
+}
+
+# If no matching column found, use a default and warn
+if (is.null(risk_col)) {
+  warning("None of the expected risk columns found in data. Using first numeric column.")
+  # Find the first numeric column as fallback
+  numeric_cols <- sapply(port_data, is.numeric)
+  if (any(numeric_cols)) {
+    risk_col <- names(port_data)[which(numeric_cols)[1]]
+  } else {
+    # Last resort - create a dummy column with zeros
+    port_data$dummy_risk <- 0
+    risk_col <- "dummy_risk"
+  }
+}
+    
+# Calculate total risk using the identified column
+total_risk <- sum(port_data[[risk_col]], na.rm = TRUE)
     
     # Calculate total risk
     total_risk <- sum(port_data[[risk_col]], na.rm = TRUE)
