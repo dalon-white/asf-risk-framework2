@@ -491,8 +491,12 @@ inspections &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDAT
               dplyr::select(all_of(inspection_cols)) |&gt;
               rename(INSPECTION_ID = ID,
                     #rename to match AQAS data structure
-                     product_origin = COUNTRY_OF_ORIGIN_NAME)
- 
+                     product_origin = COUNTRY_OF_ORIGIN_NAME,
+                     LOCATION_ID = &quot;INSPECTION_LOCATION_ID&quot;, 
+                     LOCATION_NAME = &quot;INSPECTION_LOCATION_NAME&quot;, 
+                     LOCATION_STATE_CODE = &quot;INSPECTION_LOCATION_STATE_CODE&quot;
+)
+
 #-- Load Bridge Commodity dataset ----
 commodity &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_COMMODITY]&quot;)) |&gt; 
               dplyr::select(all_of(commodity_cols)) |&gt;
@@ -543,7 +547,7 @@ datetime fiscal year &amp; month columns separately.</p>
 <pre class="r"><code># Collect data into R
 system.time(ean_records &lt;- ean_records |&gt; collect())</code></pre>
 <pre><code>##    user  system elapsed 
-##    1.12    0.16   48.38</code></pre>
+##    3.17    0.31   20.28</code></pre>
 <pre class="r"><code># Disconnect from the database
 dbDisconnect(db_conn)</code></pre>
 </div>

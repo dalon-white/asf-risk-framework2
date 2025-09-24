@@ -91,17 +91,7 @@ load_asf_params <- function() {
     message("Loaded parameters from shared configuration file")
   } else {
     # Create default params if the file doesn't exist
-    message("Shared parameter file not found. Using default parameters.")
-    params <- list(
-      begin_date = "2021-01-01",
-      end_date = "2024-12-31",
-      affected_countries = "current",
-      risk_quantification = "0_1",
-      n_sims_for_volume = 100,
-      pathway_volumes_filename = "volume_of_risk_by_pathway",
-      US_grid_cell_size = 60000
-      # Add minimal defaults needed for scripts to run independently
-    )
+    message("Shared parameter file not found.")
   }
   
   return(params)

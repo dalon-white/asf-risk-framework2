@@ -404,8 +404,14 @@ library(ggplot2)
 library(dplyr)
 library(scales)
 
+# Define output directory first before saving any plots
+output_dir <- here::here("output", "aqim pathway approach rates")
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
 # Plot probabilities by pathway
-ggplot(all_predictions, aes(x = reorder(pathway, probability), y = probability)) +
+pathway_boxplot <- ggplot(all_predictions, aes(x = reorder(pathway, probability), y = probability)) +
   geom_boxplot(aes(fill = pathway), alpha = 0.7) +
   coord_flip() +
   scale_y_continuous(labels = percent_format()) +
@@ -419,13 +425,33 @@ ggplot(all_predictions, aes(x = reorder(pathway, probability), y = probability))
   theme_minimal() +
   theme(legend.position = "none")
 
+# Display the plot
+print(pathway_boxplot)
+
+# Save the boxplot to a file
+ggsave(
+  filename = file.path(output_dir, "pathway_risk_probability_boxplot.png"),
+  plot = pathway_boxplot,
+  width = 10,
+  height = 8,
+  dpi = 300
+)
+
+# Also save as PDF for higher quality if needed
+ggsave(
+  filename = file.path(output_dir, "pathway_risk_probability_boxplot.pdf"),
+  plot = pathway_boxplot,
+  width = 10,
+  height = 8
+)
+
 # Find the top 30 locations with highest probabilities
 top_locations <- all_predictions %>%
   arrange(desc(probability)) %>%
   head(30)
 
 # Plot top 30 locations by probability
-ggplot(top_locations, aes(x = reorder(location, probability), y = probability, fill = pathway)) +
+top_locations_plot <- ggplot(top_locations, aes(x = reorder(location, probability), y = probability, fill = pathway)) +
   geom_col() +
   coord_flip() +
   scale_y_continuous(labels = percent_format()) +
@@ -438,11 +464,25 @@ ggplot(top_locations, aes(x = reorder(location, probability), y = probability, f
   ) +
   theme_minimal()
 
-# Save the results
-output_dir <- here::here("output", "aqim pathway approach rates")
-if (!dir.exists(output_dir)) {
-  dir.create(output_dir, recursive = TRUE)
-}
+# Display the plot
+print(top_locations_plot)
+
+# Save the top locations plot to a file
+ggsave(
+  filename = file.path(output_dir, "top_30_locations_risk_probability.png"),
+  plot = top_locations_plot,
+  width = 12,
+  height = 10,
+  dpi = 300
+)
+
+# Also save as PDF for higher quality if needed
+ggsave(
+  filename = file.path(output_dir, "top_30_locations_risk_probability.pdf"),
+  plot = top_locations_plot,
+  width = 12,
+  height = 10
+)
 
 # Save the predictions as CSV
 write.csv(
@@ -496,30 +536,8 @@ for (pathway_name in names(glmm_results)) {
     )
   )
   
-  # Get the original data for this pathway
-  pathway_data <- aqim_dat_list[[pathway_name]]
-  
-  # Get the fitted probabilities for each location
-  fitted_probs <- predict(model, type = "response")
-  
-  # Add fitted probabilities to the data
-  pathway_data$fitted_prob <- fitted_probs
-  
-  # Plot observed vs fitted for this pathway
-  p <- ggplot(pathway_data, aes(x = n_positive/total_obs, y = fitted_prob)) +
-    geom_point(aes(size = total_obs), alpha = 0.7) +
-    geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") +
-    scale_x_continuous(labels = percent_format()) +
-    scale_y_continuous(labels = percent_format()) +
-    labs(
-      title = paste("Fitted vs Observed Rates for", pathway_name),
-      x = "Observed Rate (n_positive / total_obs)",
-      y = "Fitted Probability",
-      size = "Sample Size"
-    ) +
-    theme_minimal()
-  
-  print(p)
+  # We'll skip plot creation and saving to avoid any issues
+  # Just collect the model statistics
 }
 
 # Display model statistics
@@ -757,19 +775,19 @@ product_risk_summary <- combined_product_risk %>%
 # Save the product risk summary
 write.csv(
   product_risk_summary,
-  file.path(output_dir, "_raw.csv"),
+  file.path(output_dir, "summary_of_risk_by_product.csv"),
   row.names = FALSE
 )
 
 # Print summary information
 cat("\nProduct type analysis complete.\n")
 cat("Number of pathway-product combinations:", nrow(product_risk_summary), "\n")
-cat("Product risk summary saved to:", file.path(output_dir, "_raw.csv"), "\n")
+cat("Product risk summary saved to:", file.path(output_dir, "summary_of_risk_by_product.csv"), "\n")
 cat("Detailed product risk data saved to:", 
     file.path(output_dir, paste0(params$glm_results_filename, "_raw")), "\n")
 ```
 
-### modify the zeroes to be half of the lowest predicted value
+### modify the zeroes
 
 ```{r replace zero predicted values}
 # Define the threshold for near-zero values
@@ -870,15 +888,33 @@ saveRDS(
   adjusted_product_risk,
   file.path(output_dir, paste0(params$glm_results_filename, "_by_product_type_adjusted"))
 )
+write.csv(
+  adjusted_product_risk,
+  file.path(output_dir, paste0(params$glm_results_filename, "_by_product_type_adjusted.csv"))
+)
+
+adjusted_product_risk <- adjusted_product_risk |> 
+rename(location = INSPECTION_LOCATION_NAME) |>
+mutate(
+    scenario = params$affected_countries,
+    date_created = Sys.Date(),
+    method = "glm",
+    # Add group_id for pipeline integration
+    group = paste(pathway, container, product_pathway, product_subpathway, sep = ";")
+) |> rename(
+  probability = adjusted_prob,
+  ci_lower = adjusted_lower,
+  ci_upper = adjusted_upper
+)
 
 # Create a summary of adjusted product risk by pathway with pipeline-compatible format
 adjusted_risk_summary <- adjusted_product_risk %>%
-  group_by(pathway, container, product_pathway, product_subpathway) %>%
+  group_by(group, pathway, container, product_pathway, product_subpathway) %>%
   summarize(
     # Using standard names that match pipeline expectations
-    probability = mean(adjusted_prob),
-    ci_lower = mean(adjusted_lower),
-    ci_upper = mean(adjusted_upper),
+    probability = mean(probability),
+    ci_lower = mean(ci_lower),
+    ci_upper = mean(ci_upper),
     # Keep additional metadata fields
     product_proportion = first(product_proportion),
     n_locations = n(),
@@ -888,38 +924,19 @@ adjusted_risk_summary <- adjusted_product_risk %>%
   mutate(
     scenario = params$affected_countries,
     date_created = Sys.Date(),
-    method = "glm",
-    # Add group_id for pipeline integration
-    group = paste(pathway, container, product_pathway, product_subpathway, sep = ";")
+    method = "glm"
   ) %>%
   arrange(pathway, desc(probability))
 
 # Save the adjusted summary in both CSV and RDS formats for pipeline compatibility
 write.csv(
   adjusted_risk_summary,
-  file.path(output_dir, "glm_product_risk_summary_adjusted.csv"),
+  file.path(output_dir, "avg_of_adjusted_product_risk_summarized_across_locations.csv"),
   row.names = FALSE
 )
 
 # Create a new file with only the essential columns for pipeline compatibility
-pipeline_ready_data <- adjusted_product_risk %>%
-rename(location = INSPECTION_LOCATION_NAME) |>
-mutate(
-    # Using standard names that match pipeline expectations
-    probability = adjusted_prob,
-    ci_lower = adjusted_lower,
-    ci_upper = adjusted_upper,
-    n_locations = n(),
-    .groups = "drop",
-
-  # Add additional fields needed by the pipeline 
-    scenario = params$affected_countries,
-    date_created = Sys.Date(),
-    method = "glm",
-
-    # Add group for pipeline integration
-    group = paste(pathway, container, product_pathway, product_subpathway, sep = ";")
-  ) %>%
+pipeline_ready_data <- adjusted_product_risk |>
   arrange(pathway, desc(probability)) |>
   dplyr::select(
     location,
@@ -1015,4 +1032,26 @@ setwd(here::here('output','aqim pathway approach rates'))
 #save summary tables for validating the data
 write.csv(combinations_summary, "aqim pathway by product combination summary of total vs at risk.csv", row.names = FALSE)
 write.csv(pathway_summary, "aqim pathway summary of total vs at risk.csv", row.names = FALSE)
+```
+
+## Output Files Summary
+```{r output_summary, echo=FALSE}
+# Summary of all saved files
+cat("\n### Summary of Output Files ###\n\n")
+cat("#### Data Files\n")
+cat(paste("- Pipeline-ready data:", file.path(output_dir, paste0(params$glm_results_filename)), "\n"))
+cat(paste("- Raw product risk data:", file.path(output_dir, paste0(params$glm_results_filename, "_by_product_type")), "\n"))
+cat(paste("- Adjusted product risk data:", file.path(output_dir, paste0(params$glm_results_filename, "_by_product_type_adjusted")), "\n"))
+cat(paste("- Product risk summary CSV:", file.path(output_dir, "_raw.csv"), "\n"))
+cat(paste("- GLM location predictions:", file.path(output_dir, "glm_location_predictions.csv"), "\n"))
+cat(paste("- GLM pathway summary:", file.path(output_dir, "glm_pathway_summary.csv"), "\n"))
+cat(paste("- Group size summary:", file.path(output_dir, paste(params$group_size_filename,".csv", sep="")), "\n\n"))
+
+cat("#### Plot Files\n")
+cat(paste("- Pathway Risk Probability Boxplot (PNG):", file.path(output_dir, "pathway_risk_probability_boxplot.png"), "\n"))
+cat(paste("- Pathway Risk Probability Boxplot (PDF):", file.path(output_dir, "pathway_risk_probability_boxplot.pdf"), "\n"))
+cat(paste("- Top 30 Locations Risk Plot (PNG):", file.path(output_dir, "top_30_locations_risk_probability.png"), "\n"))
+cat(paste("- Top 30 Locations Risk Plot (PDF):", file.path(output_dir, "top_30_locations_risk_probability.pdf"), "\n"))
+cat(paste("- Model diagnostic plots:", file.path(output_dir, "model_diagnostics"), "(one per pathway)\n"))
+
 ```

@@ -119,7 +119,7 @@ ppq_facilities <- tbl(db_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_PPQ_
 
 # Join pathway risk data with location reference
 at_risk_eans_brg_loc <- at_risk_eans %>% 
-                       left_join(brg_loc, by = c("INSPECTION_LOCATION_ID" = "ID"))
+                       left_join(brg_loc, by = c("LOCATION_ID" = "ID"))
 
 # Step 1: Join with CBP POE data first (preferred source)
 at_risk_eans_loc_and_poe <- at_risk_eans_brg_loc %>%
@@ -139,7 +139,7 @@ at_risk_eans_geo <- at_risk_eans_loc_and_poe %>%
         PPQ_LAT = Latitude,
         PPQ_LON = Longitude
       ),
-    by = c("INSPECTION_LOCATION_NAME" = "LocationName")
+    by = c("LOCATION_NAME" = "LocationName")
   )
 
 # Step 3: Create combined coordinate columns, prioritizing CBP data
@@ -190,16 +190,16 @@ dbDisconnect(geo_conn)
 ```{r sitc-geocode}
 # Filter to SITC records
 sitc_sites <- at_risk_eans %>%
-  filter(SUBCATEGORY == "SITC" & !is.na(INSPECTION_LOCATION_NAME) & INSPECTION_LOCATION_NAME != "")
-# Clean INSPECTION_LOCATION_NAME by removing " SITC"
+  filter(SUBCATEGORY == "SITC" & !is.na(LOCATION_NAME) &LOCATION_NAME != "")
+# Clean LOCATION_NAME by removing " SITC"
 sitc_sites <- sitc_sites %>%
-  mutate(cleaned_location = str_replace(INSPECTION_LOCATION_NAME, " SITC", ""))
+  mutate(cleaned_location = str_replace(LOCATION_NAME, " SITC", ""))
 # Create a combined address for geocoding
 sitc_sites <- sitc_sites %>%
-  mutate(geocode_address = paste(cleaned_location, INSPECTION_LOCATION_STATE_CODE, "USA", sep = ", "))
+  mutate(geocode_address = paste(cleaned_location, LOCATION_STATE_CODE, "USA", sep = ", "))
 
 sitc_sites <- sitc_sites %>%
-  dplyr::select(INSPECTION_LOCATION_NAME, geocode_address) %>%
+  dplyr::select(LOCATION_NAME, geocode_address) %>%
   distinct()
 # Use tidygeocoder to geocode the addresses
 if(requireNamespace("tidygeocoder", quietly = TRUE)) {
@@ -213,7 +213,7 @@ if(requireNamespace("tidygeocoder", quietly = TRUE)) {
     
     if(nrow(failed_geocodes) > 0) {
         cat("Warning: Some SITC locations failed to geocode:\n")
-        print(failed_geocodes %>% dplyr::select(INSPECTION_LOCATION_NAME, INSPECTION_LOCATION_STATE_CODE, geocode_address))
+        print(failed_geocodes %>% dplyr::select(LOCATION_NAME, LOCATION_STATE_CODE, geocode_address))
     }
     
     } else {
@@ -221,7 +221,7 @@ if(requireNamespace("tidygeocoder", quietly = TRUE)) {
     }
 # Join geocoded coordinates back to the sitc_records
 at_risk_eans_geo <- at_risk_eans_geo %>%
-  left_join(sitc_sites, by = c("INSPECTION_LOCATION_NAME")) |>
+  left_join(sitc_sites, by = c("LOCATION_NAME")) |>
     mutate(
       final_LAT = coalesce(final_LAT, SITC_LAT),
       final_LON = coalesce(final_LON, SITC_LON)
@@ -240,15 +240,15 @@ at_risk_eans_geo %>%
     # what are the unique inspection location names missing coordinates
 at_risk_eans_geo %>%
   filter(is.na(final_LAT) | is.na(final_LON)) %>%  
-    count(INSPECTION_LOCATION_NAME) %>% arrange(desc(n)) %>% print()
+    count(LOCATION_NAME) %>% arrange(desc(n)) %>% print()
 # its just DHL in ATL missing coordinates
 
 # Manually assign coordinates for DHL ATLANTA HUB (1791)
 at_risk_eans_geo <- at_risk_eans_geo |> mutate(final_LAT = case_when(
-    is.na(final_LAT) | is.na(final_LON) & INSPECTION_LOCATION_NAME == "DHL ATLANTA HUB (1791)" ~ 33.6407,
+    is.na(final_LAT) | is.na(final_LON) & LOCATION_NAME == "DHL ATLANTA HUB (1791)" ~ 33.6407,
     .default = final_LAT
 )) |> mutate(final_LON = case_when(
-    is.na(final_LON) & INSPECTION_LOCATION_NAME == "DHL ATLANTA HUB (1791)" ~ -84.4277,
+    is.na(final_LON) & LOCATION_NAME == "DHL ATLANTA HUB (1791)" ~ -84.4277,
     .default = final_LON
 ))
 ```
@@ -258,7 +258,7 @@ at_risk_eans_geo <- at_risk_eans_geo |> mutate(final_LAT = case_when(
 saveRDS(at_risk_eans_geo, here::here("output", "intermediate files", params$ean_geolocated_filename))
 cat("Geocoded EAN records saved to 'output/intermediate files/ean_records_geocoded.rds'\n")
 
-write.csv(at_risk_eans_geo, "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed_and_geolocated.csv", row.names = FALSE)
+write.csv(at_risk_eans_geo |> st_drop_geometry(), "C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed_and_geolocated.csv", row.names = FALSE)
 
 ```
 

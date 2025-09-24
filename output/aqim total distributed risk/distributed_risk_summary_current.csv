@@ -1,0 +1,11 @@
+"layer_name","short_name","pathway","container","product_pathway","product_subpathway","total_risk","cell_count"
+"Express_courier_package_swine_products_by_products_personal_use_or_consumption","Exp_pac_swi_per_2","Express_courier","package","swine products/by-products","personal use or consumption",196387.863850121,3573
+"Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_personal_use_or_consumption","Air_bag_swi_per_2","Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",76193.9460154709,3573
+"Express_courier_package_swine_products_by_products_smuggled_commercial_products","Exp_pac_swi_smu_3","Express_courier","package","swine products/by-products","smuggled commercial products",27459.1266666667,3573
+"Maritime_Port___Vessel___Cargo___CBP_container_swine_products_by_products_commercial","Mar_con_swi_com_2","Maritime Port - Vessel - Cargo - CBP","container","swine products/by-products","commercial",4978.61974025974,3573
+"Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_smuggled_commercial_products","Air_bag_swi_smu_3","Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",4686.42379636008,3573
+"Express_courier_package_other_products_unspecified_feed","Exp_pac_oth_uns_1","Express_courier","package","other products","unspecified feed",4070.86875,3573
+"Maritime_Port___Vessel___Cargo___CBP_container_other_products_animal_based_feed","Mar_con_oth_ani_1","Maritime Port - Vessel - Cargo - CBP","container","other products","animal-based feed",1598.23502164502,3573
+"Airport___Aircraft___Person___CBP_baggage_other_products_animal_based_feed","Air_bag_oth_ani_1","Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",1584.61990062123,3573
+"Airport___Aircraft___Person___Pre_Clearance_baggage_swine_products_by_products_personal_use_or_consumption","Air_bag_swi_per_2","Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",410.25140062478,3573
+"Airport___Aircraft___Person___Pre_Clearance_baggage_other_products_animal_based_feed","Air_bag_oth_ani_1","Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",18.9871732323232,3573

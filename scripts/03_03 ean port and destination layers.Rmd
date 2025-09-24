@@ -190,7 +190,7 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
     layer_name = names(spatial_layers),
     scenario = scenario_string,
     point_count = sapply(spatial_layers, nrow),
-    total_risk = sapply(spatial_layers, function(x) sum(x$TOTAL_KG, na.rm = TRUE))
+    total_risk = sapply(spatial_layers, function(x) sum(x$total_mean_kg, na.rm = TRUE))
   ) %>%
     arrange(desc(total_risk))
   

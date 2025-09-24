@@ -9,7 +9,9 @@ params:
   n_sims_for_volume: 100
   pathway_volumes_filename: "volume_of_risk_by_pathway" # Name of the output file for the pathway risk summary results
   affected_countries: "current" # "current" or "mex_can" or "other"
-  other_affected_countries: c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify countries
+  other_affected_countries: !r c("Country1 ISO-3 Code", "Country2 ISO-3 Code") # If using "other", specify countries
+  # Years to consider for affected countries
+  years: !r 2023:2024
 ---
 
 <!--
@@ -75,9 +77,10 @@ if (!exists("params")) {
   }
 }
 
+setwd(here::here('output','aqim based volume of at risk product approaching'))
 # Load pathway risk summary data
-pathway_risk_summary <- readRDS(here::here("output","aqim based volume of at risk product approaching", 
-                               paste(params$pathway_volumes_filename, params$n_sims_for_volume, "sims",".rds", sep = "")))
+pathway_risk_summary <- readRDS(paste(params$pathway_volumes_filename, min(params$years), "to", max(params$years), params$affected_countries, params$n_sims_for_volume, "sims",".rds", sep = "_"))
+
 ```
 
 # 1. Gather Geolocation Data
@@ -407,6 +410,9 @@ pathway_spatial_layers_summary <- spatial_layers_summary %>%
     total_mean_kg = sum(total_mean_kg, na.rm = TRUE),
     .groups = 'drop'
   )
+
+setwd(here::here('output','report files'))
+write.csv(pathway_spatial_layers_summary, paste("aqim pathway summary", min(params$years), "to", max(params$years), params$affected_countries, params$n_sims_for_volume, "sims",".csv", sep = "_"), row.names = FALSE)
 ```
 
 # 10. Create Final Destination Risk Layers Function
@@ -553,7 +559,7 @@ risk_summary <- distributed_risks$catalog %>%
 
 # Save the summary for reference
 write.csv(risk_summary, 
-          here::here("output", "aqim total distributed risk", "distributed_risk_summary.csv"), 
+          here::here("output", "aqim total distributed risk", paste0("distributed_risk_summary_", params$affected_countries,".csv")), 
           row.names = FALSE)
 
 cat("Spatial risk layers created and ready for use in Shiny app\n")

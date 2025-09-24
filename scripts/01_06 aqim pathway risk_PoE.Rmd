@@ -13,6 +13,11 @@ params:
   # Set number of simulations
   n_sims_for_volume: 100
   pathway_volumes_filename: "volume_of_risk_by_pathway" # Name of the output file for the pathway risk summary results
+  # Years to consider for affected countries
+  years: !r 2023:2024 
+  # Affected countries settings
+  affected_countries: "current" # "current" or "mex_can" or "other"
+  other_affected_countries: !r c("Country1 ISO-3 Code", "Country2 ISO-3 Code")
 ---
 
 ```{r setup, include=FALSE}
@@ -64,8 +69,10 @@ wads_volume <- readRDS(paste(params$wads_volume_filename, ".rds"))
 
 # read approach rates
 ```{r read approach rates}
-setwd(here::here('output','aqim pathway approach rates')) 
-location_probabilities_glmm <- readRDS(paste0(params$glm_results_filename))
+setwd(here::here('output','aqim pathway approach rates'))
+#load pipeline data
+location_probabilities_glmm <- readRDS( paste0(params$glm_results_filename))
+
 ```
 # Join WADS volume and approach rates
 
@@ -90,6 +97,21 @@ wads_volume_joined <- wads_volume %>%
     by = c("PATHWAY" = "pathway", "LOCATION_NAME" = "location", "group" = "group"),
     relationship = "many-to-many"
   )
+
+#  test <- wads_volume %>%
+#   full_join(
+#     location_probabilities_glmm, 
+#     by = c("PATHWAY" = "pathway", "LOCATION_NAME" = "location", "group" = "group"),
+#     relationship = "many-to-many"
+#   )
+
+
+#    test2 <- wads_volume %>%
+#   left_join(
+#     location_probabilities_glmm, 
+#     by = c("PATHWAY" = "pathway", "LOCATION_NAME" = "location", "group" = "group"),
+#     relationship = "many-to-many"
+#   )
 
 
 #Split the group column into its component parts
@@ -117,17 +139,30 @@ wads_volume_joined <- wads_volume_joined %>%  # Keep original group column
 # wads_volume_joined |> 
 #   mutate(probability = ifelse(is.na(probability), 0, probability)) # replace NA probabilities with 0
 
+setwd(here::here('output','aqim pathway approach rates')) 
+average_probs <- read.csv("avg_of_adjusted_product_risk_summarized_across_locations.csv") |> mutate(location = "Average") |>
+  rename(
+  avg_probability = probability,
+  avg_ci_lower = ci_lower,
+  avg_ci_upper = ci_upper
+  ) |>
+# remove these so they don't interfere with the matching and case_when
+  dplyr::select(-date_created, -scenario, -method)
 
-# Pre-compute average probabilities for all pathways once
-average_probs <- location_probabilities_glmm %>%
-  filter(location == "Average") %>%
-  dplyr::select(pathway, group, probability) %>%
-  rename(avg_probability = probability)
+
+  # the average probability has already been adjusted for the proportion of like product types in the conveyance pathway
+
+
+# # Load the pathway summary to get the average
+# average_probs <- location_probabilities_glmm %>%
+#   filter(location == "Average") %>%
+#   dplyr::select(pathway, group, probability) %>%
+#   rename(avg_probability = probability)
 
 # Join this to the main dataset in one vectorized operation
+joint_cols <- intersect(names(wads_volume_joined), names(average_probs))
 wads_volume_joined <- wads_volume_joined %>% 
-  left_join(average_probs, by = c("PATHWAY" = "pathway", "group" = "group")) %>%
-  mutate(
+  left_join(average_probs, by = joint_cols) %>%  mutate(
     # Apply the decision rules using vectorized operations
     probability = case_when(
       # If pathway is NA, keep original probability
@@ -136,16 +171,16 @@ wads_volume_joined <- wads_volume_joined %>%
       # If original probability is NA, use average
       is.na(probability) ~ avg_probability,
       
-      # If original probability is 0, take the average
-      !is.na(probability) & probability < 1e-7 & !is.na(avg_probability) ~ avg_probability,
+      # # If original probability is 0, take the average
+      # !is.na(probability) & probability < 1e-7 & !is.na(avg_probability) ~ avg_probability,
 
-      # # I was originally taking the average probability if the average was within the CI range (see below lines), but CI is now 0-1 for everything, so that is useless. Instead, I changed it to take the average if its really low
-      # # If average is WITHIN the confidence interval, use average
-      # !is.na(avg_probability) & !is.na(ci_lower) & !is.na(ci_upper) & 
-      #   avg_probability >= ci_lower & avg_probability <= ci_upper ~ avg_probability,
+      # # # I was originally taking the average probability if the average was within the CI range (see below lines). Instead, I changed it to take the average if its really low
+      # # # If average is WITHIN the confidence interval, use average
+      # # !is.na(avg_probability) & !is.na(ci_lower) & !is.na(ci_upper) & 
+      # #   avg_probability >= ci_lower & avg_probability <= ci_upper ~ avg_probability,
       
       # Otherwise keep the original probability (when average is outside CI)
-      TRUE ~ probability
+      .default = probability
     )
   )
 
@@ -201,7 +236,11 @@ This is really only relevant for passenger pathways, the others will end up with
 ```{r modify count based on aqim data and average group sizes}
 # Join average group sizes to wads_volume_joined
 setwd(here::here('output','aqim pathway approach rates'))
-group_size_summary <- readRDS(paste(params$group_size_filename,".rds", sep=""))
+group_size_summary <- readRDS(paste(params$group_size_filename,".rds", sep="")) |>
+#drop count
+dplyr::select(-count)
+
+
 wads_volume_joined <- wads_volume_joined %>%
   left_join(group_size_summary, by = c("PATHWAY" = "PATHWAY")) %>%
   mutate(
@@ -297,110 +336,5 @@ print("Ah - yes, if running with current data, pedestrian SB has no positive eve
 
 #write results immediately because it takes a while to run
 setwd(here::here("output","aqim based volume of at risk product approaching"))
-saveRDS(pathway_risk_summary, paste(params$pathway_volumes_filename, params$n_sims_for_volume, "sims",".rds", sep = ""))
-
-pathway_risk_summary <- readRDS(paste(params$pathway_volumes_filename, params$n_sims_for_volume, "sims",".rds", sep = ""))
-```
-
-
-
-
-## Inspect why smuggled commercial products pathway has such a high probability
-```{r}
-# The highest estimate is SF int'l airport, air passenger, commercial smuggled products, baggage, 2024; 734,424 people (adjusted to 521708).  probability is 0.0311. Mean_positives is 16218, mean kg per distirbution is 32kg;
-#This leads to a total estimate of ~500k kg of at risk product approaching in this month from this one WADS entry alone
-mean(sample_weight(n=100, pathway = "Airport - Aircraft - Person - CBP", container = "baggage", prod_pathway = "swine products/by-products", prod_subpathway = "smuggled commercial products"))
-
-# 3 in 100 people with smuggled products seems to be a ludicrous Check that this smuggled commercial products pathway is supposed to be such a high probability
-# Check how many actual positive events were found in this pathway in AQIM data
-dat <- read.csv("C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/aqim pathway data prep.csv")
-
-smuggled_prods_air <- dat %>%
-  filter(PATHWAY == "Airport - Aircraft - Person - CBP",
-         product_pathway == "swine products/by-products",
-         product_subpathway == "smuggled commercial products") %>%
-  count(CALENDAR_YEAR, IS_ASF_RISK) %>%
-  arrange(CALENDAR_YEAR, desc(IS_ASF_RISK))
-sum(smuggled_prods_air$n)
-
-smuggled_prods_model <- location_probabilities_glmm %>%
-  filter(pathway == "Airport - Aircraft - Person - CBP",
-         grepl("smuggled commercial products", group))
-
-# Looking at 01_03, I think this is due to a naming convention - the code does not specify that the product_pathway / subpathway when it converts to smuggled commercial products, so I think somewhere along the code that it is getting added
-
-# Probably just need to fix the lookup table to correct the product pathway/subpathway for smuggled commercial products in `data_for_risk`
-
-# 8/28 - Yes,  I think I fixed it. I added an IS_ASF_RISK != "NO" condition so that it wouldn't assign smuggling subpathway to thing sthat weren't of risk. I think it was keeping this subpathway throughout even though it shouldn't have been. WIll have to re-calculate approach rates when I leave today.
-```
-
-
-
-
-
-
-
-
-```{r sample events from distriution models of weight per event}
-# risk_weights_by_pathway <- risk_weights_by_pathway_tmp %>%
-#   # Add mutate() here
-#   mutate(
-#     total_kg_at_risk = case_when(
-#       # Only process if we have events with risk and can find the pathway
-#       events_with_risk > 0 & !is.na(PATHWAY) ~ {
-#         # Rest of your case_when logic remains the same
-#         dist_model <- pathway_distributions %>%
-#           filter(PATHWAY == .data$PATHWAY,
-#           container == .data$container,
-#           product_pathway == .data$product_pathway,
-#           product_subpathway == .data$product_subpathway) %>%
-#           pull(distribution_model) %>%
-#           first()
-
-# #test
-# pathway_distributions %>%
-#           filter(PATHWAY == 'Express_courier',
-#           container == 'baggage',
-#           product_pathway == .data$'swine products/by-products',
-#           product_subpathway == 'personal use or consumption') %>%
-#           pull(distribution_model) %>%
-#           first()
-
-# #end test
-
-#         # If we found a distribution model, sample from it
-#         if(!is.null(dist_model) && length(dist_model) > 0) {
-#           # Sample weights based on the distribution model
-#           sampled_weights <- if(dist_model$distribution == "empirical") {
-#             sample(dist_model$data, size = events_with_risk, replace = TRUE)
-#           } else if(dist_model$distribution == "lnorm") {
-#             rlnorm(events_with_risk, 
-#                    meanlog = dist_model$params$meanlog, 
-#                    sdlog = dist_model$params$sdlog)
-#           } else if(dist_model$distribution == "gamma") {
-#             rgamma(events_with_risk, 
-#                    shape = dist_model$params$shape, 
-#                    rate = dist_model$params$rate)
-#           } else if(dist_model$distribution == "weibull") {
-#             rweibull(events_with_risk, 
-#                      shape = dist_model$params$shape, 
-#                      scale = dist_model$params$scale)
-#           } else {
-#             # Default case if distribution type unknown
-#             rep(NA_real_, events_with_risk)
-#           }
-          
-#           # Sum the sampled weights
-#           sum(sampled_weights, na.rm = TRUE)
-#         } else {
-#           NA_real_  # No distribution model found
-#         }
-#       },
-#       TRUE ~ 0  # No events with risk
-#     )
-#   ) %>%
-#   ungroup()
-
-# # View the results
-# summary(risk_weights_by_pathway$total_kg_at_risk)
+saveRDS(pathway_risk_summary, paste(params$pathway_volumes_filename, min(params$years), "to", max(params$years), params$affected_countries, params$n_sims_for_volume, "sims",".rds", sep = "_"))
 ```

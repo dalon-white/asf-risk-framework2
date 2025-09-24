@@ -147,6 +147,14 @@ wads_volume <- wads |>
 
 ```
 
+```{r}
+#Verify its working correctly
+test = wads_volume |> filter(grepl('Airport - Aircraft - Person', PATHWAY)) |> group_by(LOCATION_NAME, year) |> summarize(total_count = sum(COUNT, na.rm = TRUE))
+View(test)
+sum(test$total_count)
+print(paste("the total air travelers is", format(sum(test$total_count), big.mark=","), "over", params$wads_volume_begin_date, "to", params$wads_volume_end_date))
+```
+
 
 # Supplement WADS ECO volume
 There isa WADS volume for Express_courier, but it sums to a few thousand whereas we know that ~ 1.066bn packages entered based on CBP reporting.
@@ -207,6 +215,7 @@ wads_volume <- wads_volume %>%
 ## Save summarized WADS volume
 ```{r save wads volume}
 setwd(here::here("output","wads","arrivals_or_entries"))
-saveRDS(wads_volume, paste(params$wads_volume_filename,".rds"))
+write.csv(wads_volume,paste(params$wads_volume_filename, ".csv") )
+saveRDS(wads_volume, paste(params$wads_volume_filename, ".rds"))
 ```
 

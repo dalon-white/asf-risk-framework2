@@ -1,0 +1,17 @@
+I pieced together the layers from the final output. I did it by hand to avoid writing code. I saved it and picking it up here.
+
+
+```{r}
+library(tidyverse)
+library(here)
+
+setwd(here::here('output','report files'))
+df <- read.csv("report_i_made_from_risk_at_port_summary_layers.csv")
+df$total_risk <- as.numeric(df$total_risk)
+View(df  |> dplyr::select(-layer_name, -point_count) |>  group_by(scenario, Container, PoE, Conveyance.type.pathway, Product.pathway, Product.subpathway) |> summarize(total_risk = sum(total_risk), na.rm = TRUE) |> ungroup() |> pivot_wider(names_from = scenario, values_from = total_risk))
+
+
+View(df |> group_by(scenario, PoE, Conveyance.type.pathway, Product.pathway, Product.subpathway) |> dplyr::select(-layer_name, -point_count, -Container) |> summarize(total_risk = sum(total_risk), na.rm = TRUE) |> pivot_wider(names_from = scenario, values_from = total_risk))
+
+View(df |> dplyr::select(-layer_name, -point_count, -Container, -PoE) |> group_by(scenario, Conveyance.type.pathway, Product.pathway, Product.subpathway) |> summarize(total_risk = sum(total_risk), na.rm = TRUE) |> pivot_wider(names_from = scenario, values_from = total_risk))
+```

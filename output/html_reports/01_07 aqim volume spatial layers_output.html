@@ -398,9 +398,9 @@ if (!exists(&quot;params&quot;)) {
   }
 }
 
+setwd(here::here(&#39;output&#39;,&#39;aqim based volume of at risk product approaching&#39;))
 # Load pathway risk summary data
-pathway_risk_summary &lt;- readRDS(here::here(&quot;output&quot;,&quot;aqim based volume of at risk product approaching&quot;, 
-                               paste(params$pathway_volumes_filename, params$n_sims_for_volume, &quot;sims&quot;,&quot;.rds&quot;, sep = &quot;&quot;)))</code></pre>
+pathway_risk_summary &lt;- readRDS(paste(params$pathway_volumes_filename, min(params$years), &quot;to&quot;, max(params$years), params$affected_countries, params$n_sims_for_volume, &quot;sims&quot;,&quot;.rds&quot;, sep = &quot;_&quot;))</code></pre>
 <div id="gather-geolocation-data" class="section level1">
 <h1>1. Gather Geolocation Data</h1>
 <pre class="r"><code># Connect to ARM and GeoLocations databases
@@ -452,8 +452,8 @@ pathway_risk_geo &lt;- pathway_risk_brg_loc %&gt;%
     CBP_PORT_NAME = `Port of Entry Name`
   )</code></pre>
 <pre><code>## Warning in left_join(., cbp_poe, by = c(CBP_PORT_NUMBER = &quot;CBP_CODE&quot;)): Detected an unexpected many-to-many relationship between `x` and `y`.
-## ℹ Row 2520 of `x` matches multiple rows in `y`.
-## ℹ Row 185 of `y` matches multiple rows in `x`.
+## ℹ Row 36 of `x` matches multiple rows in `y`.
+## ℹ Row 163 of `y` matches multiple rows in `x`.
 ## ℹ If a many-to-many relationship is expected, set `relationship = &quot;many-to-many&quot;` to silence this warning.</code></pre>
 <pre class="r"><code># Step 2: Join with PPQ facilities for rows still missing coordinates
 pathway_risk_geo &lt;- pathway_risk_geo %&gt;%
@@ -505,7 +505,7 @@ if(nrow(missing_coords) &gt; 0 &amp;&amp; requireNamespace(&quot;tidygeocoder&qu
   print(missing_coords %&gt;% dplyr::select(IATA_CODE) %&gt;% distinct())
 }</code></pre>
 <pre><code>## Passing 24 addresses to the Nominatim single address geocoder</code></pre>
-<pre><code>## Query completed in: 30.2 seconds</code></pre>
+<pre><code>## Query completed in: 24.4 seconds</code></pre>
 <pre class="r"><code># Close database connections when done
 dbDisconnect(db_conn)
 dbDisconnect(geo_conn)</code></pre>
@@ -523,7 +523,7 @@ print(coords_summary)</code></pre>
 <pre><code>## # A tibble: 1 × 3
 ##   total_rows rows_with_coords percent_coverage
 ##        &lt;int&gt;            &lt;int&gt;            &lt;dbl&gt;
-## 1       2873             2755             95.9</code></pre>
+## 1       2257             2171             96.2</code></pre>
 <pre class="r"><code># Calculate risk coverage statistics
 risk_summary &lt;- pathway_risk_geo %&gt;%
   summarize(
@@ -535,7 +535,7 @@ print(risk_summary)</code></pre>
 <pre><code>## # A tibble: 1 × 3
 ##   total_risk risk_with_coords percent_risk
 ##        &lt;dbl&gt;            &lt;dbl&gt;        &lt;dbl&gt;
-## 1    429355.          429355.          100</code></pre>
+## 1    317389.          317389.          100</code></pre>
 <pre class="r"><code># Analyze coordinate sources
 source_summary &lt;- pathway_risk_geo %&gt;%
   mutate(
@@ -552,9 +552,9 @@ print(source_summary)</code></pre>
 <pre><code>## # A tibble: 3 × 3
 ##   coord_source     n percent
 ##   &lt;chr&gt;        &lt;int&gt;   &lt;dbl&gt;
-## 1 CBP           2194    76.4
-## 2 IATA           561    19.5
-## 3 Missing        118     4.1</code></pre>
+## 1 CBP           1808    80.1
+## 2 IATA           363    16.1
+## 3 Missing         86     3.8</code></pre>
 <pre class="r"><code># Check missing locations
 if(coords_summary$rows_with_coords &lt; coords_summary$total_rows) {
   cat(&quot;\nSample of locations still missing coordinates:\n&quot;)
@@ -568,7 +568,7 @@ if(coords_summary$rows_with_coords &lt; coords_summary$total_rows) {
 ## # A tibble: 23 × 2
 ##    LOCATION_NAME                                 PATHWAY                        
 ##    &lt;chr&gt;                                         &lt;chr&gt;                          
-##  1 &quot;OTAY-CROSS BORDER UFA SAN DIEGO, CA (2582) &quot; Pedestrian SB                  
+##  1 &quot;OTAY-CROSS BORDER UFA SAN DIEGO, CA (2582) &quot; Pedestrian                     
 ##  2 &quot;Dublin IE Preclearance (7541) &quot;              Airport - Aircraft - Person - …
 ##  3 &quot;Abu Dhabi Preclearance (7543) &quot;              Airport - Aircraft - Person - …
 ##  4 &quot;Edmonton Preclearance (7924) &quot;               Airport - Aircraft - Person - …
@@ -576,7 +576,7 @@ if(coords_summary$rows_with_coords &lt; coords_summary$total_rows) {
 ##  6 &quot;Ottawa Preclearance (7929) &quot;                 Airport - Aircraft - Person - …
 ##  7 &quot;Hidalgo&quot;                                     Airport - Aircraft - Person - …
 ##  8 &quot;Hidalgo&quot;                                     Land Border - Truck - Conveyan…
-##  9 &quot;Hidalgo&quot;                                     Pedestrian SB                  
+##  9 &quot;Hidalgo&quot;                                     Pedestrian                     
 ## 10 &quot;Tornillo-Ft Hancock&quot;                         Land Border - Truck - Conveyan…
 ## # ℹ 13 more rows</code></pre>
 </div>
@@ -610,7 +610,7 @@ removed_points &lt;- total_points - kept_points
 
 cat(sprintf(&quot;Filtered to %d points within US boundaries (%d removed)\n&quot;, 
           kept_points, removed_points))</code></pre>
-<pre><code>## Filtered to 2755 points within US boundaries (0 removed)</code></pre>
+<pre><code>## Filtered to 2171 points within US boundaries (0 removed)</code></pre>
 </div>
 <div id="summarize-data-for-spatial-layers" class="section level1">
 <h1>6. Summarize Data for Spatial Layers</h1>
@@ -732,124 +732,76 @@ spatial_layers &lt;- create_spatial_layers(
   save_files = TRUE,
   output_dir = port_risk_output_dir
 )</code></pre>
-<pre><code>## Created 22 spatial layers for different pathway combinations</code></pre>
+<pre><code>## Created 10 spatial layers for different pathway combinations</code></pre>
 <pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Writing layer `Air_bag_oth_ani_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_oth_ani_mex_can.gpkg&#39; using driver `GPKG&#39;
+<pre><code>## Deleting layer `Air_bag_oth_ani_current&#39; using driver `GPKG&#39;
+## Writing layer `Air_bag_oth_ani_current&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_oth_ani_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 176 features with 8 fields and geometry type Point.
-## Saved layer 1/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_oth_ani_mex_can.gpkg</code></pre>
+## Saved layer 1/10: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_oth_ani_current.gpkg</code></pre>
 <pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Writing layer `Air_bag_swi_per_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_mex_can.gpkg&#39; using driver `GPKG&#39;
+<pre><code>## Deleting layer `Air_bag_swi_per_current&#39; using driver `GPKG&#39;
+## Writing layer `Air_bag_swi_per_current&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 176 features with 8 fields and geometry type Point.
-## Saved layer 2/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_mex_can.gpkg</code></pre>
+## Saved layer 2/10: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_current.gpkg</code></pre>
 <pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Writing layer `Air_bag_swi_smu_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_smu_mex_can.gpkg&#39; using driver `GPKG&#39;
+<pre><code>## Deleting layer `Air_bag_swi_smu_current&#39; using driver `GPKG&#39;
+## Writing layer `Air_bag_swi_smu_current&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_smu_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 176 features with 8 fields and geometry type Point.
-## Saved layer 3/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_smu_mex_can.gpkg
-## Deleting layer `Air_bag_oth_ani_mex_can&#39; using driver `GPKG&#39;
-## Writing layer `Air_bag_oth_ani_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_oth_ani_mex_can.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 3/10: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_smu_current.gpkg
+## Deleting layer `Air_bag_oth_ani_current&#39; using driver `GPKG&#39;
+## Writing layer `Air_bag_oth_ani_current&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_oth_ani_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 9 features with 8 fields and geometry type Point.
-## Saved layer 4/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_oth_ani_mex_can.gpkg
-## Deleting layer `Air_bag_swi_per_mex_can&#39; using driver `GPKG&#39;
-## Writing layer `Air_bag_swi_per_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_mex_can.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 4/10: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_oth_ani_current.gpkg
+## Deleting layer `Air_bag_swi_per_current&#39; using driver `GPKG&#39;
+## Writing layer `Air_bag_swi_per_current&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 9 features with 8 fields and geometry type Point.
-## Saved layer 5/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_mex_can.gpkg</code></pre>
+## Saved layer 5/10: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_bag_swi_per_current.gpkg</code></pre>
 <pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Writing layer `Exp_pac_fom_per_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_fom_per_mex_can.gpkg&#39; using driver `GPKG&#39;
+<pre><code>## Deleting layer `Exp_pac_oth_uns_current&#39; using driver `GPKG&#39;
+## Writing layer `Exp_pac_oth_uns_current&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_oth_uns_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 6/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_fom_per_mex_can.gpkg</code></pre>
+## Saved layer 6/10: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_oth_uns_current.gpkg</code></pre>
 <pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Writing layer `Exp_pac_oth_pla_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_oth_pla_mex_can.gpkg&#39; using driver `GPKG&#39;
+<pre><code>## Deleting layer `Exp_pac_swi_per_current&#39; using driver `GPKG&#39;
+## Writing layer `Exp_pac_swi_per_current&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_per_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 7/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_oth_pla_mex_can.gpkg</code></pre>
+## Saved layer 7/10: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_per_current.gpkg</code></pre>
 <pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Writing layer `Exp_pac_oth_smu_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_oth_smu_mex_can.gpkg&#39; using driver `GPKG&#39;
+<pre><code>## Deleting layer `Exp_pac_swi_smu_current&#39; using driver `GPKG&#39;
+## Writing layer `Exp_pac_swi_smu_current&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_smu_current.gpkg&#39; using driver `GPKG&#39;
 ## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 8/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_oth_smu_mex_can.gpkg</code></pre>
-<pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Writing layer `Exp_pac_oth_uns_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_oth_uns_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 9/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_oth_uns_mex_can.gpkg</code></pre>
-<pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Writing layer `Exp_pac_swi_per_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_per_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 10/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_per_mex_can.gpkg
-## Writing layer `Lan_bag_oth_ani_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_oth_ani_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 42 features with 8 fields and geometry type Point.
-## Saved layer 11/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_oth_ani_mex_can.gpkg
-## Writing layer `Lan_bag_oth_smu_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_oth_smu_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 42 features with 8 fields and geometry type Point.
-## Saved layer 12/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_oth_smu_mex_can.gpkg
-## Writing layer `Lan_bag_swi_per_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_swi_per_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 42 features with 8 fields and geometry type Point.
-## Saved layer 13/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_swi_per_mex_can.gpkg
-## Writing layer `Lan_bag_swi_smu_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_swi_smu_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 42 features with 8 fields and geometry type Point.
-## Saved layer 14/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_swi_smu_mex_can.gpkg
-## Deleting layer `Lan_bag_oth_ani_mex_can&#39; using driver `GPKG&#39;
-## Writing layer `Lan_bag_oth_ani_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_oth_ani_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 32 features with 8 fields and geometry type Point.
-## Saved layer 15/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_oth_ani_mex_can.gpkg
-## Deleting layer `Lan_bag_oth_smu_mex_can&#39; using driver `GPKG&#39;
-## Writing layer `Lan_bag_oth_smu_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_oth_smu_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 32 features with 8 fields and geometry type Point.
-## Saved layer 16/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_oth_smu_mex_can.gpkg
-## Deleting layer `Lan_bag_swi_per_mex_can&#39; using driver `GPKG&#39;
-## Writing layer `Lan_bag_swi_per_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_swi_per_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 32 features with 8 fields and geometry type Point.
-## Saved layer 17/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_swi_per_mex_can.gpkg
-## Deleting layer `Lan_bag_swi_smu_mex_can&#39; using driver `GPKG&#39;
-## Writing layer `Lan_bag_swi_smu_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_swi_smu_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 32 features with 8 fields and geometry type Point.
-## Saved layer 18/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_swi_smu_mex_can.gpkg
-## Writing layer `Lan_con_fom_pla_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_con_fom_pla_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 32 features with 8 fields and geometry type Point.
-## Saved layer 19/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_con_fom_pla_mex_can.gpkg
-## Writing layer `Ped_bag_oth_uns_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_oth_uns_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 20/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_oth_uns_mex_can.gpkg
-## Writing layer `Ped_bag_swi_per_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_swi_per_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 21/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_swi_per_mex_can.gpkg
-## Writing layer `Ped_bag_swi_smu_mex_can&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_swi_smu_mex_can.gpkg&#39; using driver `GPKG&#39;
-## Writing 29 features with 8 fields and geometry type Point.
-## Saved layer 22/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Ped_bag_swi_smu_mex_can.gpkg
+## Saved layer 8/10: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Exp_pac_swi_smu_current.gpkg
+## Deleting layer `Mar_con_oth_ani_current&#39; using driver `GPKG&#39;
+## Writing layer `Mar_con_oth_ani_current&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_oth_ani_current.gpkg&#39; using driver `GPKG&#39;
+## Writing 53 features with 8 fields and geometry type Point.
+## Saved layer 9/10: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_oth_ani_current.gpkg
+## Deleting layer `Mar_con_swi_com_current&#39; using driver `GPKG&#39;
+## Writing layer `Mar_con_swi_com_current&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_swi_com_current.gpkg&#39; using driver `GPKG&#39;
+## Writing 53 features with 8 fields and geometry type Point.
+## Saved layer 10/10: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_swi_com_current.gpkg
 ## 
-## Summary of spatial layers for scenario &#39;mex_can&#39; (top 10 by risk):
-##                      layer_name scenario point_count total_risk
-## Lan_bag_swi_per Lan_bag_swi_per  mex_can          32 159275.273
-## Exp_pac_swi_per Exp_pac_swi_per  mex_can          29  76292.625
-## Lan_bag_swi_smu Lan_bag_swi_smu  mex_can          32  38307.216
-## Exp_pac_oth_smu Exp_pac_oth_smu  mex_can          29  29086.592
-## Exp_pac_oth_uns Exp_pac_oth_uns  mex_can          29  17284.692
-## Lan_bag_oth_ani Lan_bag_oth_ani  mex_can          32  16333.340
-## Ped_bag_swi_per Ped_bag_swi_per  mex_can          29  11791.601
-## Exp_pac_oth_pla Exp_pac_oth_pla  mex_can          29  11637.176
-## Air_bag_swi_smu Air_bag_swi_smu  mex_can         176   8121.037
-## Lan_bag_oth_smu Lan_bag_oth_smu  mex_can          32   6925.684
+## Summary of spatial layers for scenario &#39;current&#39; (top 10 by risk):
+##                      layer_name scenario point_count   total_risk
+## Exp_pac_swi_per Exp_pac_swi_per  current          29 196387.86385
+## Exp_pac_swi_smu Exp_pac_swi_smu  current          29  27459.12667
+## Mar_con_swi_com Mar_con_swi_com  current          53   4978.61974
+## Air_bag_swi_smu Air_bag_swi_smu  current         176   4686.42380
+## Exp_pac_oth_uns Exp_pac_oth_uns  current          29   4070.86875
+## Mar_con_oth_ani Mar_con_oth_ani  current          53   1598.23502
+## Air_bag_swi_per Air_bag_swi_per  current           9    410.25140
+## Air_bag_oth_ani Air_bag_oth_ani  current           9     18.98717
 ## 
-## Saved summary table to: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/layer_summary_mex_can.csv</code></pre>
+## Saved summary table to: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/layer_summary_current.csv</code></pre>
 </div>
 <div id="prepare-data-for-final-destination-risk-layers" class="section level1">
 <h1>9. Prepare Data for Final Destination Risk Layers</h1>
@@ -860,7 +812,10 @@ pathway_spatial_layers_summary &lt;- spatial_layers_summary %&gt;%
   summarize(
     total_mean_kg = sum(total_mean_kg, na.rm = TRUE),
     .groups = &#39;drop&#39;
-  )</code></pre>
+  )
+
+setwd(here::here(&#39;output&#39;,&#39;report files&#39;))
+write.csv(pathway_spatial_layers_summary, paste(&quot;aqim pathway summary&quot;, min(params$years), &quot;to&quot;, max(params$years), params$affected_countries, params$n_sims_for_volume, &quot;sims&quot;,&quot;.csv&quot;, sep = &quot;_&quot;), row.names = FALSE)</code></pre>
 </div>
 <div id="create-final-destination-risk-layers-function" class="section level1">
 <h1>10. Create Final Destination Risk Layers Function</h1>
@@ -991,103 +946,52 @@ distributed_risks &lt;- distribute_pathway_risks(
 ## Writing layer `risk_Air_bag_oth_ani_1&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Air_bag_oth_ani_1.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Airport___Aircraft___Person___CBP_baggage_other_products_animal_based_feed → Air_bag_oth_ani_1 with risk 3053.474286
+## Processed Airport___Aircraft___Person___CBP_baggage_other_products_animal_based_feed → Air_bag_oth_ani_1 with risk 1584.619901
 ## Deleting layer `risk_Air_bag_swi_per_2&#39; using driver `GPKG&#39;
 ## Writing layer `risk_Air_bag_swi_per_2&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Air_bag_swi_per_2.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_personal_use_or_consumption → Air_bag_swi_per_2 with risk 35496.268365
+## Processed Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_personal_use_or_consumption → Air_bag_swi_per_2 with risk 76193.946015
 ## Deleting layer `risk_Air_bag_swi_smu_3&#39; using driver `GPKG&#39;
 ## Writing layer `risk_Air_bag_swi_smu_3&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Air_bag_swi_smu_3.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_smuggled_commercial_products → Air_bag_swi_smu_3 with risk 8121.037121
+## Processed Airport___Aircraft___Person___CBP_baggage_swine_products_by_products_smuggled_commercial_products → Air_bag_swi_smu_3 with risk 4686.423796
 ## Deleting layer `risk_Air_bag_oth_ani_1&#39; using driver `GPKG&#39;
 ## Writing layer `risk_Air_bag_oth_ani_1&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Air_bag_oth_ani_1.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Airport___Aircraft___Person___Pre_Clearance_baggage_other_products_animal_based_feed → Air_bag_oth_ani_1 with risk 245.627786
+## Processed Airport___Aircraft___Person___Pre_Clearance_baggage_other_products_animal_based_feed → Air_bag_oth_ani_1 with risk 18.987173
 ## Deleting layer `risk_Air_bag_swi_per_2&#39; using driver `GPKG&#39;
 ## Writing layer `risk_Air_bag_swi_per_2&#39; to data source 
 ##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Air_bag_swi_per_2.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Airport___Aircraft___Person___Pre_Clearance_baggage_swine_products_by_products_personal_use_or_consumption → Air_bag_swi_per_2 with risk 2689.968097
-## Deleting layer `risk_Exp_pac_fom_per_1&#39; using driver `GPKG&#39;
-## Writing layer `risk_Exp_pac_fom_per_1&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_fom_per_1.gpkg&#39; using driver `GPKG&#39;
+## Processed Airport___Aircraft___Person___Pre_Clearance_baggage_swine_products_by_products_personal_use_or_consumption → Air_bag_swi_per_2 with risk 410.251401
+## Deleting layer `risk_Exp_pac_oth_uns_1&#39; using driver `GPKG&#39;
+## Writing layer `risk_Exp_pac_oth_uns_1&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_oth_uns_1.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_fomite_personal_effects → Exp_pac_fom_per_1 with risk 665.346364
-## Writing layer `risk_Exp_pac_oth_pla_2&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_oth_pla_2.gpkg&#39; using driver `GPKG&#39;
+## Processed Express_courier_package_other_products_unspecified_feed → Exp_pac_oth_uns_1 with risk 4070.868750
+## Deleting layer `risk_Exp_pac_swi_per_2&#39; using driver `GPKG&#39;
+## Writing layer `risk_Exp_pac_swi_per_2&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_swi_per_2.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_other_products_plasma → Exp_pac_oth_pla_2 with risk 11637.176439
-## Writing layer `risk_Exp_pac_oth_smu_3&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_oth_smu_3.gpkg&#39; using driver `GPKG&#39;
+## Processed Express_courier_package_swine_products_by_products_personal_use_or_consumption → Exp_pac_swi_per_2 with risk 196387.863850
+## Deleting layer `risk_Exp_pac_swi_smu_3&#39; using driver `GPKG&#39;
+## Writing layer `risk_Exp_pac_swi_smu_3&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_swi_smu_3.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_other_products_smuggled_commercial_products → Exp_pac_oth_smu_3 with risk 29086.591894
-## Writing layer `risk_Exp_pac_oth_uns_4&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_oth_uns_4.gpkg&#39; using driver `GPKG&#39;
+## Processed Express_courier_package_swine_products_by_products_smuggled_commercial_products → Exp_pac_swi_smu_3 with risk 27459.126667
+## Deleting layer `risk_Mar_con_oth_ani_1&#39; using driver `GPKG&#39;
+## Writing layer `risk_Mar_con_oth_ani_1&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Mar_con_oth_ani_1.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_other_products_unspecified_feed → Exp_pac_oth_uns_4 with risk 17284.691561
-## Deleting layer `risk_Exp_pac_swi_per_5&#39; using driver `GPKG&#39;
-## Writing layer `risk_Exp_pac_swi_per_5&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Exp_pac_swi_per_5.gpkg&#39; using driver `GPKG&#39;
+## Processed Maritime_Port___Vessel___Cargo___CBP_container_other_products_animal_based_feed → Mar_con_oth_ani_1 with risk 1598.235022
+## Deleting layer `risk_Mar_con_swi_com_2&#39; using driver `GPKG&#39;
+## Writing layer `risk_Mar_con_swi_com_2&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Mar_con_swi_com_2.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Express_courier_package_swine_products_by_products_personal_use_or_consumption → Exp_pac_swi_per_5 with risk 76292.625008
-## Writing layer `risk_Lan_bag_oth_ani_1&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Lan_bag_oth_ani_1.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Land_Border___Truck___Conveyance___CBP_NB_baggage_other_products_animal_based_feed → Lan_bag_oth_ani_1 with risk 2091.341076
-## Writing layer `risk_Lan_bag_oth_smu_2&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Lan_bag_oth_smu_2.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Land_Border___Truck___Conveyance___CBP_NB_baggage_other_products_smuggled_commercial_products → Lan_bag_oth_smu_2 with risk 1839.297492
-## Writing layer `risk_Lan_bag_swi_per_3&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Lan_bag_swi_per_3.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Land_Border___Truck___Conveyance___CBP_NB_baggage_swine_products_by_products_personal_use_or_consumption → Lan_bag_swi_per_3 with risk 2768.951428
-## Writing layer `risk_Lan_bag_swi_smu_4&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Lan_bag_swi_smu_4.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Land_Border___Truck___Conveyance___CBP_NB_baggage_swine_products_by_products_smuggled_commercial_products → Lan_bag_swi_smu_4 with risk 1324.405604
-## Deleting layer `risk_Lan_bag_oth_ani_1&#39; using driver `GPKG&#39;
-## Writing layer `risk_Lan_bag_oth_ani_1&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Lan_bag_oth_ani_1.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Land_Border___Truck___Conveyance___CBP_SB_baggage_other_products_animal_based_feed → Lan_bag_oth_ani_1 with risk 16333.339578
-## Deleting layer `risk_Lan_bag_oth_smu_2&#39; using driver `GPKG&#39;
-## Writing layer `risk_Lan_bag_oth_smu_2&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Lan_bag_oth_smu_2.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Land_Border___Truck___Conveyance___CBP_SB_baggage_other_products_smuggled_commercial_products → Lan_bag_oth_smu_2 with risk 6925.684091
-## Deleting layer `risk_Lan_bag_swi_per_3&#39; using driver `GPKG&#39;
-## Writing layer `risk_Lan_bag_swi_per_3&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Lan_bag_swi_per_3.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Land_Border___Truck___Conveyance___CBP_SB_baggage_swine_products_by_products_personal_use_or_consumption → Lan_bag_swi_per_3 with risk 159275.272666
-## Deleting layer `risk_Lan_bag_swi_smu_4&#39; using driver `GPKG&#39;
-## Writing layer `risk_Lan_bag_swi_smu_4&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Lan_bag_swi_smu_4.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Land_Border___Truck___Conveyance___CBP_SB_baggage_swine_products_by_products_smuggled_commercial_products → Lan_bag_swi_smu_4 with risk 38307.216266
-## Writing layer `risk_Lan_con_fom_pla_5&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Lan_con_fom_pla_5.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Land_Border___Truck___Conveyance___CBP_SB_conveyance_fomite_plant_based_feed → Lan_con_fom_pla_5 with risk 9.446576
-## Writing layer `risk_Ped_bag_oth_uns_1&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Ped_bag_oth_uns_1.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Pedestrian_SB_baggage_other_products_unspecified_feed → Ped_bag_oth_uns_1 with risk 169.573669
-## Deleting layer `risk_Ped_bag_swi_per_2&#39; using driver `GPKG&#39;
-## Writing layer `risk_Ped_bag_swi_per_2&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Ped_bag_swi_per_2.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Pedestrian_SB_baggage_swine_products_by_products_personal_use_or_consumption → Ped_bag_swi_per_2 with risk 11791.600999
-## Deleting layer `risk_Ped_bag_swi_smu_3&#39; using driver `GPKG&#39;
-## Writing layer `risk_Ped_bag_swi_smu_3&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at final destinations/risk_Ped_bag_swi_smu_3.gpkg&#39; using driver `GPKG&#39;
-## Writing 3573 features with 2 fields and geometry type Unknown (any).
-## Processed Pedestrian_SB_baggage_swine_products_by_products_smuggled_commercial_products → Ped_bag_swi_smu_3 with risk 3945.762488</code></pre>
+## Processed Maritime_Port___Vessel___Cargo___CBP_container_swine_products_by_products_commercial → Mar_con_swi_com_2 with risk 4978.619740</code></pre>
 <pre class="r"><code># Save a compact version of the catalog for Shiny app use
 risk_summary &lt;- distributed_risks$catalog %&gt;%
   dplyr::select(
@@ -1103,7 +1007,7 @@ risk_summary &lt;- distributed_risks$catalog %&gt;%
 
 # Save the summary for reference
 write.csv(risk_summary, 
-          here::here(&quot;output&quot;, &quot;aqim total distributed risk&quot;, &quot;distributed_risk_summary.csv&quot;), 
+          here::here(&quot;output&quot;, &quot;aqim total distributed risk&quot;, paste0(&quot;distributed_risk_summary_&quot;, params$affected_countries,&quot;.csv&quot;)), 
           row.names = FALSE)
 
 cat(&quot;Spatial risk layers created and ready for use in Shiny app\n&quot;)</code></pre>
@@ -1162,7 +1066,7 @@ if(all(valid_geoms)) {
   fixed_gpkg &lt;- st_make_valid(gpkg_data)
   plot(fixed_gpkg)
 }</code></pre>
-<p><img role="img" src="data:image/png;base64,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" width="672" /></p>
+<p><img role="img" src="data:image/png;base64,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" width="672" /></p>
 </div>
 
 

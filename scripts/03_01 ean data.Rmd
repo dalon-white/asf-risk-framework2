@@ -169,8 +169,12 @@ inspections <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SY
               dplyr::select(all_of(inspection_cols)) |>
               rename(INSPECTION_ID = ID,
                     #rename to match AQAS data structure
-                     product_origin = COUNTRY_OF_ORIGIN_NAME)
- 
+                     product_origin = COUNTRY_OF_ORIGIN_NAME,
+                     LOCATION_ID = "INSPECTION_LOCATION_ID", 
+                     LOCATION_NAME = "INSPECTION_LOCATION_NAME", 
+                     LOCATION_STATE_CODE = "INSPECTION_LOCATION_STATE_CODE"
+)
+
 #-- Load Bridge Commodity dataset ----
 commodity <- tbl(db_conn, sql("SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_COMMODITY]")) |> 
               dplyr::select(all_of(commodity_cols)) |>
