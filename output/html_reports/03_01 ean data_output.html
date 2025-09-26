@@ -547,7 +547,7 @@ datetime fiscal year &amp; month columns separately.</p>
 <pre class="r"><code># Collect data into R
 system.time(ean_records &lt;- ean_records |&gt; collect())</code></pre>
 <pre><code>##    user  system elapsed 
-##    3.17    0.31   20.28</code></pre>
+##    1.50    0.17   71.98</code></pre>
 <pre class="r"><code># Disconnect from the database
 dbDisconnect(db_conn)</code></pre>
 </div>
@@ -662,7 +662,7 @@ countries; otherwise, EANs wouldn’t exist. load country reference
 list</li>
 </ul>
 <pre class="r"><code>setwd(here::here(&quot;input&quot;,&quot;data&quot;,&quot;asf affected countries by year&quot;))
-affected_countries &lt;- read.csv(&quot;asf affected countries.csv&quot;) |&gt; 
+affected_countries &lt;- read.csv(params$affected_country_file) |&gt; 
     mutate(Year = as.numeric(Year)) |&gt; 
     filter(Year %in% params$years) |&gt; 
     filter(Disease == &quot;ASF&quot;) |&gt;

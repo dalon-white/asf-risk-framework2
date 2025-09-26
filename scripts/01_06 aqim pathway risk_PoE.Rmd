@@ -254,7 +254,7 @@ wads_volume_joined <- wads_volume_joined %>%
 
 
 
-```{r}
+```{r simulate positive counts and kgs}
 # Create storage for simulation results
 simulation_results <- list()
 
@@ -302,7 +302,10 @@ for(i in 1:params$n_sims_for_volume) {
   
   # Store this simulation's results
   simulation_results[[i]] <- sim_result %>%
-    dplyr::select(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, year, month, probability, COUNT, adjusted_COUNT, positive_count_sim, total_kg_sim, sim_id)
+    dplyr::select(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY,
+container, product_pathway, product_subpathway, probability, COUNT,
+  #   container, product_pathway, product_subpathway, year, month, probability, COUNT,
+      adjusted_COUNT, positive_count_sim, total_kg_sim, sim_id)
 }
 
 
@@ -311,7 +314,9 @@ all_simulations <- bind_rows(simulation_results)
 
 # Calculate summary statistics by pathway/container/product group
 pathway_risk_summary <- all_simulations %>%
-  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, year, probability, month, sim_id) %>%
+#9/25 - drop year and month to get overall summary by pathway
+group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, probability, sim_id) %>%
+  # group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, year, probability, month, sim_id) %>%
   # Sum within each pathway group for each simulation
   summarize(
     total_positives = sum(positive_count_sim, na.rm = TRUE),
@@ -319,7 +324,7 @@ pathway_risk_summary <- all_simulations %>%
     .groups = "drop"
   ) %>%
   # Now calculate statistics across simulations
-  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, year, probability) %>%
+  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, probability) %>%
   summarize(
     mean_positives = mean(total_positives),
     lower_ci_positives = quantile(total_positives, 0.05),
@@ -333,8 +338,11 @@ pathway_risk_summary <- all_simulations %>%
 
 print("Do pathways with at risk items having been found have 0 probability? For instance, there are none found in the pedestrian SB pathway.")
 print("Ah - yes, if running with current data, pedestrian SB has no positive events in AQIM data, so probability is 0. That is correct.")
+```
+# save results
 
-#write results immediately because it takes a while to run
+```{r save results}
+#write results
 setwd(here::here("output","aqim based volume of at risk product approaching"))
 saveRDS(pathway_risk_summary, paste(params$pathway_volumes_filename, min(params$years), "to", max(params$years), params$affected_countries, params$n_sims_for_volume, "sims",".rds", sep = "_"))
 ```

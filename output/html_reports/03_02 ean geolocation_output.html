@@ -501,7 +501,7 @@ if(nrow(missing_coords) &gt; 0 &amp;&amp; requireNamespace(&quot;tidygeocoder&qu
   print(missing_coords %&gt;% dplyr::select(IATA_CODE) %&gt;% distinct())
 }</code></pre>
 <pre><code>## Passing 11 addresses to the Nominatim single address geocoder</code></pre>
-<pre><code>## Query completed in: 14 seconds</code></pre>
+<pre><code>## Query completed in: 17.2 seconds</code></pre>
 <pre class="r"><code># Close database connections when done
 dbDisconnect(db_conn)
 dbDisconnect(geo_conn)</code></pre>
@@ -540,7 +540,7 @@ if(requireNamespace(&quot;tidygeocoder&quot;, quietly = TRUE)) {
     cat(&quot;The &#39;tidygeocoder&#39; package is not installed. Please install it to geocode SITC locations.\n&quot;)
     }</code></pre>
 <pre><code>## Passing 45 addresses to the Nominatim single address geocoder</code></pre>
-<pre><code>## Query completed in: 45.9 seconds</code></pre>
+<pre><code>## Query completed in: 47.4 seconds</code></pre>
 <pre class="r"><code># Join geocoded coordinates back to the sitc_records
 at_risk_eans_geo &lt;- at_risk_eans_geo %&gt;%
   left_join(sitc_sites, by = c(&quot;LOCATION_NAME&quot;)) |&gt;
@@ -593,7 +593,7 @@ at_risk_eans_geo &lt;- at_risk_eans_geo |&gt; mutate(final_LAT = case_when(
 <pre class="r"><code>saveRDS(at_risk_eans_geo, here::here(&quot;output&quot;, &quot;intermediate files&quot;, params$ean_geolocated_filename))
 cat(&quot;Geocoded EAN records saved to &#39;output/intermediate files/ean_records_geocoded.rds&#39;\n&quot;)</code></pre>
 <pre><code>## Geocoded EAN records saved to &#39;output/intermediate files/ean_records_geocoded.rds&#39;</code></pre>
-<pre class="r"><code>write.csv(at_risk_eans_geo, &quot;C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed_and_geolocated.csv&quot;, row.names = FALSE)</code></pre>
+<pre class="r"><code>write.csv(at_risk_eans_geo |&gt; st_drop_geometry(), &quot;C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework-large-files/ean_records_processed_and_geolocated.csv&quot;, row.names = FALSE)</code></pre>
 </div>
 
 

@@ -397,8 +397,9 @@ wads_volume &lt;- readRDS(paste(params$wads_volume_filename, &quot;.rds&quot;))<
 </div>
 <div id="read-approach-rates" class="section level1">
 <h1>read approach rates</h1>
-<pre class="r"><code>setwd(here::here(&#39;output&#39;,&#39;aqim pathway approach rates&#39;)) 
-location_probabilities_glmm &lt;- readRDS(paste0(params$glm_results_filename))</code></pre>
+<pre class="r"><code>setwd(here::here(&#39;output&#39;,&#39;aqim pathway approach rates&#39;))
+#load pipeline data
+location_probabilities_glmm &lt;- readRDS( paste0(params$glm_results_filename))</code></pre>
 </div>
 <div id="join-wads-volume-and-approach-rates" class="section level1">
 <h1>Join WADS volume and approach rates</h1>
@@ -422,6 +423,21 @@ wads_volume_joined &lt;- wads_volume %&gt;%
     by = c(&quot;PATHWAY&quot; = &quot;pathway&quot;, &quot;LOCATION_NAME&quot; = &quot;location&quot;, &quot;group&quot; = &quot;group&quot;),
     relationship = &quot;many-to-many&quot;
   )
+
+#  test &lt;- wads_volume %&gt;%
+#   full_join(
+#     location_probabilities_glmm, 
+#     by = c(&quot;PATHWAY&quot; = &quot;pathway&quot;, &quot;LOCATION_NAME&quot; = &quot;location&quot;, &quot;group&quot; = &quot;group&quot;),
+#     relationship = &quot;many-to-many&quot;
+#   )
+
+
+#    test2 &lt;- wads_volume %&gt;%
+#   left_join(
+#     location_probabilities_glmm, 
+#     by = c(&quot;PATHWAY&quot; = &quot;pathway&quot;, &quot;LOCATION_NAME&quot; = &quot;location&quot;, &quot;group&quot; = &quot;group&quot;),
+#     relationship = &quot;many-to-many&quot;
+#   )
 
 
 #Split the group column into its component parts
@@ -449,17 +465,30 @@ wads_volume_joined &lt;- wads_volume_joined %&gt;%  # Keep original group column
 # wads_volume_joined |&gt; 
 #   mutate(probability = ifelse(is.na(probability), 0, probability)) # replace NA probabilities with 0
 
+setwd(here::here(&#39;output&#39;,&#39;aqim pathway approach rates&#39;)) 
+average_probs &lt;- read.csv(&quot;avg_of_adjusted_product_risk_summarized_across_locations.csv&quot;) |&gt; mutate(location = &quot;Average&quot;) |&gt;
+  rename(
+  avg_probability = probability,
+  avg_ci_lower = ci_lower,
+  avg_ci_upper = ci_upper
+  ) |&gt;
+# remove these so they don&#39;t interfere with the matching and case_when
+  dplyr::select(-date_created, -scenario, -method)
 
-# Pre-compute average probabilities for all pathways once
-average_probs &lt;- location_probabilities_glmm %&gt;%
-  filter(location == &quot;Average&quot;) %&gt;%
-  dplyr::select(pathway, group, probability) %&gt;%
-  rename(avg_probability = probability)
+
+  # the average probability has already been adjusted for the proportion of like product types in the conveyance pathway
+
+
+# # Load the pathway summary to get the average
+# average_probs &lt;- location_probabilities_glmm %&gt;%
+#   filter(location == &quot;Average&quot;) %&gt;%
+#   dplyr::select(pathway, group, probability) %&gt;%
+#   rename(avg_probability = probability)
 
 # Join this to the main dataset in one vectorized operation
+joint_cols &lt;- intersect(names(wads_volume_joined), names(average_probs))
 wads_volume_joined &lt;- wads_volume_joined %&gt;% 
-  left_join(average_probs, by = c(&quot;PATHWAY&quot; = &quot;pathway&quot;, &quot;group&quot; = &quot;group&quot;)) %&gt;%
-  mutate(
+  left_join(average_probs, by = joint_cols) %&gt;%  mutate(
     # Apply the decision rules using vectorized operations
     probability = case_when(
       # If pathway is NA, keep original probability
@@ -468,16 +497,16 @@ wads_volume_joined &lt;- wads_volume_joined %&gt;%
       # If original probability is NA, use average
       is.na(probability) ~ avg_probability,
       
-      # If original probability is 0, take the average
-      !is.na(probability) &amp; probability &lt; 1e-7 &amp; !is.na(avg_probability) ~ avg_probability,
+      # # If original probability is 0, take the average
+      # !is.na(probability) &amp; probability &lt; 1e-7 &amp; !is.na(avg_probability) ~ avg_probability,
 
-      # # I was originally taking the average probability if the average was within the CI range (see below lines), but CI is now 0-1 for everything, so that is useless. Instead, I changed it to take the average if its really low
-      # # If average is WITHIN the confidence interval, use average
-      # !is.na(avg_probability) &amp; !is.na(ci_lower) &amp; !is.na(ci_upper) &amp; 
-      #   avg_probability &gt;= ci_lower &amp; avg_probability &lt;= ci_upper ~ avg_probability,
+      # # # I was originally taking the average probability if the average was within the CI range (see below lines). Instead, I changed it to take the average if its really low
+      # # # If average is WITHIN the confidence interval, use average
+      # # !is.na(avg_probability) &amp; !is.na(ci_lower) &amp; !is.na(ci_upper) &amp; 
+      # #   avg_probability &gt;= ci_lower &amp; avg_probability &lt;= ci_upper ~ avg_probability,
       
       # Otherwise keep the original probability (when average is outside CI)
-      TRUE ~ probability
+      .default = probability
     )
   )</code></pre>
 </div>
@@ -527,7 +556,11 @@ sample_weight &lt;- function(n, pathway, container, prod_pathway, prod_subpathwa
 end up with a group size of 1</p>
 <pre class="r"><code># Join average group sizes to wads_volume_joined
 setwd(here::here(&#39;output&#39;,&#39;aqim pathway approach rates&#39;))
-group_size_summary &lt;- readRDS(paste(params$group_size_filename,&quot;.rds&quot;, sep=&quot;&quot;))
+group_size_summary &lt;- readRDS(paste(params$group_size_filename,&quot;.rds&quot;, sep=&quot;&quot;)) |&gt;
+#drop count
+dplyr::select(-count)
+
+
 wads_volume_joined &lt;- wads_volume_joined %&gt;%
   left_join(group_size_summary, by = c(&quot;PATHWAY&quot; = &quot;PATHWAY&quot;)) %&gt;%
   mutate(
@@ -584,7 +617,10 @@ for(i in 1:params$n_sims_for_volume) {
   
   # Store this simulation&#39;s results
   simulation_results[[i]] &lt;- sim_result %&gt;%
-    dplyr::select(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, year, month, probability, COUNT, adjusted_COUNT, positive_count_sim, total_kg_sim, sim_id)
+    dplyr::select(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY,
+container, product_pathway, product_subpathway, probability, COUNT,
+  #   container, product_pathway, product_subpathway, year, month, probability, COUNT,
+      adjusted_COUNT, positive_count_sim, total_kg_sim, sim_id)
 }
 
 
@@ -593,7 +629,9 @@ all_simulations &lt;- bind_rows(simulation_results)
 
 # Calculate summary statistics by pathway/container/product group
 pathway_risk_summary &lt;- all_simulations %&gt;%
-  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, year, probability, month, sim_id) %&gt;%
+#9/25 - drop year and month to get overall summary by pathway
+group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, probability, sim_id) %&gt;%
+  # group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, year, probability, month, sim_id) %&gt;%
   # Sum within each pathway group for each simulation
   summarize(
     total_positives = sum(positive_count_sim, na.rm = TRUE),
@@ -601,7 +639,7 @@ pathway_risk_summary &lt;- all_simulations %&gt;%
     .groups = &quot;drop&quot;
   ) %&gt;%
   # Now calculate statistics across simulations
-  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, year, probability) %&gt;%
+  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, container, product_pathway, product_subpathway, probability) %&gt;%
   summarize(
     mean_positives = mean(total_positives),
     lower_ci_positives = quantile(total_positives, 0.05),
@@ -617,10 +655,13 @@ print(&quot;Do pathways with at risk items having been found have 0 probability?
 <pre><code>## [1] &quot;Do pathways with at risk items having been found have 0 probability? For instance, there are none found in the pedestrian SB pathway.&quot;</code></pre>
 <pre class="r"><code>print(&quot;Ah - yes, if running with current data, pedestrian SB has no positive events in AQIM data, so probability is 0. That is correct.&quot;)</code></pre>
 <pre><code>## [1] &quot;Ah - yes, if running with current data, pedestrian SB has no positive events in AQIM data, so probability is 0. That is correct.&quot;</code></pre>
-<pre class="r"><code>#write results immediately because it takes a while to run
+</div>
+</div>
+<div id="save-results" class="section level1">
+<h1>save results</h1>
+<pre class="r"><code>#write results
 setwd(here::here(&quot;output&quot;,&quot;aqim based volume of at risk product approaching&quot;))
 saveRDS(pathway_risk_summary, paste(params$pathway_volumes_filename, min(params$years), &quot;to&quot;, max(params$years), params$affected_countries, params$n_sims_for_volume, &quot;sims&quot;,&quot;.rds&quot;, sep = &quot;_&quot;))</code></pre>
-</div>
 </div>
 
 

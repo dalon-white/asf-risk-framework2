@@ -457,7 +457,7 @@ system.time(wads &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[A
               collect()
            )</code></pre>
 <pre><code>##    user  system elapsed 
-##    0.11    0.01    2.34</code></pre>
+##    0.06    0.00    1.70</code></pre>
 </div>
 </div>
 <div id="summarize-wads-volume-by-month-year-location-and-pathway" class="section level2">
@@ -471,7 +471,7 @@ wads &lt;- wads |&gt;
   mutate(COUNT = case_when(
     !is.na(MIN) &amp; COUNT &lt; MIN ~ MIN,
     !is.na(MAX) &amp; COUNT &gt; MAX ~ MAX,
-    TRUE ~ COUNT
+    .default = COUNT
   )) |&gt; dplyr::select(-c(MIN, MAX))
 
 wads_volume &lt;- wads |&gt; 
@@ -483,6 +483,20 @@ wads_volume &lt;- wads |&gt;
   group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, year, month) |&gt; 
   summarize(COUNT = sum(COUNT, na.rm=TRUE),
             .groups = &quot;drop&quot;)</code></pre>
+<pre class="r"><code>#Verify its working correctly
+test = wads_volume |&gt; filter(grepl(&#39;Airport - Aircraft - Person&#39;, PATHWAY)) |&gt; group_by(LOCATION_NAME, year) |&gt; summarize(total_count = sum(COUNT, na.rm = TRUE))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;LOCATION_NAME&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre class="r"><code>View(test)
+sum(test$total_count)</code></pre>
+<pre><code>## [1] 261473705</code></pre>
+<pre class="r"><code>print(paste(&quot;the total air travelers is&quot;, format(sum(test$total_count), big.mark=&quot;,&quot;), &quot;over&quot;, params$wads_volume_begin_date, &quot;to&quot;, params$wads_volume_end_date))</code></pre>
+<pre><code>## [1] &quot;the total air travelers is 261,473,705 over 2023-01-01 to 2024-12-31&quot;</code></pre>
+<pre class="r"><code>test2 &lt;- wads_volume |&gt; filter(grepl(&#39;Airport - Aircraft - Person&#39;, PATHWAY)) |&gt;
+group_by(LOCATION_NAME, PATHWAY) |&gt; summarize(total_count = sum(COUNT, na.rm = TRUE))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;LOCATION_NAME&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre class="r"><code>View(test2)</code></pre>
 </div>
 <div id="supplement-wads-eco-volume" class="section level1">
 <h1>Supplement WADS ECO volume</h1>
@@ -533,13 +547,24 @@ SB_state_cd &lt;- c(&quot;CA&quot;,&quot;AZ&quot;,&quot;NM&quot;,&quot;TX&quot;)
     PATHWAY = case_when(
       LOCATION_STATE_CODE %in% NB_state_cd &amp; grepl(&quot;Land Border|Pedestrian&quot;, PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, &quot; NB&quot;),
       LOCATION_STATE_CODE %in% SB_state_cd &amp; grepl(&quot;Land Border|Pedestrian&quot;, PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, &quot; SB&quot;),
-      TRUE ~ PATHWAY
+      .default = PATHWAY
     )
   )</code></pre>
+</div>
+<div id="drop-month-and-year" class="section level1">
+<h1>drop month and year</h1>
+<ul>
+<li>9/25 - something is not working correctly. I am going to try to drop
+month and year and see if that helps</li>
+</ul>
+<pre class="r"><code>wads_volume &lt;- wads_volume %&gt;%
+  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY) %&gt;%
+  summarize(COUNT = sum(COUNT, na.rm = TRUE), .groups = &quot;drop&quot;)</code></pre>
 <div id="save-summarized-wads-volume" class="section level2">
 <h2>Save summarized WADS volume</h2>
 <pre class="r"><code>setwd(here::here(&quot;output&quot;,&quot;wads&quot;,&quot;arrivals_or_entries&quot;))
-saveRDS(wads_volume, paste(params$wads_volume_filename,&quot;.rds&quot;))</code></pre>
+write.csv(wads_volume, paste(params$wads_volume_filename, &quot;.csv&quot;) )
+saveRDS(wads_volume, paste(params$wads_volume_filename, &quot;.rds&quot;))</code></pre>
 </div>
 </div>
 

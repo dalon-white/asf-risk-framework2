@@ -468,7 +468,7 @@ create_spatial_layers &lt;- function(summarized_data, save_files = FALSE, output
     
     # Create clean name for layer using abbreviations
     layer_name &lt;- paste(
-      substr(gsub(&quot;[^[:alnum:]]&quot;, &quot;&quot;, combo$PATHWAY), 1, 3),
+      substr(gsub(&quot;[^[:alnum:]]&quot;, &quot;&quot;, combo$PATHWAY), 1, 25),
       substr(gsub(&quot;[^[:alnum:]]&quot;, &quot;&quot;, combo$container), 1, 3),
       substr(gsub(&quot;[^[:alnum:]]&quot;, &quot;&quot;, combo$product_pathway), 1, 3),
       substr(gsub(&quot;[^[:alnum:]]&quot;, &quot;&quot;, combo$product_subpathway), 1, 3),
@@ -502,14 +502,27 @@ create_spatial_layers &lt;- function(summarized_data, save_files = FALSE, output
       })
     }
   }
-  
-  # Create summary table of the layers
-  layer_summary &lt;- data.frame(
-    layer_name = names(spatial_layers),
-    scenario = scenario_string,
-    point_count = sapply(spatial_layers, nrow),
-    total_risk = sapply(spatial_layers, function(x) sum(x$TOTAL_KG, na.rm = TRUE))
-  ) %&gt;%
+    # Calculate totals directly from the original summarized data to ensure consistency
+  # This approach guarantees the same results as the manual grouping and summarization
+  layer_summary &lt;- summarized_data %&gt;%
+    sf::st_drop_geometry() %&gt;%
+    group_by(PATHWAY, container, product_pathway, product_subpathway) %&gt;%
+    summarize(
+      total_risk = sum(total_mean_kg, na.rm = TRUE),
+      point_count = n(),
+      .groups = &#39;drop&#39;
+    ) %&gt;%
+    mutate(
+      layer_name = paste(
+        substr(gsub(&quot;[^[:alnum:]]&quot;, &quot;&quot;, PATHWAY), 1, 25),
+        substr(gsub(&quot;[^[:alnum:]]&quot;, &quot;&quot;, container), 1, 3),
+        substr(gsub(&quot;[^[:alnum:]]&quot;, &quot;&quot;, product_pathway), 1, 3),
+        substr(gsub(&quot;[^[:alnum:]]&quot;, &quot;&quot;, product_subpathway), 1, 3),
+        sep = &quot;_&quot;
+      ),
+      scenario = scenario_string
+    ) %&gt;%
+    dplyr::select(layer_name, scenario, point_count, total_risk) %&gt;%
     arrange(desc(total_risk))
   
   # Print summary
@@ -551,152 +564,135 @@ spatial_layers &lt;- create_spatial_layers(
   output_dir = port_risk_output_dir
 )</code></pre>
 <pre><code>## Created 22 spatial layers for different pathway combinations
-## Deleting layer `Air_con_fom_pla_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Air_con_fom_pla_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_con_fom_pla_EAN.gpkg&#39; using driver `GPKG&#39;
+## Deleting layer `AirportAircraftCargoCBP_con_fom_pla_EAN&#39; using driver `GPKG&#39;
+## Writing layer `AirportAircraftCargoCBP_con_fom_pla_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftCargoCBP_con_fom_pla_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 5 features with 8 fields and geometry type Point.
-## Saved layer 1/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_con_fom_pla_EAN.gpkg</code></pre>
+## Saved layer 1/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftCargoCBP_con_fom_pla_EAN.gpkg</code></pre>
 <pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Deleting layer `Air_con_oth_ani_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Air_con_oth_ani_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_con_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
+<pre><code>## Deleting layer `AirportAircraftCargoCBP_con_oth_ani_EAN&#39; using driver `GPKG&#39;
+## Writing layer `AirportAircraftCargoCBP_con_oth_ani_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftCargoCBP_con_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 26 features with 8 fields and geometry type Point.
-## Saved layer 2/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_con_oth_ani_EAN.gpkg</code></pre>
+## Saved layer 2/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftCargoCBP_con_oth_ani_EAN.gpkg</code></pre>
 <pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Deleting layer `Air_con_swi_com_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Air_con_swi_com_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
+<pre><code>## Deleting layer `AirportAircraftCargoCBP_con_swi_com_EAN&#39; using driver `GPKG&#39;
+## Writing layer `AirportAircraftCargoCBP_con_swi_com_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftCargoCBP_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 48 features with 8 fields and geometry type Point.
-## Saved layer 3/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_con_swi_com_EAN.gpkg
-## Deleting layer `Air_pac_fom_pla_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Air_pac_fom_pla_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_fom_pla_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 3/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftCargoCBP_con_swi_com_EAN.gpkg
+## Deleting layer `AirportAircraftExpressCar_pac_fom_pla_EAN&#39; using driver `GPKG&#39;
+## Writing layer `AirportAircraftExpressCar_pac_fom_pla_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_fom_pla_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 1 features with 8 fields and geometry type Point.
-## Saved layer 4/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_fom_pla_EAN.gpkg
-## Deleting layer `Air_pac_fom_smu_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Air_pac_fom_smu_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_fom_smu_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 4/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_fom_pla_EAN.gpkg
+## Deleting layer `AirportAircraftExpressCar_pac_fom_smu_EAN&#39; using driver `GPKG&#39;
+## Writing layer `AirportAircraftExpressCar_pac_fom_smu_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_fom_smu_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 1 features with 8 fields and geometry type Point.
-## Saved layer 5/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_fom_smu_EAN.gpkg
-## Deleting layer `Air_pac_oth_ani_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Air_pac_oth_ani_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 5/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_fom_smu_EAN.gpkg
+## Deleting layer `AirportAircraftExpressCar_pac_oth_ani_EAN&#39; using driver `GPKG&#39;
+## Writing layer `AirportAircraftExpressCar_pac_oth_ani_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 14 features with 8 fields and geometry type Point.
-## Saved layer 6/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_oth_ani_EAN.gpkg
-## Deleting layer `Air_pac_oth_smu_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Air_pac_oth_smu_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_oth_smu_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 6/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_oth_ani_EAN.gpkg
+## Deleting layer `AirportAircraftExpressCar_pac_oth_smu_EAN&#39; using driver `GPKG&#39;
+## Writing layer `AirportAircraftExpressCar_pac_oth_smu_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_oth_smu_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 4 features with 8 fields and geometry type Point.
-## Saved layer 7/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_oth_smu_EAN.gpkg</code></pre>
+## Saved layer 7/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_oth_smu_EAN.gpkg</code></pre>
 <pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Deleting layer `Air_pac_swi_per_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Air_pac_swi_per_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_swi_per_EAN.gpkg&#39; using driver `GPKG&#39;
+<pre><code>## Deleting layer `AirportAircraftExpressCar_pac_swi_per_EAN&#39; using driver `GPKG&#39;
+## Writing layer `AirportAircraftExpressCar_pac_swi_per_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_swi_per_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 25 features with 8 fields and geometry type Point.
-## Saved layer 8/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_swi_per_EAN.gpkg</code></pre>
+## Saved layer 8/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_swi_per_EAN.gpkg</code></pre>
 <pre><code>## Warning in st_cast.MULTIPOINT(X[[i]], ...): point from first coordinate only</code></pre>
-<pre><code>## Deleting layer `Air_pac_swi_smu_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Air_pac_swi_smu_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_swi_smu_EAN.gpkg&#39; using driver `GPKG&#39;
+<pre><code>## Deleting layer `AirportAircraftExpressCar_pac_swi_smu_EAN&#39; using driver `GPKG&#39;
+## Writing layer `AirportAircraftExpressCar_pac_swi_smu_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_swi_smu_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 13 features with 8 fields and geometry type Point.
-## Saved layer 9/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Air_pac_swi_smu_EAN.gpkg
-## Deleting layer `Lan_con_swi_com_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Lan_con_swi_com_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 9/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/AirportAircraftExpressCar_pac_swi_smu_EAN.gpkg
+## Deleting layer `LandBorderRailCargoCBP_con_swi_com_EAN&#39; using driver `GPKG&#39;
+## Writing layer `LandBorderRailCargoCBP_con_swi_com_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/LandBorderRailCargoCBP_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 4 features with 8 fields and geometry type Point.
-## Saved layer 10/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_con_swi_com_EAN.gpkg
-## Deleting layer `Lan_con_oth_ani_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Lan_con_oth_ani_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_con_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 10/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/LandBorderRailCargoCBP_con_swi_com_EAN.gpkg
+## Deleting layer `LandBorderTruckCargoCBP_con_oth_ani_EAN&#39; using driver `GPKG&#39;
+## Writing layer `LandBorderTruckCargoCBP_con_oth_ani_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/LandBorderTruckCargoCBP_con_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 7 features with 8 fields and geometry type Point.
-## Saved layer 11/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_con_oth_ani_EAN.gpkg
-## Deleting layer `Lan_con_swi_com_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Lan_con_swi_com_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 11/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/LandBorderTruckCargoCBP_con_oth_ani_EAN.gpkg
+## Deleting layer `LandBorderTruckCargoCBP_con_swi_com_EAN&#39; using driver `GPKG&#39;
+## Writing layer `LandBorderTruckCargoCBP_con_swi_com_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/LandBorderTruckCargoCBP_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 8 features with 8 fields and geometry type Point.
-## Saved layer 12/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_con_swi_com_EAN.gpkg
-## Deleting layer `Lan_bag_swi_per_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Lan_bag_swi_per_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_swi_per_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 12/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/LandBorderTruckCargoCBP_con_swi_com_EAN.gpkg
+## Deleting layer `LandBorderTruckConveyance_bag_swi_per_EAN&#39; using driver `GPKG&#39;
+## Writing layer `LandBorderTruckConveyance_bag_swi_per_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/LandBorderTruckConveyance_bag_swi_per_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 1 features with 8 fields and geometry type Point.
-## Saved layer 13/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Lan_bag_swi_per_EAN.gpkg
-## Deleting layer `Mar_con_oth_ani_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Mar_con_oth_ani_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 13/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/LandBorderTruckConveyance_bag_swi_per_EAN.gpkg
+## Deleting layer `MaritimePortVesselCargoCB_con_oth_ani_EAN&#39; using driver `GPKG&#39;
+## Writing layer `MaritimePortVesselCargoCB_con_oth_ani_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/MaritimePortVesselCargoCB_con_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 7 features with 8 fields and geometry type Point.
-## Saved layer 14/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_oth_ani_EAN.gpkg
-## Deleting layer `Mar_con_swi_com_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Mar_con_swi_com_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 14/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/MaritimePortVesselCargoCB_con_oth_ani_EAN.gpkg
+## Deleting layer `MaritimePortVesselCargoCB_con_swi_com_EAN&#39; using driver `GPKG&#39;
+## Writing layer `MaritimePortVesselCargoCB_con_swi_com_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/MaritimePortVesselCargoCB_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 15 features with 8 fields and geometry type Point.
-## Saved layer 15/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_swi_com_EAN.gpkg
-## Deleting layer `Mar_con_swi_com_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Mar_con_swi_com_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 15/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/MaritimePortVesselCargoCB_con_swi_com_EAN.gpkg
+## Deleting layer `MaritimePortVesselCargoPI_con_swi_com_EAN&#39; using driver `GPKG&#39;
+## Writing layer `MaritimePortVesselCargoPI_con_swi_com_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/MaritimePortVesselCargoPI_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 1 features with 8 fields and geometry type Point.
-## Saved layer 16/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_con_swi_com_EAN.gpkg
-## Deleting layer `Mar_bag_swi_smu_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Mar_bag_swi_smu_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_bag_swi_smu_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 16/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/MaritimePortVesselCargoPI_con_swi_com_EAN.gpkg
+## Deleting layer `MaritimePortVesselConveya_bag_swi_smu_EAN&#39; using driver `GPKG&#39;
+## Writing layer `MaritimePortVesselConveya_bag_swi_smu_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/MaritimePortVesselConveya_bag_swi_smu_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 1 features with 8 fields and geometry type Point.
-## Saved layer 17/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Mar_bag_swi_smu_EAN.gpkg
-## Deleting layer `Non_con_oth_ani_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Non_con_oth_ani_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Non_con_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 17/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/MaritimePortVesselConveya_bag_swi_smu_EAN.gpkg
+## Deleting layer `NonPortNonTransportCommer_con_oth_ani_EAN&#39; using driver `GPKG&#39;
+## Writing layer `NonPortNonTransportCommer_con_oth_ani_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/NonPortNonTransportCommer_con_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 3 features with 8 fields and geometry type Point.
-## Saved layer 18/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Non_con_oth_ani_EAN.gpkg
-## Deleting layer `Non_con_swi_com_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Non_con_swi_com_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Non_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 18/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/NonPortNonTransportCommer_con_oth_ani_EAN.gpkg
+## Deleting layer `NonPortNonTransportCommer_con_swi_com_EAN&#39; using driver `GPKG&#39;
+## Writing layer `NonPortNonTransportCommer_con_swi_com_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/NonPortNonTransportCommer_con_swi_com_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 43 features with 8 fields and geometry type Point.
-## Saved layer 19/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Non_con_swi_com_EAN.gpkg
-## Writing layer `Non_pac_oth_ani_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Non_pac_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 19/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/NonPortNonTransportCommer_con_swi_com_EAN.gpkg
+## Deleting layer `NonPortNonTransportExpres_pac_oth_ani_EAN&#39; using driver `GPKG&#39;
+## Writing layer `NonPortNonTransportExpres_pac_oth_ani_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/NonPortNonTransportExpres_pac_oth_ani_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 1 features with 8 fields and geometry type Point.
-## Saved layer 20/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Non_pac_oth_ani_EAN.gpkg
-## Deleting layer `Non_pac_swi_per_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Non_pac_swi_per_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Non_pac_swi_per_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 20/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/NonPortNonTransportExpres_pac_oth_ani_EAN.gpkg
+## Deleting layer `NonPortNonTransportExpres_pac_swi_per_EAN&#39; using driver `GPKG&#39;
+## Writing layer `NonPortNonTransportExpres_pac_swi_per_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/NonPortNonTransportExpres_pac_swi_per_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 8 features with 8 fields and geometry type Point.
-## Saved layer 21/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Non_pac_swi_per_EAN.gpkg
-## Deleting layer `Non_pac_swi_smu_EAN&#39; using driver `GPKG&#39;
-## Writing layer `Non_pac_swi_smu_EAN&#39; to data source 
-##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Non_pac_swi_smu_EAN.gpkg&#39; using driver `GPKG&#39;
+## Saved layer 21/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/NonPortNonTransportExpres_pac_swi_per_EAN.gpkg
+## Deleting layer `NonPortNonTransportExpres_pac_swi_smu_EAN&#39; using driver `GPKG&#39;
+## Writing layer `NonPortNonTransportExpres_pac_swi_smu_EAN&#39; to data source 
+##   `C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/NonPortNonTransportExpres_pac_swi_smu_EAN.gpkg&#39; using driver `GPKG&#39;
 ## Writing 4 features with 8 fields and geometry type Point.
-## Saved layer 22/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/Non_pac_swi_smu_EAN.gpkg</code></pre>
-<pre><code>## Warning: Unknown or uninitialised column: `TOTAL_KG`.</code></pre>
-<pre><code>## Warning: Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.
-## Unknown or uninitialised column: `TOTAL_KG`.</code></pre>
-<pre><code>## 
+## Saved layer 22/22: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/NonPortNonTransportExpres_pac_swi_smu_EAN.gpkg
+## 
 ## Summary of spatial layers for scenario &#39;EAN&#39; (top 10 by risk):
-##                      layer_name scenario point_count total_risk
-## Air_con_fom_pla Air_con_fom_pla      EAN           5          0
-## Air_con_oth_ani Air_con_oth_ani      EAN          26          0
-## Air_con_swi_com Air_con_swi_com      EAN          48          0
-## Air_pac_fom_pla Air_pac_fom_pla      EAN           1          0
-## Air_pac_fom_smu Air_pac_fom_smu      EAN           1          0
-## Air_pac_oth_ani Air_pac_oth_ani      EAN          14          0
-## Air_pac_oth_smu Air_pac_oth_smu      EAN           4          0
-## Air_pac_swi_per Air_pac_swi_per      EAN          25          0
-## Air_pac_swi_smu Air_pac_swi_smu      EAN          13          0
-## Lan_con_swi_com Lan_con_swi_com      EAN           8          0
+## # A tibble: 10 × 4
+##    layer_name                            scenario point_count total_risk
+##    &lt;chr&gt;                                 &lt;chr&gt;          &lt;int&gt;      &lt;dbl&gt;
+##  1 MaritimePortVesselCargoCB_con_oth_ani EAN                7  15110635.
+##  2 MaritimePortVesselCargoCB_con_swi_com EAN               15    524249.
+##  3 LandBorderTruckCargoCBP_con_oth_ani   EAN                7     85681.
+##  4 AirportAircraftCargoCBP_con_swi_com   EAN               48     46908.
+##  5 LandBorderTruckCargoCBP_con_swi_com   EAN                8     41417.
+##  6 AirportAircraftExpressCar_pac_swi_per EAN               25     35152.
+##  7 NonPortNonTransportCommer_con_swi_com EAN               43     30751.
+##  8 AirportAircraftExpressCar_pac_swi_smu EAN               13     30353.
+##  9 LandBorderRailCargoCBP_con_swi_com    EAN                4     16916 
+## 10 AirportAircraftExpressCar_pac_oth_smu EAN                4      7601.
 ## 
 ## Saved summary table to: C:/Users/Dalon.White/OneDrive - USDA/Desktop/Projects/asf-risk-framework2/asf-risk-framework2/output/spatial layers/risk at ports/layer_summary_EAN.csv</code></pre>
 </div>

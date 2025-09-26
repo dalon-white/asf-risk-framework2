@@ -9,6 +9,7 @@ params:
   wads_volume_end_date: "2024-12-31" # End date for pulling WADS volume data
   wads_volume_reference_filename: "wads volume reference table.csv" # Name of the input reference file that houses which ACTIVITY_CODE is for which PATHWAY
   wads_volume_filename: wads_passenger_volume_by_port_pathway_month_year # Name of the output file for WADS volume data
+  wads_ECO_volume: (mean(1066000000+1400000000)/12) # Total express courier volume to supplement WADS data if needed (2023 + 2024)
 ---
 
 Third Rmd
@@ -67,7 +68,7 @@ if (!exists("params")) {
       wads_volume_end_date = "2024-12-31",
       wads_volume_reference_filename = "wads volume reference table.csv",
       wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year",
-      wads_ECO_volume = 1066000000 # Total express courier volume to supplement WADS data if needed
+      wads_ECO_volume = (mean(1066000000+1400000000)/12) # Total express courier volume to supplement WADS data if needed (2023 + 2024)
     )
   }
 }
@@ -132,7 +133,7 @@ wads <- wads |>
   mutate(COUNT = case_when(
     !is.na(MIN) & COUNT < MIN ~ MIN,
     !is.na(MAX) & COUNT > MAX ~ MAX,
-    TRUE ~ COUNT
+    .default = COUNT
   )) |> dplyr::select(-c(MIN, MAX))
 
 wads_volume <- wads |> 
@@ -153,6 +154,10 @@ test = wads_volume |> filter(grepl('Airport - Aircraft - Person', PATHWAY)) |> g
 View(test)
 sum(test$total_count)
 print(paste("the total air travelers is", format(sum(test$total_count), big.mark=","), "over", params$wads_volume_begin_date, "to", params$wads_volume_end_date))
+
+test2 <- wads_volume |> filter(grepl('Airport - Aircraft - Person', PATHWAY)) |>
+group_by(LOCATION_NAME, PATHWAY) |> summarize(total_count = sum(COUNT, na.rm = TRUE))
+View(test2)
 ```
 
 
@@ -165,7 +170,7 @@ So we'll use that number to adjust the COUNT in the WADS volum; I'll write it fl
 if(!"Express_courier" %in% wads_volume$PATHWAY) {
   # If not, create a new entry for ECO with the total volume
   # Check if parameter is defined, if not use default
-  eco_volume <- if(!is.null(params$wads_ECO_volume)) params$wads_ECO_volume else 1066000000
+  eco_volume <- if(!is.null(params$wads_ECO_volume)) params$wads_ECO_volume else (mean(1066000000+1400000000)/12) # 1.066bn from 2023 + 1.4bn from 2024
   message("Using Express_courier volume: ", eco_volume)
   
   eco_entry <- data.frame(
@@ -181,7 +186,7 @@ if(!"Express_courier" %in% wads_volume$PATHWAY) {
   wads_volume <- bind_rows(wads_volume, eco_entry)
 } else {
   # Check if parameter is defined, if not use default
-  eco_volume <- if(!is.null(params$wads_ECO_volume)) params$wads_ECO_volume else 1066000000
+  eco_volume <- if(!is.null(params$wads_ECO_volume)) params$wads_ECO_volume else (mean(1066000000+1400000000)/12) # 1.066bn from 2023 + 1.4bn from 2024
   message("Using Express_courier volume: ", eco_volume)
   
   #scale the existing ECO volume to match the known total. Use the COUNT to get the proportion for each location, and then scale to the known total
@@ -208,14 +213,24 @@ wads_volume <- wads_volume %>%
     PATHWAY = case_when(
       LOCATION_STATE_CODE %in% NB_state_cd & grepl("Land Border|Pedestrian", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " NB"),
       LOCATION_STATE_CODE %in% SB_state_cd & grepl("Land Border|Pedestrian", PATHWAY, ignore.case = TRUE) ~ paste0(PATHWAY, " SB"),
-      TRUE ~ PATHWAY
+      .default = PATHWAY
     )
   )
 ```
+
+# drop month and year
+
+- 9/25 - something is not working correctly. I am going to try to drop month and year and see if that helps
+```{r drop month year}
+wads_volume <- wads_volume %>%
+  group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY) %>%
+  summarize(COUNT = sum(COUNT, na.rm = TRUE), .groups = "drop")
+```
+
 ## Save summarized WADS volume
 ```{r save wads volume}
 setwd(here::here("output","wads","arrivals_or_entries"))
-write.csv(wads_volume,paste(params$wads_volume_filename, ".csv") )
+write.csv(wads_volume, paste(params$wads_volume_filename, ".csv") )
 saveRDS(wads_volume, paste(params$wads_volume_filename, ".rds"))
 ```
 

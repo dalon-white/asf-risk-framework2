@@ -1,46 +1,56 @@
 PoE,Conveyance type pathway,Container,Product pathway,Product subpathway,layer_name,scenario,point_count,total_risk
-Air,Passenger,Baggage,other swine product,animal-based feed,Air_bag_oth_ani,current,9,18.74957828
-Air,Passenger,Baggage,swine product and byproduct,personal use,Air_bag_swi_per,current,9,406.653269
-Air,Passenger,Baggage,swine product and byproduct,smuggled commercial product,Air_bag_swi_smu,current,176,4652.25611
-Air,Eco,Package,other swine product,unspecified,Exp_pac_oth_uns,current,29,4072.940417
-Air,Eco,Package,swine product and byproduct,personal use,Exp_pac_swi_per,current,29,196391.0372
-Air,Eco,Package,swine product and byproduct,smuggled commercial product,Exp_pac_swi_smu,current,29,27472.65083
-Land border,Passenger,Baggage,swine product and byproduct,personal use,Lan_bag_swi_per,current,42,5.657088366
-Maritime,Cargo,Container,other swine product,animal-based feed,Mar_con_oth_ani,current,53,1403.434091
-Maritime,Cargo,Container,swine product and byproduct,commercial product,Mar_con_swi_com,current,53,4868.556061
-Air,Cargo,Container,fomite,plant-based feed,Air_con_fom_pla,EAN,5,10.85
-Air,Cargo,Container,other swine product,animal-based feed,Air_con_oth_ani,EAN,26,5790.972
-Air,Cargo,Container,swine product and byproduct,commercial product,Air_con_swi_com,EAN,48,46907.79126
-Air,Eco,Package,fomite,plant-based feed,Air_pac_fom_pla,EAN,1,16.35
-Air,Eco,Package,fomite,smuggled commercial product,Air_pac_fom_smu,EAN,1,50
-Air,Eco,Package,other swine product,animal-based feed,Air_pac_oth_ani,EAN,14,1084.415
-Air,Eco,Package,other swine product,unspecified,Air_pac_oth_smu,EAN,4,7601.2
-Air,Eco,Package,swine product and byproduct,personal use,Air_pac_swi_per,EAN,25,35152.23597
-Air,Eco,Package,swine product and byproduct,smuggled commercial product,Air_pac_swi_smu,EAN,13,30352.585
-Land border,Passenger,Baggage,swine product and byproduct,personal use,Lan_bag_swi_per,EAN,1,0.75
-Land border,Cargo,Container,other swine product,animal-based feed,Lan_con_oth_ani,EAN,7,85680.99
-Land border,Cargo,Container,swine product and byproduct,commercial product,Lan_con_swi_com,EAN,8,41417.26
-Maritime,Passenger,Baggage,swine product and byproduct,smuggled commercial product,Mar_bag_swi_smu,EAN,1,3292
-Maritime,Cargo,Container,other swine product,animal-based feed,Mar_con_oth_ani,EAN,7,15110634.8
-Maritime,Cargo,Container,swine product and byproduct,commercial product,Mar_con_swi_com,EAN,1,1.81
-Non-port,Cargo,Container,other swine product,animal-based feed,Non_con_oth_ani,EAN,3,4555.95
-Non-port,Cargo,Container,swine product and byproduct,commercial product,Non_con_swi_com,EAN,43,30750.9673
-Non-port,Eco,Package,other swine product,animal-based feed,Non_pac_oth_ani,EAN,1,52
-Non-port,Eco,Package,swine product and byproduct,personal use,Non_pac_swi_per,EAN,8,867.812
-Non-port,Eco,Package,swine product and byproduct,smuggled commercial product,Non_pac_swi_smu,EAN,4,455.42
-Air,Passenger,Baggage,other swine product,animal-based feed,Air_bag_oth_ani,mex_can,9,245.1941143
-Air,Passenger,Baggage,swine product and byproduct,personal use,Air_bag_swi_per,mex_can,9,2687.460859
-Air,Passenger,Baggage,swine product and byproduct,smuggled commercial product,Air_bag_swi_smu,mex_can,176,8158.351136
-Air,Eco,Package,fomite,personal effects,Exp_pac_fom_per,mex_can,29,664.5284545
-Air,Eco,Package,fomite,plant-based feed,Exp_pac_oth_pla,mex_can,29,11634.13894
-Air,Eco,Package,other swine product,smuggled commercial product,Exp_pac_oth_smu,mex_can,29,29062.00992
-Air,Eco,Package,other swine product,unspecified,Exp_pac_oth_uns,mex_can,29,17289.39274
-Air,Eco,Package,swine product and byproduct,personal use,Exp_pac_swi_per,mex_can,29,76347.83891
-Land border,Passenger,Baggage,other swine product,animal-based feed,Lan_bag_oth_ani,mex_can,32,16316.64209
-Land border,Passenger,Baggage,other swine product,unspecified,Lan_bag_oth_smu,mex_can,32,6929.873804
-Land border,Passenger,Baggage,swine product and byproduct,personal use,Lan_bag_swi_per,mex_can,32,159275.9104
-Land border,Passenger,Baggage,swine product and byproduct,smuggled commercial product,Lan_bag_swi_smu,mex_can,32,38335.01074
-Land border,Cargo,Container,fomite,plant-based feed,Lan_con_fom_pla,mex_can,32,9.508073232
-Land border,Passenger,Baggage,other swine product,unspecified,Ped_bag_oth_uns,mex_can,29,170.4881652
-Land border,Passenger,Baggage,swine product and byproduct,personal use,Ped_bag_swi_per,mex_can,29,11791.20387
-Land border,Passenger,Baggage,swine product and byproduct,smuggled commercial product,Ped_bag_swi_smu,mex_can,29,3941.436321
+Air,Eco,Package,swine product and byproduct,personal use,Expresscourier_pac_swi_per,current,29,2732290
+Air,Passenger,Baggage,swine product and byproduct,personal use,AirportAircraftPersonCBP_bag_swi_per,current,176,1613997
+Air,Eco,Package,swine product and byproduct,personal use,Expresscourier_pac_swi_per,mex_can,29,1093059
+Air,Passenger,Baggage,swine product and byproduct,personal use,AirportAircraftPersonCBP_bag_swi_per,mex_can,176,811389
+Air,Eco,Package,swine product and byproduct,smuggled commercial product,Expresscourier_pac_oth_smu,mex_can,29,416416
+Air,Eco,Package,swine product and byproduct,smuggled commercial product,Expresscourier_pac_swi_smu,current,29,381875
+Air,Eco,Package,other swine product,unspecified,Expresscourier_pac_oth_uns,mex_can,29,247446
+Air,Passenger,Baggage,swine product and byproduct,smuggled commercial product,AirportAircraftPersonCBP_bag_swi_smu,mex_can,176,185073
+Air,Eco,Package,other swine product,plasma,Expresscourier_pac_oth_pla,mex_can,29,166474
+Air,Passenger,Baggage,swine product and byproduct,smuggled commercial product,AirportAircraftPersonCBP_bag_swi_smu,current,176,98529
+Air,Passenger,Baggage,other swine product,animal-based feed,AirportAircraftPersonCBP_bag_oth_ani,mex_can,176,69728
+Air,Eco,Package,other swine product,unspecified,Expresscourier_pac_oth_uns,current,29,56628
+Air,Cargo,Container,fomite,plant-based feed,AirportAircraftCargoCBP_con_fom_pla,EAN,5,11
+Air,Passenger,Baggage,swine product and byproduct,personal use,AirportAircraftPersonPreC_bag_swi_per,mex_can,9,36022
+Air,Eco,Package,swine product and byproduct,personal use,AirportAircraftExpressCar_pac_swi_per,EAN,25,35152
+Air,Passenger,Baggage,other swine product,animal-based feed,AirportAircraftPersonCBP_bag_oth_ani,current,176,33454
+Air,Eco,Package,swine product and byproduct,smuggled commercial product,AirportAircraftExpressCar_pac_swi_smu,EAN,13,30353
+Air,Eco,Package,fomite,personal effects,Expresscourier_pac_fom_per,mex_can,29,9513
+Air,Eco,Package,other swine product,smuggled commercial product,AirportAircraftExpressCar_pac_oth_smu,EAN,4,7601
+Air,Cargo,Container,other swine product,animal-based feed,AirportAircraftCargoCBP_con_oth_ani,EAN,26,5791
+Air,Passenger,Baggage,swine product and byproduct,personal use,AirportAircraftPersonPreC_bag_swi_per,current,9,5467
+Air,Passenger,Baggage,other swine product,animal-based feed,AirportAircraftPersonPreC_bag_oth_ani,mex_can,9,3291
+Air,Eco,Package,other swine product,animal-based feed,AirportAircraftExpressCar_pac_oth_ani,EAN,14,1084
+Air,Passenger,Baggage,other swine product,animal-based feed,AirportAircraftPersonPreC_bag_oth_ani,current,9,254
+Air,Eco,Package,fomite,smuggled commercial product,AirportAircraftExpressCar_pac_fom_smu,EAN,1,50
+Air,Eco,Package,fomite,plant-based feed,AirportAircraftExpressCar_pac_fom_pla,EAN,1,16
+Air,Cargo,Container,swine product and byproduct,commercial imports,AirportAircraftCargoCBP_con_swi_com,EAN,48,46908
+Land border,Passenger,Baggage,swine product and byproduct,personal use,LandBorderTruckConveyance_bag_swi_per,mex_can,32,2650018
+Land border,Passenger,Baggage,swine product and byproduct,smuggled commercial product,LandBorderTruckConveyance_bag_swi_smu,mex_can,32,637028
+Land border,Passenger,Baggage,other swine product,animal-based feed,LandBorderTruckConveyance_bag_oth_ani,mex_can,32,271361
+Land border,Passenger,Baggage,swine product and byproduct,personal use,PedestrianSB_bag_swi_per,mex_can,29,178234
+Land border,Passenger,Baggage,other swine product,smuggled commercial product,LandBorderTruckConveyance_bag_oth_smu,mex_can,32,115084
+Land border,Cargo,Container,swine product and byproduct,commercial imports,LandBorderRailCargoCBP_con_swi_com,EAN,4,16916
+Land border,Passenger,Baggage,swine product and byproduct,personal use,LandBorderTruckConveyance_bag_swi_per,mex_can,42,77568
+Land border,Passenger,Baggage,swine product and byproduct,smuggled commercial product,PedestrianSB_bag_swi_smu,mex_can,29,59520
+Land border,Passenger,Baggage,other swine product,animal-based feed,LandBorderTruckConveyance_bag_oth_ani,mex_can,42,58517
+Land border,Passenger,Baggage,other swine product,smuggled commercial product,LandBorderTruckConveyance_bag_oth_smu,mex_can,42,51810
+Land border,Cargo,Container,other swine product,animal-based feed,LandBorderTruckCargoCBP_con_oth_ani,EAN,7,85681
+Land border,Passenger,Baggage,swine product and byproduct,smuggled commercial product,LandBorderTruckConveyance_bag_swi_smu,mex_can,42,37403
+Land border,Cargo,Container,swine product and byproduct,commercial imports,LandBorderTruckCargoCBP_con_swi_com,EAN,8,41417
+Land border,Passenger,Baggage,other swine product,unspecified,PedestrianSB_bag_oth_uns,mex_can,29,2558
+Land border,Passenger,Baggage,swine product and byproduct,personal use,LandBorderTruckConveyance_bag_swi_per,current,42,283
+Land border,Passenger,Vehicle,fomite,plant-based feed,LandBorderTruckConveyance_con_fom_pla,mex_can,32,158
+Land border,Passenger,Baggage,swine product and byproduct,personal use,LandBorderTruckConveyance_bag_swi_per,EAN,1,1
+Maritime,Cargo,Container,other swine product,animal-based feed,MaritimePortVesselCargoCB_con_oth_ani,EAN,7,15110635
+Maritime,Cargo,Container,other swine product,animal-based feed,MaritimePortVesselCargoCB_con_oth_ani,current,53,169754
+Maritime,Cargo,Container,swine product and byproduct,commercial imports,MaritimePortVesselCargoCB_con_swi_com,current,53,524557
+Maritime,Cargo,Container,swine product and byproduct,commercial imports,MaritimePortVesselCargoCB_con_swi_com,EAN,15,524249
+Maritime,Passenger,Baggage,swine product and byproduct,smuggled commercial product,MaritimePortVesselConveya_bag_swi_smu,EAN,1,3292
+Maritime,Cargo,Container,swine product and byproduct,commercial imports,MaritimePortVesselCargoPI_con_swi_com,EAN,1,2
+NonPort,Cargo,Unspecified,other swine product,animal-based feed,NonPortNonTransportCommer_con_oth_ani,EAN,3,4556
+NonPort,Cargo,Unspecified,swine product and byproduct,commercial imports,NonPortNonTransportCommer_con_swi_com,EAN,43,30751
+NonPort,Eco,Package,swine product and byproduct,personal use,NonPortNonTransportExpres_pac_swi_per,EAN,8,868
+NonPort,Eco,Package,swine product and byproduct,smuggled commercial product,NonPortNonTransportExpres_pac_swi_smu,EAN,4,455
+NonPort,Eco,Package,other swine product,animal-based feed,NonPortNonTransportExpres_pac_oth_ani,EAN,1,52

@@ -150,7 +150,7 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
     
     # Create clean name for layer using abbreviations
     layer_name <- paste(
-      substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 3),
+      substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 25),
       substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3),
       substr(gsub("[^[:alnum:]]", "", combo$product_pathway), 1, 3),
       substr(gsub("[^[:alnum:]]", "", combo$product_subpathway), 1, 3),
@@ -184,14 +184,27 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
       })
     }
   }
-  
-  # Create summary table of the layers
-  layer_summary <- data.frame(
-    layer_name = names(spatial_layers),
-    scenario = scenario_string,
-    point_count = sapply(spatial_layers, nrow),
-    total_risk = sapply(spatial_layers, function(x) sum(x$total_mean_kg, na.rm = TRUE))
-  ) %>%
+    # Calculate totals directly from the original summarized data to ensure consistency
+  # This approach guarantees the same results as the manual grouping and summarization
+  layer_summary <- summarized_data %>%
+    sf::st_drop_geometry() %>%
+    group_by(PATHWAY, container, product_pathway, product_subpathway) %>%
+    summarize(
+      total_risk = sum(total_mean_kg, na.rm = TRUE),
+      point_count = n(),
+      .groups = 'drop'
+    ) %>%
+    mutate(
+      layer_name = paste(
+        substr(gsub("[^[:alnum:]]", "", PATHWAY), 1, 25),
+        substr(gsub("[^[:alnum:]]", "", container), 1, 3),
+        substr(gsub("[^[:alnum:]]", "", product_pathway), 1, 3),
+        substr(gsub("[^[:alnum:]]", "", product_subpathway), 1, 3),
+        sep = "_"
+      ),
+      scenario = scenario_string
+    ) %>%
+    dplyr::select(layer_name, scenario, point_count, total_risk) %>%
     arrange(desc(total_risk))
   
   # Print summary

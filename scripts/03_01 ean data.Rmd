@@ -332,7 +332,7 @@ Next step is to determine if there is any risk associated with the EAN record. T
 load country reference list
 ```{r identify countries of risk}
 setwd(here::here("input","data","asf affected countries by year"))
-affected_countries <- read.csv("asf affected countries.csv") |> 
+affected_countries <- read.csv(params$affected_country_file) |> 
     mutate(Year = as.numeric(Year)) |> 
     filter(Year %in% params$years) |> 
     filter(Disease == "ASF") |>

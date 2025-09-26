@@ -1,0 +1,11 @@
+"PATHWAY","container","product_pathway","product_subpathway","total_mean_kg"
+"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",2787.78182666867
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",134467.185241514
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",8221.33978085746
+"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",20.6327777777778
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",449.573225333628
+"Express_courier","package","other products","unspecified feed",4797.63761724387
+"Express_courier","package","swine products/by-products","personal use or consumption",231590.384465346
+"Express_courier","package","swine products/by-products","smuggled commercial products",32266.4805194805
+"Maritime Port - Vessel - Cargo - CBP","container","other products","animal-based feed",14391.1363636364
+"Maritime Port - Vessel - Cargo - CBP","container","swine products/by-products","commercial",48745.7863636364
