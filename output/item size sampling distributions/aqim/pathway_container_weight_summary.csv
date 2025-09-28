@@ -1,20 +1,20 @@
 "PATHWAY","container","product_pathway","product_subpathway","mean_weight","median_weight","total_samples","min_weight","max_weight"
-"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","personal use or consumption",2.14745430251203,1,3742,0.01,18
-"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",1.09084870188004,0.5,1117,0.001,16.8
-"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",1.24313621262458,0.6,602,0.02,15
+"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","personal use or consumption",2.1332913028292,1,2863,0.01,18
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",1.0805625,0.5,864,0.001,16.8
 "Pedestrian SB","baggage","swine products/by-products","personal use or consumption",1.99165177858439,1,551,0.00013,19.81
-"Land Border - Truck - Conveyance - CBP SB","baggage","other products","animal-based feed",2.72263888888889,2,288,0.05,19.5
-"Land Border - Truck - Conveyance - CBP NB","baggage","other products","animal-based feed",1.94419928825623,1,281,0.05,18
-"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",0.430128676470588,0.2,272,0.01,4
-"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","smuggled commercial products",32.4475,24.5,64,20,132
-"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",1.8119298245614,1.5,57,0.1,10
-"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",0.275375,0.2,40,0.01,3
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",1.32604925053533,0.6,467,0.02,15
+"Land Border - Truck - Conveyance - CBP SB","baggage","other products","animal-based feed",2.85125,2,240,0.05,19.5
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",0.426355855855856,0.2,222,0.01,4
+"Land Border - Truck - Conveyance - CBP NB","baggage","other products","animal-based feed",2.05640186915888,1,214,0.05,18
+"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","smuggled commercial products",29.7320754716981,25,53,20,80
+"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",2.03760869565217,2,46,0.1,10
+"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",0.301774193548387,0.2,31,0.05,3
 "Express_courier","package","swine products/by-products","personal use or consumption",2.70117647058824,2,17,0.1,11
-"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption",1.8325,1.85,16,0.46,5
-"Land Border - Truck - Conveyance - CBP NB","baggage","other products","smuggled commercial products",57.5555555555556,50,9,20,200
-"Land Border - Truck - Conveyance - CBP SB","baggage","other products","smuggled commercial products",41,35,9,22,90
+"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption",1.92363636363636,1.9,11,0.46,5
 "Pedestrian SB","baggage","other products","unspecified feed",1.83466666666667,1,9,0.012,6
-"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","smuggled commercial products",62.5,42.5,6,20,189
+"Land Border - Truck - Conveyance - CBP NB","baggage","other products","smuggled commercial products",58.5,37,8,20,200
+"Land Border - Truck - Conveyance - CBP SB","baggage","other products","smuggled commercial products",46.1666666666667,42.5,6,22,90
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","smuggled commercial products",71,50,5,24,189
 "Maritime Port - Vessel - Mail - CBP","package","other products","animal-based feed",2.1,2,4,1.4,3
 "Pedestrian SB","baggage","swine products/by-products","smuggled commercial products",96.405,48,4,39.62,250
 "Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",91.6666666666667,50,3,20,205

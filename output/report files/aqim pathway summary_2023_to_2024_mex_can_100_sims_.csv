@@ -1,23 +1,23 @@
 "PATHWAY","container","product_pathway","product_subpathway","total_mean_kg"
-"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",69728.3877068671
-"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",811389.128535239
-"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",185073.15
-"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",3290.75421029722
-"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",36022.393296109
-"Express_courier","package","fomite","personal effects",9512.524
-"Express_courier","package","other products","plasma",166473.53
-"Express_courier","package","other products","smuggled commercial products",416415.87
-"Express_courier","package","other products","unspecified feed",247445.826
-"Express_courier","package","swine products/by-products","personal use or consumption",1093059.33973349
-"Land Border - Truck - Conveyance - CBP NB","baggage","other products","animal-based feed",58517.4126310942
-"Land Border - Truck - Conveyance - CBP NB","baggage","other products","smuggled commercial products",51809.8287687715
-"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",77568.249410645
-"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","smuggled commercial products",37403.4331275062
-"Land Border - Truck - Conveyance - CBP SB","baggage","other products","animal-based feed",271361.46802405
-"Land Border - Truck - Conveyance - CBP SB","baggage","other products","smuggled commercial products",115083.928139498
-"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","personal use or consumption",2650018.01423356
-"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","smuggled commercial products",637028.487772481
-"Land Border - Truck - Conveyance - CBP SB","conveyance","fomite","plant based feed",157.8
-"Pedestrian SB","baggage","other products","unspecified feed",2558.1934788806
-"Pedestrian SB","baggage","swine products/by-products","personal use or consumption",178234.228774878
-"Pedestrian SB","baggage","swine products/by-products","smuggled commercial products",59519.578
+"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",81440.5728089371
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",800640.654329173
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",238311.9
+"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",3323.23658961542
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",37760.8947343922
+"Express_courier","package","fomite","personal effects",1836.748
+"Express_courier","package","other products","plasma",32141.6
+"Express_courier","package","other products","smuggled commercial products",80176.42
+"Express_courier","package","other products","unspecified feed",47870.992
+"Express_courier","package","swine products/by-products","personal use or consumption",210685.026257105
+"Land Border - Truck - Conveyance - CBP NB","baggage","other products","animal-based feed",61631.4371008352
+"Land Border - Truck - Conveyance - CBP NB","baggage","other products","smuggled commercial products",60528.994222509
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",81661.4304345631
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","smuggled commercial products",46278.5463294085
+"Land Border - Truck - Conveyance - CBP SB","baggage","other products","animal-based feed",282570.482825378
+"Land Border - Truck - Conveyance - CBP SB","baggage","other products","smuggled commercial products",113895.208793249
+"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","personal use or consumption",2645944.83678047
+"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","smuggled commercial products",644894.94688723
+"Land Border - Truck - Conveyance - CBP SB","conveyance","fomite","plant based feed",207.49
+"Pedestrian SB","baggage","other products","unspecified feed",2569.46637163031
+"Pedestrian SB","baggage","swine products/by-products","personal use or consumption",178039.192375193
+"Pedestrian SB","baggage","swine products/by-products","smuggled commercial products",59908.641

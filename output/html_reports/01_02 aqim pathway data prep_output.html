@@ -541,7 +541,7 @@ system.time(arm_aqim &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2
            )
 )</code></pre>
 <pre><code>##    user  system elapsed 
-##    0.00    0.00    0.06</code></pre>
+##    0.01    0.00    0.17</code></pre>
 <pre class="r"><code>#-- Load Bridge Commodity dataset ----
 system.time(commodity &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV2].[ARMDATADM].[SYS2_BRG_COMMODITY]&quot;)) |&gt; 
               dplyr::select(commodity_cols) |&gt; 
@@ -550,7 +550,7 @@ system.time(commodity &lt;- tbl(db_conn, sql(&quot;SELECT * FROM [PPQ_AQI_ARMDMV
                             product_origin = COUNTRY_OF_ORIGIN_NAME)
             )</code></pre>
 <pre><code>##    user  system elapsed 
-##    0.00    0.00    0.04</code></pre>
+##    0.00    0.00    0.09</code></pre>
 <pre class="r"><code>arm_aqim_records &lt;- arm_aqim |&gt; left_join(commodity, by = c(&quot;ID&quot; = &quot;INSPECTION_ID&quot;), relationship = &quot;many-to-many&quot;)
 
 # #filter to pathway of interest
@@ -563,19 +563,19 @@ system.time(arm_aqim_records &lt;- arm_aqim_records  |&gt;
   )
 )</code></pre>
 <pre><code>##    user  system elapsed 
-##    0.01    0.00    0.00</code></pre>
+##       0       0       0</code></pre>
 <pre class="r"><code>#filter to at or before end date
 system.time(arm_aqim_records &lt;- arm_aqim_records |&gt; 
   filter(INSPECTION_DATETIME_FISCAL_YEAR &lt; end_year | (INSPECTION_DATETIME_FISCAL_YEAR == end_year &amp; INSPECTION_DATETIME_FISCAL_MONTH &lt;= end_month)
   )
 )</code></pre>
 <pre><code>##    user  system elapsed 
-##       0       0       0</code></pre>
+##    0.02    0.00    0.00</code></pre>
 <pre class="r"><code>#collect records
 system.time(arm_aqim_records &lt;- arm_aqim_records |&gt; collect()
             )</code></pre>
 <pre><code>##    user  system elapsed 
-##    0.66    0.20   52.90</code></pre>
+##    1.58    0.17   81.83</code></pre>
 <pre class="r"><code>system.time(arm_aqim_records &lt;- arm_aqim_records %&gt;%
   mutate(
     CALENDAR_MONTH = lubridate::month(INSPECTION_DATETIME),
@@ -583,7 +583,7 @@ system.time(arm_aqim_records &lt;- arm_aqim_records |&gt; collect()
   )
 )</code></pre>
 <pre><code>##    user  system elapsed 
-##   11.90    0.08   12.80</code></pre>
+##   10.16    0.10   10.52</code></pre>
 <pre class="r"><code>arm_aqim_records &lt;- arm_aqim_records %&gt;%
   mutate(
     PATHWAY = case_when(
@@ -986,7 +986,7 @@ missing_percent &lt;- round(missing_kg_count / total_records * 100, 2)
 # Print summary of conversion results
 cat(sprintf(&quot;Conversion complete: %d out of %d records (%.2f%%) have valid kg values.\n&quot;, 
             total_records - missing_kg_count, total_records, 100 - missing_percent))</code></pre>
-<pre><code>## Conversion complete: 131572 out of 138734 records (94.84%) have valid kg values.</code></pre>
+<pre><code>## Conversion complete: 105335 out of 110922 records (94.96%) have valid kg values.</code></pre>
 <pre class="r"><code># If there are missing values, show the top unit types that couldn&#39;t be converted
 if(missing_kg_count &gt; 0) {
   cat(&quot;Top unit types without kg conversion:\n&quot;)
@@ -1000,13 +1000,13 @@ if(missing_kg_count &gt; 0) {
 ## # A tibble: 8 × 2
 ##   QUANTITY_UNITS_NAME     n
 ##   &lt;chr&gt;               &lt;int&gt;
-## 1 Plant Units          2965
-## 2 Stems                2954
-## 3 Pallets               973
-## 4 Bouquet               184
-## 5 Bales                  46
+## 1 Stems                2298
+## 2 Plant Units          2294
+## 3 Pallets               782
+## 4 Bouquet               140
+## 5 Bales                  37
 ## 6 Plant Unit             23
-## 7 Square Meters          14
+## 7 Square Meters          10
 ## 8 Bale                    2</code></pre>
 </div>
 <div id="create-a-reference-table-that-identifies-what-entry-type-each-pathway-is-associated-with" class="section level1">
@@ -1035,7 +1035,7 @@ system.time(aqim_data &lt;- aqim_data %&gt;%
   ungroup()
 )</code></pre>
 <pre><code>##    user  system elapsed 
-##   80.14    0.34   82.01</code></pre>
+##   67.55    0.61   73.00</code></pre>
 </div>
 <div id="assign-location" class="section level1">
 <h1>Assign location</h1>
@@ -1097,9 +1097,9 @@ dat &lt;- aqim_data %&gt;%
 <pre><code>## Joining with `by = join_by(ID, PATHWAY, INSPECTION_LOCATION_NAME, PORT_CD, INSPECTION_LOCATION_STATE_CODE, CALENDAR_MONTH,
 ## CALENDAR_YEAR, actions, group_size, INSPECTION_LOCATION_ID, qmis, ct_count, edge_origin, COMMODITY_DISPLAY_NAME, QUANTITY,
 ## QUANTITY_UNITS_NAME, ACTN_TAKEN, product_origin, port_type, INSPECTION_NUMBER, CATEGORY, SUBCATEGORY, IS_AQIM, PATHWAY_ID,
-## PORT_OF_ENTRY_ID, INSPECTION_DATETIME, INSPECTION_DATETIME_FISCAL_YEAR, INSPECTION_DATETIME_FISCAL_MONTH, COMMODITY_ID, IS_SMUGGLED,
-## IS_CONTAMINANT_FOUND, COMMODITY_CLASSIFICATION, REF_COMMODITY_ID, MISC_ANIMAL_COMMODITY_NAME, unit, est_volume..in.liters,
-## est_packing.volume, est_kilograms, Notes, TOTAL_KG, how_many, entry_type, aqim_based)`</code></pre>
+## PORT_OF_ENTRY_ID, INSPECTION_DATETIME, INSPECTION_DATETIME_FISCAL_YEAR, INSPECTION_DATETIME_FISCAL_MONTH, COMMODITY_ID,
+## IS_SMUGGLED, IS_CONTAMINANT_FOUND, COMMODITY_CLASSIFICATION, REF_COMMODITY_ID, MISC_ANIMAL_COMMODITY_NAME, unit,
+## est_volume..in.liters, est_packing.volume, est_kilograms, Notes, TOTAL_KG, how_many, entry_type, aqim_based)`</code></pre>
 <div id="convert-the-entry_type-to-commercial-if-size-is-large" class="section level2">
 <h2>Convert the entry_type to commercial if size is large</h2>
 <pre class="r"><code>#Use the reference table to convert entry_type to commercial if the size is large

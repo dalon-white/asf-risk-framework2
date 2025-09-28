@@ -1,19 +1,19 @@
-"","Conveyance.type.pathway","Product.pathway","Product.subpathway","na.rm","EAN","current","mex_can"
+"","Conveyance.type.pathway","Product.pathway","Product.subpathway","na.rm","Intercepted","Mex/Can","Predicted"
 "1","Cargo","fomite","plant-based feed",TRUE,11,NA,NA
-"2","Cargo","other swine product","animal-based feed",TRUE,15206663,169754,NA
-"3","Cargo","swine product and byproduct","commercial imports",TRUE,660243,524557,NA
+"2","Cargo","other swine product","animal-based feed",TRUE,15202386.6011514,NA,165948
+"3","Cargo","swine product and byproduct","commercial imports",TRUE,660243,NA,511542
 "4","Eco","fomite","plant-based feed",TRUE,16,NA,NA
 "5","Eco","fomite","smuggled commercial product",TRUE,50,NA,NA
 "6","Eco","other swine product","animal-based feed",TRUE,1136,NA,NA
 "7","Eco","other swine product","smuggled commercial product",TRUE,7601,NA,NA
-"8","Eco","swine product and byproduct","personal use",TRUE,36020,2732290,1093059
-"9","Eco","swine product and byproduct","smuggled commercial product",TRUE,30808,381875,416416
-"10","Passenger","swine product and byproduct","personal use",TRUE,1,1619747,3753231
-"11","Passenger","swine product and byproduct","smuggled commercial product",TRUE,3292,98529,919024
-"12","Eco","other swine product","unspecified",TRUE,NA,56628,247446
-"13","Passenger","other swine product","animal-based feed",TRUE,NA,33708,402897
-"14","Eco","fomite","personal effects",TRUE,NA,NA,9513
-"15","Eco","other swine product","plasma",TRUE,NA,NA,166474
-"16","Passenger","fomite","plant-based feed",TRUE,NA,NA,158
-"17","Passenger","other swine product","smuggled commercial product",TRUE,NA,NA,166894
-"18","Passenger","other swine product","unspecified",TRUE,NA,NA,2558
+"8","Eco","swine product and byproduct","personal use",TRUE,36020,210774,526600
+"9","Eco","swine product and byproduct","smuggled commercial product",TRUE,30808,80210,73824
+"10","Passenger","swine product and byproduct","personal use",TRUE,1,3753390,1619969
+"11","Passenger","swine product and byproduct","smuggled commercial product",TRUE,253.173,920099,98281
+"12","Eco","fomite","personal effects",TRUE,NA,1833,NA
+"13","Eco","other swine product","plasma",TRUE,NA,32122,NA
+"14","Eco","other swine product","unspecified",TRUE,NA,47738,10940
+"15","Passenger","fomite","plant-based feed",TRUE,NA,157,NA
+"16","Passenger","other swine product","animal-based feed",TRUE,NA,402747,33662
+"17","Passenger","other swine product","smuggled commercial product",TRUE,NA,167053,NA
+"18","Passenger","other swine product","unspecified",TRUE,NA,2559,NA

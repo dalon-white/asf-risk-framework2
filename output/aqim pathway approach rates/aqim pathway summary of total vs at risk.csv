@@ -1,14 +1,14 @@
 "PATHWAY","risk_0","risk_1","total","risk_percent"
-"Airport - Aircraft - Cargo - CBP",5342,0,5342,0
-"Airport - Aircraft - Passenger - Predeparture",70466,0,70466,0
-"Airport - Aircraft - Person - CBP",315667,1177,316844,0.4
-"Airport - Aircraft - Person - Pre-Clearance",52214,312,52526,0.6
+"Airport - Aircraft - Cargo - CBP",4189,0,4189,0
+"Airport - Aircraft - Passenger - Predeparture",54668,0,54668,0
+"Airport - Aircraft - Person - CBP",245730,913,246643,0.4
+"Airport - Aircraft - Person - Pre-Clearance",40652,253,40905,0.6
 "Cruise_ship",40225,0,40225,0
 "Express_courier",67887,23,67910,0
-"Land Border - Truck - Cargo - CBP NB",8348,0,8348,0
-"Land Border - Truck - Cargo - CBP SB",1938,0,1938,0
-"Land Border - Truck - Conveyance - CBP NB",142738,898,143636,0.6
-"Land Border - Truck - Conveyance - CBP SB",262499,4104,266603,1.5
-"Maritime Port - Vessel - Cargo - CBP",13517,0,13517,0
-"Maritime Port - Vessel - Mail - CBP",64078,20,64098,0
+"Land Border - Truck - Cargo - CBP NB",6504,0,6504,0
+"Land Border - Truck - Cargo - CBP SB",1529,0,1529,0
+"Land Border - Truck - Conveyance - CBP NB",111070,694,111764,0.6
+"Land Border - Truck - Conveyance - CBP SB",204343,3163,207506,1.5
+"Maritime Port - Vessel - Cargo - CBP",10526,0,10526,0
+"Maritime Port - Vessel - Mail - CBP",49803,15,49818,0
 "Pedestrian SB",293999,564,294563,0.2

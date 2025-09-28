@@ -39,7 +39,7 @@ asf_params <- list(
   wads_volume_end_date = "2024-12-31",
   
   # Affected countries settings
-  affected_countries = "current", # "current" or "mex_can" or "other"
+  affected_countries = "mex_can", # "current" or "mex_can" or "other"
   other_affected_countries = c("Country1 ISO-3 Code", "Country2 ISO-3 Code"),
   years = 2023:2024, # Years to include for ASF affected countries
   affected_country_file = "asf affected countries.csv",

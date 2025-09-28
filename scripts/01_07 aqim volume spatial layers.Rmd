@@ -393,7 +393,7 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
     ) %>%
     mutate(
       layer_name = paste(
-        substr(gsub("[^[:alnum:]]", "", PATHWAY), 1, 25),
+        substr(gsub("[^[:alnum:]]", "", PATHWAY), 1, 27),
         substr(gsub("[^[:alnum:]]", "", container), 1, 3),
         substr(gsub("[^[:alnum:]]", "", product_pathway), 1, 3),
         substr(gsub("[^[:alnum:]]", "", product_subpathway), 1, 3),
@@ -502,7 +502,7 @@ distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
       risk_value <- combo$total_mean_kg
       
       # Create abbreviated name components for file naming
-      pathway_abbr <- substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 25)
+      pathway_abbr <- substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 27)
       container_abbr <- substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3)
       prod_path_abbr <- substr(gsub("[^[:alnum:]]", "", combo$product_pathway), 1, 3)
       prod_subpath_abbr <- substr(gsub("[^[:alnum:]]", "", combo$product_subpathway), 1, 3)

@@ -34,7 +34,7 @@
 "33",7428,"El Paso - Bota","TX","Pedestrian SB",420713
 "34",7430,"EL PASO, TX (2402)","TX","Airport - Aircraft - Cargo - CBP",2
 "35",7430,"EL PASO, TX (2402)","TX","Airport - Aircraft - Person - CBP",8727
-"36",7430,"EL PASO, TX (2402)","TX","Express_courier",104984
+"36",7430,"EL PASO, TX (2402)","TX","Express_courier",20240
 "37",7438,"FT LAUDERDALE INTL AIRPT (5210)","FL","Airport - Aircraft - Cargo - CBP",141
 "38",7438,"FT LAUDERDALE INTL AIRPT (5210)","FL","Airport - Aircraft - Person - CBP",5774794
 "39",7439,"PORT EVERGLADES, FL (5203)","FL","Cruise_ship",5063289
@@ -74,7 +74,7 @@
 "73",7466,"Halifax (7931)","DC","Airport - Aircraft - Person - Pre-Clearance",115352
 "74",7467,"JOHN F KENNEDY AIRPORT (4701)","NY","Airport - Aircraft - Cargo - CBP",4918
 "75",7467,"JOHN F KENNEDY AIRPORT (4701)","NY","Airport - Aircraft - Person - CBP",0
-"76",7467,"JOHN F KENNEDY AIRPORT (4701)","NY","Express_courier",104983
+"76",7467,"JOHN F KENNEDY AIRPORT (4701)","NY","Express_courier",20239
 "77",7467,"JOHN F KENNEDY AIRPORT (4701)","NY","Maritime Port - Vessel - Cargo - CBP",122
 "78",7468,"JFK Air Cargo","NY","Airport - Aircraft - Cargo - CBP",1022
 "79",7468,"JFK Air Cargo","NY","Express_courier",0
@@ -101,24 +101,24 @@
 "100",7486,"Los Angeles - Term Sat 7","CA","Airport - Aircraft - Person - CBP",1728275
 "101",7487,"Los Angeles - TBIT","CA","Airport - Aircraft - Person - CBP",20273624
 "102",7488,"LOS ANGELES INT AIRPORT (2720)","CA","Airport - Aircraft - Cargo - CBP",267393
-"103",7488,"LOS ANGELES INT AIRPORT (2720)","CA","Express_courier",159312093
+"103",7488,"LOS ANGELES INT AIRPORT (2720)","CA","Express_courier",30711667
 "104",7492,"LYNDEN, WA (3023)","WA","Land Border - Truck - Cargo - CBP NB",98023
 "105",7492,"LYNDEN, WA (3023)","WA","Land Border - Truck - Conveyance - CBP NB",1145584
 "106",7492,"LYNDEN, WA (3023)","WA","Pedestrian NB",13686
 "107",7494,"MAYAGUEZ, PR (4907)","PR","Cruise_ship",36
 "108",7495,"MEMPHIS, TN (2006)","TN","Airport - Aircraft - Cargo - CBP",0
 "109",7495,"MEMPHIS, TN (2006)","TN","Airport - Aircraft - Person - CBP",3610
-"110",7495,"MEMPHIS, TN (2006)","TN","Express_courier",1784716
+"110",7495,"MEMPHIS, TN (2006)","TN","Express_courier",344051
 "111",7495,"MEMPHIS, TN (2006)","TN","Maritime Port - Vessel - Cargo - CBP",10
 "112",7496,"FEDEX COURIER, MEMPHIS TN (2095)","TN","Airport - Aircraft - Person - CBP",40585
-"113",7496,"FEDEX COURIER, MEMPHIS TN (2095)","TN","Express_courier",485993746
+"113",7496,"FEDEX COURIER, MEMPHIS TN (2095)","TN","Express_courier",93688289
 "114",7498,"MIAMI INTERNATIONAL AIRPORT (5206)","FL","Airport - Aircraft - Cargo - CBP",133294
 "115",7500,"MIAMI, FL (5201)","FL","Cruise_ship",8158864
 "116",7500,"MIAMI, FL (5201)","FL","Maritime Port - Vessel - Cargo - CBP",33755
 "117",7500,"MIAMI, FL (5201)","FL","RG_maritime",22651369.773
 "118",7502,"MILWAUKEE, WI (3701)","WI","Airport - Aircraft - Person - CBP",68935
 "119",7502,"MILWAUKEE, WI (3701)","WI","Cruise_ship",1600
-"120",7502,"MILWAUKEE, WI (3701)","WI","Express_courier",341197
+"120",7502,"MILWAUKEE, WI (3701)","WI","Express_courier",65777
 "121",7502,"MILWAUKEE, WI (3701)","WI","RG_maritime",14147
 "122",7503,"MINNEAPOLIS-ST. PAUL, MN (3501)","MN","Airport - Aircraft - Cargo - CBP",1597
 "123",7503,"MINNEAPOLIS-ST. PAUL, MN (3501)","MN","Express_courier",0
@@ -149,7 +149,7 @@
 "148",7519,"Nogales - Grand Ave.","AZ","Land Border - Truck - Cargo - CBP SB",795232
 "149",7519,"Nogales - Grand Ave.","AZ","Land Border - Truck - Conveyance - CBP SB",4303373
 "150",7519,"Nogales - Grand Ave.","AZ","Pedestrian SB",5188394
-"151",7520,"NORFOLK-NEWPORT NEWS, VA (1401)","VA","Airport - Aircraft - Person - CBP",28571
+"151",7520,"NORFOLK-NEWPORT NEWS, VA (1401)","VA","Airport - Aircraft - Person - CBP",28598
 "152",7520,"NORFOLK-NEWPORT NEWS, VA (1401)","VA","Cruise_ship",340795
 "153",7520,"NORFOLK-NEWPORT NEWS, VA (1401)","VA","Maritime Port - Vessel - Cargo - CBP",9453
 "154",7520,"NORFOLK-NEWPORT NEWS, VA (1401)","VA","RG_maritime",654627.15
@@ -244,7 +244,7 @@
 "243",7571,"SAN JOSE INTL AIRPORT (2834)","CA","Airport - Aircraft - Person - CBP",778856
 "244",7572,"SAN JUAN INTL AIRPORT (4913)","PR","Airport - Aircraft - Cargo - CBP",797
 "245",7572,"SAN JUAN INTL AIRPORT (4913)","PR","Airport - Aircraft - Person - CBP",201369
-"246",7572,"SAN JUAN INTL AIRPORT (4913)","PR","Express_courier",11443173
+"246",7572,"SAN JUAN INTL AIRPORT (4913)","PR","Express_courier",2205977
 "247",7574,"SAN JUAN, PR (4909)","PR","Airport - Aircraft - Person - CBP",11306
 "248",7574,"SAN JUAN, PR (4909)","PR","Cruise_ship",3952550
 "249",7574,"SAN JUAN, PR (4909)","PR","Land Border - Truck - Conveyance - CBP",9496
@@ -275,7 +275,7 @@
 "274",7584,"CHRISTIANSTED, VI (5104)","VI","RG_maritime",26775.6
 "275",7587,"ST LOUIS, MO (4503)","MO","Airport - Aircraft - Cargo - CBP",33
 "276",7587,"ST LOUIS, MO (4503)","MO","Airport - Aircraft - Person - CBP",409748
-"277",7587,"ST LOUIS, MO (4503)","MO","Express_courier",26246
+"277",7587,"ST LOUIS, MO (4503)","MO","Express_courier",5060
 "278",7588,"CHARLOTTE AMALIE, VI (5101)","VI","Airport - Aircraft - Cargo - CBP",151
 "279",7588,"CHARLOTTE AMALIE, VI (5101)","VI","Airport - Aircraft - Person - CBP",34915
 "280",7588,"CHARLOTTE AMALIE, VI (5101)","VI","Cruise_ship",11382217
@@ -296,7 +296,7 @@
 "295",7592,"TACOMA, WA (3002)","WA","RG_maritime",1968
 "296",7593,"TAMPA, FL (1801)","FL","Airport - Aircraft - Cargo - CBP",14
 "297",7593,"TAMPA, FL (1801)","FL","Airport - Aircraft - Person - CBP",674753
-"298",7593,"TAMPA, FL (1801)","FL","Express_courier",78737
+"298",7593,"TAMPA, FL (1801)","FL","Express_courier",15179
 "299",7593,"TAMPA, FL (1801)","FL","Maritime Port - Vessel - Cargo - CBP",2926
 "300",7593,"TAMPA, FL (1801)","FL","RG_maritime",1598300
 "301",7597,"DAYTONA BEACH INTL AIRPORT (1884)","FL","Airport - Aircraft - Person - CBP",3094
@@ -312,7 +312,7 @@
 "311",7651,"AGUADILLA, PR (4901)","PR","Airport - Aircraft - Cargo - CBP",297
 "312",7651,"AGUADILLA, PR (4901)","PR","Airport - Aircraft - Person - CBP",14927
 "313",7651,"AGUADILLA, PR (4901)","PR","Cruise_ship",296
-"314",7651,"AGUADILLA, PR (4901)","PR","Express_courier",11600650
+"314",7651,"AGUADILLA, PR (4901)","PR","Express_courier",2236334
 "315",7667,"PROVIDENCE, RI (0502)","RI","Airport - Aircraft - Person - CBP",6433
 "316",7667,"PROVIDENCE, RI (0502)","RI","Cruise_ship",24185
 "317",7667,"PROVIDENCE, RI (0502)","RI","Maritime Port - Vessel - Cargo - CBP",37
@@ -374,7 +374,7 @@
 "373",7703,"GALVESTON, TX (5310)","TX","Maritime Port - Vessel - Cargo - CBP",499
 "374",7703,"GALVESTON, TX (5310)","TX","RG_maritime",2721384
 "375",7707,"TULSA, OK (5505)","OK","Airport - Aircraft - Person - CBP",2073
-"376",7707,"TULSA, OK (5505)","OK","Express_courier",131230
+"376",7707,"TULSA, OK (5505)","OK","Express_courier",25299
 "377",7709,"Anzalduas","TX","Land Border - Truck - Conveyance - CBP SB",1988911
 "378",7711,"GREENVILLE-SPARTANBRG SC (1603)","SC","Airport - Aircraft - Person - CBP",8927
 "379",7712,"ANDRADE, CA (2502)","CA","Land Border - Truck - Conveyance - CBP SB",1622640
@@ -390,7 +390,7 @@
 "389",7715,"ALBANY, NY (1002)","NY","Cruise_ship",212
 "390",7716,"ASHTABULA/CONNEAUT (4122)","OH","Cruise_ship",3295
 "391",7717,"DHL COURIER CINCINNATI (4197)","OH","Airport - Aircraft - Person - CBP",37011
-"392",7717,"DHL COURIER CINCINNATI (4197)","OH","Express_courier",161831693
+"392",7717,"DHL COURIER CINCINNATI (4197)","OH","Express_courier",31197387
 "393",7721,"TORNILLO, TX (2404)","TX","Land Border - Truck - Cargo - CBP SB",20320
 "394",7721,"TORNILLO, TX (2404)","TX","Land Border - Truck - Conveyance - CBP SB",1096516
 "395",7721,"TORNILLO, TX (2404)","TX","Pedestrian SB",92803
@@ -404,7 +404,7 @@
 "403",7735,"PORT ARTHUR, TX (2101)","TX","RG_maritime",1489912
 "404",7738,"TUCSON, AZ (2609)","AZ","Airport - Aircraft - Cargo - CBP",1614
 "405",7738,"TUCSON, AZ (2609)","AZ","Airport - Aircraft - Person - CBP",25794
-"406",7738,"TUCSON, AZ (2609)","AZ","Express_courier",446179
+"406",7738,"TUCSON, AZ (2609)","AZ","Express_courier",86015
 "407",7740,"DETROIT METROPLTN AIRPRT (3807)","MI","Airport - Aircraft - Cargo - CBP",643
 "408",7740,"DETROIT METROPLTN AIRPRT (3807)","MI","Airport - Aircraft - Person - CBP",2985707
 "409",7741,"PORT HURON, MI (3802)","MI","Airport - Aircraft - Person - CBP",2759
@@ -421,7 +421,7 @@
 "420",7743,"SAULT STE. MARIE, MI (3803)","MI","Pedestrian NB",32462
 "421",7744,"DETROIT, MI (3801)","MI","Airport - Aircraft - Person - CBP",1020
 "422",7744,"DETROIT, MI (3801)","MI","Cruise_ship",28328
-"423",7744,"DETROIT, MI (3801)","MI","Express_courier",1469765
+"423",7744,"DETROIT, MI (3801)","MI","Express_courier",283336
 "424",7744,"DETROIT, MI (3801)","MI","Land Border - Truck - Cargo - CBP NB",3035963
 "425",7744,"DETROIT, MI (3801)","MI","Land Border - Truck - Conveyance - CBP NB",7343270
 "426",7744,"DETROIT, MI (3801)","MI","Pedestrian NB",126501
@@ -438,7 +438,7 @@
 "437",7762,"LUKEVILLE, AZ (2602)","AZ","Land Border - Truck - Cargo - CBP SB",30
 "438",7800,"ALBUQUERQUE, NM (2407)","NM","Airport - Aircraft - Cargo - CBP",53
 "439",7800,"ALBUQUERQUE, NM (2407)","NM","Airport - Aircraft - Person - CBP",819
-"440",7800,"ALBUQUERQUE, NM (2407)","NM","Express_courier",26246
+"440",7800,"ALBUQUERQUE, NM (2407)","NM","Express_courier",5060
 "441",7801,"ANCHORAGE, AK (3126)","AK","Airport - Aircraft - Person - CBP",47034
 "442",7801,"ANCHORAGE, AK (3126)","AK","Cruise_ship",59737
 "443",7802,"Aruba (7424)","DC","Airport - Aircraft - Person - Pre-Clearance",2145193
@@ -446,7 +446,7 @@
 "445",7803,"ATLANTA, GA (1704)","GA","Airport - Aircraft - Person - CBP",12747645
 "446",7805,"AUSTIN, TX (5506)","TX","Airport - Aircraft - Cargo - CBP",41
 "447",7805,"AUSTIN, TX (5506)","TX","Airport - Aircraft - Person - CBP",1027778
-"448",7805,"AUSTIN, TX (5506)","TX","Express_courier",209966
+"448",7805,"AUSTIN, TX (5506)","TX","Express_courier",40477
 "449",7806,"BWI AIRPORT (1305)","MD","Airport - Aircraft - Person - CBP",1346199
 "450",7807,"MORGAN CITY, LA (2001)","LA","Airport - Aircraft - Person - CBP",455
 "451",7807,"MORGAN CITY, LA (2001)","LA","Cruise_ship",76441
@@ -495,7 +495,7 @@
 "494",7828,"CHICAGO, IL (3901)","IL","Airport - Aircraft - Cargo - CBP",16094
 "495",7828,"CHICAGO, IL (3901)","IL","Airport - Aircraft - Person - CBP",11700456
 "496",7828,"CHICAGO, IL (3901)","IL","Cruise_ship",6927
-"497",7828,"CHICAGO, IL (3901)","IL","Express_courier",126741038
+"497",7828,"CHICAGO, IL (3901)","IL","Express_courier",24432721
 "498",7828,"CHICAGO, IL (3901)","IL","Maritime Port - Vessel - Cargo - CBP",31
 "499",7829,"CINCINNATI, OH (4102)","KY","Airport - Aircraft - Cargo - CBP",178
 "500",7829,"CINCINNATI, OH (4102)","KY","Airport - Aircraft - Person - CBP",204887
@@ -573,7 +573,7 @@
 "572",7964,"ROCHESTER, NY (0903)","NY","Airport - Aircraft - Cargo - CBP",2
 "573",7964,"ROCHESTER, NY (0903)","NY","Airport - Aircraft - Person - CBP",2386
 "574",7964,"ROCHESTER, NY (0903)","NY","Cruise_ship",131
-"575",7964,"ROCHESTER, NY (0903)","NY","Express_courier",52492
+"575",7964,"ROCHESTER, NY (0903)","NY","Express_courier",10119
 "576",7966,"PORT ANGELES, WA (3007)","WA","Cruise_ship",161549
 "577",7966,"PORT ANGELES, WA (3007)","WA","Land Border - Truck - Cargo - CBP NB",333
 "578",7966,"PORT ANGELES, WA (3007)","WA","Land Border - Truck - Conveyance - CBP NB",130891
@@ -589,7 +589,7 @@
 "588",11003,"Tacoma","WA","Maritime Port - Vessel - Cargo - CBP",93
 "589",11007,"New York/Newark Area Air Cargo","NJ","Airport - Aircraft - Cargo - CBP",4737
 "590",11007,"New York/Newark Area Air Cargo","NJ","Airport - Aircraft - Person - CBP",13621253
-"591",11007,"New York/Newark Area Air Cargo","NJ","Express_courier",734884
+"591",11007,"New York/Newark Area Air Cargo","NJ","Express_courier",141670
 "592",11008,"New York/Newark Area Sea","NJ","Cruise_ship",1314808
 "593",11008,"New York/Newark Area Sea","NJ","Maritime Port - Vessel - Cargo - CBP",72550
 "594",11008,"New York/Newark Area Sea","NJ","RG_maritime",3279738
@@ -613,9 +613,9 @@
 "612",11149,"Travis AFB",NA,"Airport - Aircraft - Person - CBP",3765
 "613",11156,"US Coast Guard Air Station Sacramento (McClellan)",NA,"Airport - Aircraft - Person - CBP",40
 "614",79903,"FEDERAL EXPRESS COURIER AK (3195)","AK","Airport - Aircraft - Person - CBP",33767
-"615",79903,"FEDERAL EXPRESS COURIER AK (3195)","AK","Express_courier",27085681
+"615",79903,"FEDERAL EXPRESS COURIER AK (3195)","AK","Express_courier",5221489
 "616",79904,"UPS COURIER HUB, AK (3196)","AK","Airport - Aircraft - Person - CBP",990
-"617",79913,"FEDEX COURIER FACILITY OAKLAND (2895)","CA","Express_courier",6089033
+"617",79913,"FEDEX COURIER FACILITY OAKLAND (2895)","CA","Express_courier",1173824
 "618",79931,"SAN FRANCISCO, CA (2809)","CA","Cruise_ship",838406
 "619",79931,"SAN FRANCISCO, CA (2809)","CA","Maritime Port - Vessel - Cargo - CBP",15139
 "620",79931,"SAN FRANCISCO, CA (2809)","CA","RG_maritime",1169387
@@ -626,7 +626,7 @@
 "625",79948,"PORTHILL, ID (3308)","ID","Land Border - Truck - Conveyance - CBP NB",245031
 "626",79948,"PORTHILL, ID (3308)","ID","Pedestrian NB",148
 "627",79956,"FEDERAL EXPRESS HUB IN (4198)","IN","Airport - Aircraft - Person - CBP",4763
-"628",79956,"FEDERAL EXPRESS HUB IN (4198)","IN","Express_courier",47399942
+"628",79956,"FEDERAL EXPRESS HUB IN (4198)","IN","Express_courier",9137607
 "629",79959,"UPS COURIER LOUISVILLE (4196)","KY","Airport - Aircraft - Person - CBP",22493
 "630",79967,"BOSTON, MA (0401)","MA","Airport - Aircraft - Cargo - CBP",14741
 "631",79967,"BOSTON, MA (0401)","MA","Cruise_ship",183212
@@ -654,11 +654,11 @@
 "653",80077,"SYRACUSE, NY (0906)","NY","Airport - Aircraft - Cargo - CBP",0
 "654",80077,"SYRACUSE, NY (0906)","NY","Airport - Aircraft - Person - CBP",2133
 "655",80077,"SYRACUSE, NY (0906)","NY","Cruise_ship",1805
-"656",80077,"SYRACUSE, NY (0906)","NY","Express_courier",367443
+"656",80077,"SYRACUSE, NY (0906)","NY","Express_courier",70837
 "657",80078,"TROUT RIVER, NY (0715)","NY","Land Border - Truck - Cargo - CBP NB",22939
 "658",80078,"TROUT RIVER, NY (0715)","NY","Rail_cargo",4
 "659",80095,"UPS HUB, PHILADELPHIA, PA (1195)","PA","Airport - Aircraft - Person - CBP",2926
-"660",80095,"UPS HUB, PHILADELPHIA, PA (1195)","PA","Express_courier",656145
+"660",80095,"UPS HUB, PHILADELPHIA, PA (1195)","PA","Express_courier",126489
 "661",80098,"ERIE, PA (4106)","PA","Airport - Aircraft - Person - CBP",4417
 "662",80098,"ERIE, PA (4106)","PA","Cruise_ship",152
 "663",80105,"ADDISON AIRPORT (5584)","TX","Airport - Aircraft - Person - CBP",1025
@@ -708,6 +708,6 @@
 "707",80679,"SACRAMENTO INT AIRPORT (2835)","CA","Airport - Aircraft - Person - CBP",358883
 "708",80679,"SACRAMENTO INT AIRPORT (2835)","CA","Cruise_ship",1369
 "709",81075,"Orlando - Terminal C","FL","Airport - Aircraft - Person - CBP",2523281
-"710",81114,"DHL ATLANTA HUB (1791)","GA","Express_courier",21967747
+"710",81114,"DHL ATLANTA HUB (1791)","GA","Express_courier",4234870
 "711",81122,"TX Fort Worth Meacham International Airport (5589)","TX","Airport - Aircraft - Person - CBP",524
 "712",81123,"APPLETON, WI (3781)","WI","Airport - Aircraft - Person - CBP",81
