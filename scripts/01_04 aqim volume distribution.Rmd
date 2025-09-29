@@ -139,6 +139,10 @@ View(dat |> filter(IS_ASF_RISK != "NO") |> count(edge_origin, product_origin) |>
 
 print("Most items that could carry risk are coming from Mex, Can, or the US; in 4th and 5th, though, are ESP, BHS, PRI (Puerto Rico), with ITA, DEU, and PHL not far behind. These all actually carry risk")
 
+write.csv(dat |> filter(IS_ASF_RISK != "NO") |> count(edge_origin, product_origin) |> arrange(desc(n)),
+          here::here("output","report files","commodity origin counts for risk.csv"),
+          row.names=FALSE)
+
 View(commodity_dat_tmp |> filter(IS_ASF_RISK == "NO") |> count(COMMODITY_DISPLAY_NAME, sort=TRUE))
 print("I double checked all these commodities to ensure none of these names carried risk, and that the reference tables are working appropriately. They are, and these commodities do not carry risk.")
 ```

@@ -567,6 +567,8 @@ wads_volume_joined &lt;- wads_volume_joined %&gt;%
     # If avg_group_size is NA (no data), default to 1
     avg_group_size = ifelse(is.na(avg_group_size) | avg_group_size &lt; 1, 1, avg_group_size),
     # Adjust COUNT based on mean group size
+    # Divide COUNT by avg_group_size and round to nearest whole number
+      # This is because COUNT is the number of people in WADS, not inspections. And group size is the number of people per inspection; count/group size = number of inspections, and our approach rate is the number of positive inspections
     adjusted_COUNT = round(COUNT / avg_group_size, 0)
   ) %&gt;%
   dplyr::select(-avg_group_size)  # Remove avg_group_size if not needed further</code></pre>
