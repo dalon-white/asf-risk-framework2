@@ -1,0 +1,587 @@
+task,owner,sub_category,start_date,completion_comments,Animal.kg,Plant.kg,lat,lon,PATHWAY,how_many,entry_type,aqim_based,COMMODITY_DISPLAY_NAME,container,ITEM_TYPE,IS_ASF_RISK,IS_CSF_RISK,IS_FMD_RISK,product_pathway,product_subpathway
+TK:3485:25,Puerto Rico,IBL 25-027,2024-12-31,"Animal # 5.0 pounds
+Plant # 0.5 pounds",2.26796,0.226796,18.48788,-66.66892,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3308:25,Puerto Rico,IBL 25-026,2024-12-26,"Animal # 52.00
+Plant # 10.00",23.586784,4.53592,17.97802,-66.61869,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3237:25,Puerto Rico,IBL 25-025,2024-12-21,"Animal # 5.30
+Plant # 0.0",2.4040376,0,18.06163,-65.82183,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3220:25,Puerto Rico,IBL 25-024,2024-12-21,"Animal # 4.50
+Plant # 1.50",2.041164,0.680388,18.09176,-67.19871,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3084:25,Puerto Rico,IBL 25-023,2024-12-16,"Animal #1.5
+Plant #0",0.680388,0,17.96111,-67.21402,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3037:25,Puerto Rico,IBL 25-022,2024-12-16,"Animal# 2.0 pounds
+Plant# 0.0 pounds",0.907184,0,18.01286,-67.16998,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2995:25,Puerto Rico,IBL 25-021,2024-12-14,"Animal #7
+Plant #4",3.175144,1.814368,18.48578,-66.59198,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2819:25,Puerto Rico,IBL 25-020,2024-12-08,"Animal #0
+Plant #14",0,6.350288,17.97455,-66.54152,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2568:25,Puerto Rico,IBL 25-019,2024-12-01,"Animal #6.5 pounds
+Plant # 0.0 pounds",2.948348,0,18.51367,-67.08047,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2542:25,Puerto Rico,IBL 25-018,2024-11-30,"Animal# 5.0 pounds
+Plant# 20.0 pounds",2.26796,9.07184,18.48395,-66.54066,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2532:25,Puerto Rico,IBL 25-017,2024-11-29,"Animal # 5.00
+Plant #20.00",2.26796,9.07184,18.49078,-66.60923,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1940:25,Puerto Rico,IBL 25-016,2024-11-12,"Animal# 13.0 pounds
+Plant# 2.0 pounds",5.896696,0.907184,18.49065,-66.60759,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1818:25,Puerto Rico,IBL 25-015,2024-11-10,"Animal # 0.7
+Plant # 0.0",0.3175144,0,18.48931,-66.60411,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1783:25,Puerto Rico,IBL 25-014,2024-11-09,"Animal # 0.0
+Plants # 0.0",0,0,18.49231,-66.97936,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3792:25,Florida,IBL 25-014,2024-12-31,Data provided by CBP,NA,NA,25.28595,-80.28945,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1430:25,Puerto Rico,IBL 25-013,2024-10-27,"ANIMAL # 5
+PLANT # 1",2.26796,0.453592,18.4476,-65.93655,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3791:25,Florida,IBL 25-013,2024-12-29,Data provided by CBP,NA,NA,24.55205,-81.7565,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3790:25,Florida,IBL 25-012,2024-12-27,Data provided by CBP,NA,NA,26.20451,-80.09377,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1403:25,Puerto Rico,IBL 25-012,2024-10-23,"Animal # 30.70
+Plant # 0.00",13.9252744,0,18.48789,-66.88491,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3789:25,Florida,IBL 25-011,2024-12-26,Data provided by CBP,NA,NA,24.55196,-81.76866,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1349:25,Puerto Rico,IBL 25-011,2024-10-20,"Animal # 0.0
+Plant # 0.5",0,0.226796,18.01284,-67.17008,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3787:25,Florida,IBL 25-010,2024-12-10,Data provided by CBP,NA,NA,25.90689,-80.12461,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1348:25,Puerto Rico,IBL 25-010,2024-10-19,"Animal # 0.0
+Plant # 0.0",0,0,18.01276,-67.17018,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1347:25,Puerto Rico,IBL 25-009,2024-10-16,"Animal # 0.0 
+Plant # 0.0",0,0,18.2921,-67.19836,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3785:25,Florida,IBL 25-009,2024-11-25,Data provided by CBP,NA,NA,26.80788,-80.03378,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1012:25,Puerto Rico,IBL 25-008,2024-10-15,"Animal # 12.60
+Plant # 11.00",5.7152592,4.9895119999999995,17.9785,-66.6186,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3783:25,Florida,IBL 25-008,2024-11-24,Data provided by CBP,NA,NA,26.54751,-80.04196,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1322:25,Puerto Rico,IBL 25-007,2024-10-11,"Animal # 14.3
+Plant # 5",6.4863656,2.26796,18.01292,-67.16993,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3782:25,Florida,IBL 25-007,2024-11-19,Data provided by CBP,NA,NA,26.2606,-80.0963,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1558:25,Puerto Rico,IBL 25-006,2024-10-09,"Animal # 0
+Plant # 0",0,0,18.01277,-67.17009,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3781:25,Florida,IBL 25-006,2024-11-18,Data provided by CBP,NA,NA,25.90076,-80.12127,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3780:25,Florida,IBL 25-006,2024-11-18,Data provided by CBP,NA,NA,25.90076,-80.12127,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1157:25,Puerto Rico,IBL 25-005,2024-10-08,"Animal: 0.0 pounds
+Plant: 0.0 pounds",0,0,17.95408,-67.14497,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3779:25,Florida,IBL 25-005,2024-11-11,Data provided by CBP,NA,NA,26.25786,-80.0806,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1155:25,Puerto Rico,IBL 25-004,2024-10-08,"Animal# 11
+Plant# 0.5",4.9895119999999995,0.226796,17.95309,-67.21272,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3778:25,Florida,IBL 25-004,2024-11-11,Data provided by CBP,NA,NA,26.51449,-80.05295,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1095:25,Puerto Rico,IBL 25-003,2024-10-05,"Animal # 0.0 pounds
+Plant # 0.0 pounds",0,0,18.36626,-67.26914,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3777:25,Florida,IBL 25-003,2024-10-26,Data provided by CBP,NA,NA,26.80788,-80.03378,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1039:25,Puerto Rico,IBL 25-002,2024-10-02,"Animal# 2
+Plant# 0.8",0.907184,0.3628736,18.01287,-67.17,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3776:25,Florida,IBL 25-002,2024-10-15,Data provided by CBP,NA,NA,26.51449,-80.05295,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1028:25,Puerto Rico,IBL 25-001,2024-10-02,"Animal #0.0 pounds
+Plant #0.0 pounds",0,0,18.09412,-67.93755,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3725:25,Florida,IBL 25-001,2024-10-08,Data provided by CBP,NA,NA,26.50322,-80.05137,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8631:24,Puerto Rico,IBL 24-092,2024-09-30,"Animal# 0
+Plant# 0",0,0,18.15822,-67.94834,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8608:24,Puerto Rico,IBL 24-091,2024-09-28,"ANIMAL #0
+PLANT #0",0,0,18.44169,-65.88425,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8553:24,Puerto Rico,IBL 24-090,2024-09-26,"ANIMAL #1
+PLANT #1",0.453592,0.453592,18.46215,-66.09456,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8516:24,Puerto Rico,IBL 24-089,2024-09-25,"Animal# 7
+Plant# 0",3.175144,0,18.08985,-67.1993,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8489:24,Puerto Rico,IBL 24-088,2024-09-24,"Animal# 10.0 pounds
+Plant# 3.5 pounds",4.53592,1.587572,17.97796,-66.61871,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8469:24,Puerto Rico,IBL 24-087,2024-09-21,"Animal# 0
+Plant# 0",0,0,18.51274,-67.03988,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8468:24,Puerto Rico,IBL 24-086,2024-09-21,"Animal# 15.2
+Plant# 1",6.8945984,0.453592,18.35976,-67.27043,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8449:24,Puerto Rico,IBL 24-085,2024-09-20,"ANIMAL #0
+PLANT #0",0,0,18.49217,-66.63136,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8414:24,Puerto Rico,IBL 24-084,2024-09-18,"ANIMAL # 5
+PLANT # 4",2.26796,1.814368,18.42985,-65.8336,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8369:24,Puerto Rico,IBL 24-083,2024-09-17,"Animal# 9
+Plant# 0.8",4.082328,0.3628736,18.51471,-67.10181,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8360:24,Puerto Rico,IBl 24-082,2024-09-17,"Animal: 0.0 pounds
+Plant: 0.0 pounds",0,0,18.47776,-67.16881,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8354:24,Puerto Rico,IBL 24-081,2024-09-16,"Animal: 0.0 pounds
+Plants: 0.0 pounds",0,0,18.15962,-67.9488,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8197:24,Puerto Rico,IBL 24-080,2024-09-10,"Animal: 24.0 pounds
+Plant: 0.25 pounds",10.886208,0.113398,18.37673,-67.23615,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8088:24,Puerto Rico,IBL 24-079,2024-09-02,"Animal# 0
+Plant# 0",0,0,18.2885,-65.28083,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8044:24,Puerto Rico,IBL 24-078,2024-08-28,"Animal# 0
+Plant# 0",0,0,18.13901,-65.51243,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8031:24,Puerto Rico,IBL 24-077,2024-08-29,"Animal # 18.0 pounds
+Plants # 8.0 pounds",8.164656,3.628736,17.96941,-66.61238,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7986:24,Puerto Rico,IBL 24-076,2024-08-26,"Animal# 7
+Plant# 0",3.175144,0,18.28738,-67.19408,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7961:24,Puerto Rico,IBL 24-075,2024-08-22,"Animal# 11
+Plant# 3.5",4.9895119999999995,1.587572,18.4839,-67.16662,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7821:24,Puerto Rico,IBL 24-074,2024-08-11,"ANIMAL # 5
+PLANT #0",2.26796,0,18.40694,-65.79757,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7817:24,Puerto Rico,IBL 24-073,2024-08-11,"ANIMAL #0
+PLANT #0",0,0,18.51347,-67.04283,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7816:24,Puerto Rico,IBL 24-072,2024-08-10,"ANIMAL # 0
+PLANT # 14",0,6.350288,18.23185,-65.62201,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7629:24,Puerto Rico,IBL 24-071,2024-08-06,"Animal: 3.75 pounds
+Plants: 0.0 pounds",1.7009699999999999,0,18.37264,-67.25038,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7585:24,Puerto Rico,IBL 24-070,2024-07-31,"Animal# 2
+Plant# 0.7",0.907184,0.3175144,18.01291,-67.16989,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7545:24,Puerto Rico,IBL 24-069,2024-07-28,"Animal# 6
+Plant# 4.2",2.721552,1.9050864,18.40083,-67.18666,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7430:24,Puerto Rico,IBL 24-068,2024-07-17,"ANIMAL #20
+PLANT #9",9.07184,4.082328,17.99441,-65.8803,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7343:24,Puerto Rico,IBL 24-067,2024-07-14,"Animal# 3.5pounds
+Plant#0.0 pounds",1.587572,0,18.38957,-67.20295,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7274:24,Puerto Rico,IBL 24-066,2024-07-07,"Animal#0
+Plant#0",0,0,18.13811,-65.51233,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7160:24,Puerto Rico,IBL 24-065,2024-06-28,"Animal# 0.75 pounds
+Plant# 2.0 pounds",0.340194,0.907184,18.50679,-67.13912,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6949:24,Puerto Rico,IBL 24-064,2024-06-17,"Animal#0
+Plant#0",0,0,18.51062,-67.03236,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6877:24,Puerto Rico,IBL 24-063,2024-06-14,"Animal# 0
+Plant# 0",0,0,18.08906,-67.93813,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6852:24,Puerto Rico,IBL 24-062,2024-06-13,"Animal# 26
+Plant# 3",11.793392,1.360776,18.49006,-67.1572,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6767:24,Puerto Rico,IBL 24-061,2024-06-10,"Animal # 9.0 pounds
+Plant # 1.2 pounds",4.082328,0.5443104,18.51304,-67.11352,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6750:24,Puerto Rico,IBL 24-060,2024-06-07,"Animal# 0
+Plant# 0",0,0,18.23202,-65.62184,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6487:24,Puerto Rico,IBL 24-059,2024-05-27,"Animal# 27
+Plant# 3",12.246984,1.360776,18.36372,-67.27043,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6480:24,Puerto Rico,IBL 24-058,2024-05-25,"Animal: 0.0 pounds
+Plant 0.0 pounds",0,0,18.34751,-67.26327,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1082:25,Florida,IBL 24-057,2024-09-24,NA,NA,NA,26.77844,-80.0352,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6353:24,Puerto Rico,IBL 24-057,2024-05-20,"Animal# 0
+Plant# 0",0,0,18.30491,-65.24473,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8393:24,Florida,IBL 24-056,2024-09-16,NA,NA,NA,24.69211,-81.08721,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6333:24,Puerto Rico,IBL 24-056,2024-05-18,"Animal: 0.0 pounds
+Plant: 3.5 pounds",0,1.587572,18.36453,-67.26994,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6300:24,Puerto Rico,IBL 24-055,2024-05-16,"Animal # 25.0 pounds
+Plant 0.66 pounds",11.3398,0.29937072000000003,18.509,-67.02768,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8392:24,Florida,IBL 24-055,2024-09-15,NA,NA,NA,26.54215,-80.04382,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6284:24,Puerto Rico,IBL 24-054,2024-05-14,"ANIMAL #30
+PLANT #16",13.607759999999999,7.257472,18.51536,-67.09767,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8391:24,Florida,IBL 24-054,2024-08-30,NA,NA,NA,26.44779,-80.05982,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6246:24,Puerto Rico,IBL 24-053,2024-05-14,"Animal# 0
+Plant# 0",0,0,18.48595,-66.67685,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8388:24,Florida,IBL 24-053,2024-08-21,NA,NA,NA,24.68092,-81.23107,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8385:24,Florida,IBL 24-052,2024-08-18,NA,NA,NA,25.18728,-80.35281,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6235:24,Puerto Rico,IBL 24-052,2024-05-12,"ANIMAL #25
+PLANT #20",11.3398,9.07184,18.23074,-65.62148,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8383:24,Florida,IBL 24-051,2024-08-11,NA,NA,NA,26.77112,-80.03456,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6175:24,Puerto Rico,IBL 24-051,2024-05-07,"Animal# 4.7
+Plant# 2",2.1318824,0.907184,17.96114,-67.21398,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6134:24,Puerto Rico,IBL 24-050,2024-05-03,"ANIMAL # 10.00
+PLANT # 16.00",4.53592,7.257472,18.48858,-66.42295,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7960:24,Florida,IBL 24-050,2024-08-10,NA,NA,NA,25.96327,-80.11962,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5981:24,Puerto Rico,IBL 24-049,2024-04-28,"Animal: 0.0 pounds
+Plant: 0.0 pounds",0,0,18.37385,-67.24577,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7959:24,Florida,IBL 24-049,2024-08-01,NA,NA,NA,24.55028,-81.77625,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5980:24,Puerto Rico,IBL 24-048,2024-04-27,"Animal 2.5 pounds
+Plant 0.5 pounds",1.13398,0.226796,18.51306,-67.11471,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7958:24,Florida,IBL 24-048,2024-07-30,NA,NA,NA,24.54517,-81.80703,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5847:24,Puerto Rico,IBL 24-047,2024-04-19,"Animal# 6
+Plant #4",2.721552,1.814368,18.5127,-67.04023,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7927:24,Florida,IBL 24-047,2024-07-07,NA,NA,NA,26.75707,-80.03628,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5466:24,Puerto Rico,IBL 24-046,2024-04-07,"Animal: 13.0 pounds
+Plant 0.0 pounds",5.896696,0,18.50342,-67.0027,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7926:24,Florida,IBL 24-046,2024-07-02,Vessel landed in South Miami beach and all subjects considered got-aways.,NA,NA,25.76916,-80.13061,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7268:24,Florida,IBL 24-045,2024-06-30,NA,NA,NA,26.53856,-80.05404,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5455:24,Puerto Rico,IBL 24-045,2024-04-07,"Animal: 0.0 pounds
+Plants: 0.0 pounds",0,0,18.50846,-67.02472,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7267:24,Florida,IBL 24-044,2024-06-30,NA,NA,NA,24.55302,-81.75211,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5454:24,Puerto Rico,IBL 24-044,2024-04-07,"Animal: 0.0 pounds
+Plant 0.0 pounds",0,0,18.4897,-67.15796,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7266:24,Florida,IBL 24-043,2024-06-27,NA,NA,NA,25.328,-80.2592,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7266:24,Florida,IBL 24-043,2024-06-27,NA,NA,NA,25.328,-80.2592,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7269:24,Florida,IBL 24-043,2024-06-27,NA,NA,NA,25.328,-80.2592,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7269:24,Florida,IBL 24-043,2024-06-27,NA,NA,NA,25.328,-80.2592,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5009:24,Puerto Rico,IBL 24-043,2024-03-24,"Animal 10.0 pounds
+Plants 7.5 pounds",4.53592,3.4019399999999997,17.96751,-67.21308,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4991:24,Puerto Rico,IBL 24-042,2024-03-22,"ANIMAL # 20
+PLANT# 40",9.07184,18.14368,18.23196,-65.62191,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7265:24,Florida,IBL 24-042,2024-06-26,NA,NA,NA,24.54973,-81.78064,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4967:24,Puerto Rico,IBL 24-041,2024-03-20,"Animal# 1
+Plant# 1",0.453592,0.453592,17.95781,-67.21223,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6976:24,Florida,IBL 24-041,2024-06-16,NA,NA,NA,26.75501,-80.03619,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4934:24,Puerto Rico,IBL 24-040,2024-03-19,"ANIMAL #2
+PLANT #3",0.907184,1.360776,18.49032,-66.60667,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6975:24,Florida,IBL 24-040,2024-06-10,NA,NA,NA,24.54695,-81.78795,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4709:24,Puerto Rico,IBL 24-039,2024-03-10,"ANIMAL #6
+PLANT #10",2.721552,4.53592,18.40146,-67.18526,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6974:24,Florida,IBL 24-039,2024-06-05,NA,NA,NA,25.36846,-80.2355,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4369:24,Puerto Rico,IBL 24-038,2024-02-21,"ANIMAL #25
+PLANT #5",11.3398,2.26796,18.45804,-65.99002,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6973:24,Florida,IBL 24-038,2024-05-26,NA,NA,NA,26.2582,-80.0803,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6971:24,Florida,IBL 24-037,2024-05-21,NA,NA,NA,25.30935,-80.29615,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4362:24,Puerto Rico,IBL 24-037,2024-02-20,"Animal# 3
+Plant# 0.7",1.360776,0.3175144,18.37423,-67.24492,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4329:24,Puerto Rico,IBL 24-036,2024-02-16,"ANIMAL #0
+PLANT #0",0,0,18.23243,-65.62168,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6970:24,Florida,IBL 24-036,2024-05-21,NA,NA,NA,26.54273,-80.04496,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4308:24,Puerto Rico,IBL 24-035,2024-02-15,"Animal # 5.00
+Plant # 2.60",2.26796,1.1793392,17.98953,-67.21358,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6968:24,Florida,IBL 24-035,2024-05-18,NA,NA,NA,25.18222,-80.22224,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4104:24,Puerto Rico,IBL 24-034,2024-02-06,"Animal # 0.00
+Plant # 0.10",0,0.0453592,18.48861,-67.16225,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6967:24,Florida,IBL 24-034,2024-05-13,NA,NA,NA,25.17405,-80.3687,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4057:24,Puerto Rico,IBL 24-033,2024-02-05,"Animal# 14.0
+Plant# 5.0",6.350288,2.26796,18.23196,-65.62192,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6966:24,Florida,IBL 24-033,2024-05-09,NA,NA,NA,25.90657,-80.12133,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6573:24,Florida,IBL 24-032,2024-05-04,NA,NA,NA,26.01676,-80.1146,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3927:24,Puerto Rico,IBL 24-032,2024-02-01,"Animal: 2.0 pounds
+Plant: 0.3 pounds",0.907184,0.1360776,18.4922,-66.97414,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3922:24,Puerto Rico,IBL 24-031,2024-01-31,"Animal: 2.0 pounds
+Plant 0.1 pounds",0.907184,0.0453592,18.48367,-66.9019,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6572:24,Florida,IBL 24-031,2024-04-23,NA,NA,NA,25.06775,-80.46493,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3767:24,Puerto Rico,IBL 24-030,2024-01-30,"Animal #12 pounds
+Plant # 11 pounds",5.443104,4.9895119999999995,18.48843,-66.42319,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6570:24,Florida,IBL 24-030,2024-04-20,NA,NA,NA,24.54941,-82.15903,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3766:24,Puerto Rico,IBL 24-029,2024-01-30,"Animal # 0.00
+Plant # 0.00",0,0,18.43283,-67.15547,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6569:24,Florida,IBL 24-029,2024-04-10,NA,NA,NA,24.62689,-82.87279,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3735:24,Puerto Rico,IBL 24-028,2024-01-30,"Animal# 5.6
+Plant# 1",2.5401152,0.453592,18.51359,-67.04652,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6568:24,Florida,IBL 24-028,2024-04-04,NA,NA,NA,25.00844,-80.51552,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3414:24,Puerto Rico,IBL 24-027,2024-01-16,"Animal# 1.7
+Plant# 0",0.7711064,0,18.49145,-66.61584,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6528:24,Florida,IBL 24-027,2024-01-15,NA,NA,NA,25.44173,-80.19995,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3297:24,Puerto Rico,IBL 24-026,2024-01-11,"Animal: 2.0 pounds
+Plants: 4.0 pounds",0.907184,1.814368,18.01833,-67.17006,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5259:24,Florida,IBL 24-026,2024-03-30,NA,NA,NA,26.72755,-80.11851,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2986:24,Puerto Rico,IBL 24-025,2024-01-02,"Animal # 8 pounds
+Plant # 2 pounds",3.628736,0.907184,18.48091,-67.16716,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5258:24,Florida,IBL 24-025,2024-03-18,NA,NA,NA,24.77285,-80.90784,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2970:24,Puerto Rico,IBL 24-024,2024-01-01,"Animal# 1
+Plant# 0.5",0.453592,0.226796,18.51197,-67.10727,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5257:24,Florida,IBL 24-024,2024-03-02,NA,NA,NA,26.97011,-80.08079,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5256:24,Florida,IBL 24-023,2024-02-29,NA,NA,NA,24.81457,-80.82056,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2969:24,Puerto Rico,IBL 24-023,2023-12-31,"ANIMAL #8
+PLANT #2",3.628736,0.907184,18.45283,-66.17511,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2967:24,Puerto Rico,IBL 24-022,2023-12-29,"Animal# 16.5
+Plant# 0.5",7.484268,0.226796,18.0129,-67.17034,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4395:24,Florida,IBL 24-022,2024-02-16,NA,NA,NA,25.74074,-80.17116,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4394:24,Florida,IBL 24-021,2024-02-03,NA,NA,NA,27.46558,-80.30596,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2909:24,Puerto Rico,IBL 24-021,2023-12-29,"Animal# 0.0 pounds
+Plant# 0.0 pounds",0,0,17.97179,-66.92694,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4393:24,Florida,IBL 24-020,2024-02-01,NA,NA,NA,25.2894,-80.379,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2844:24,Puerto Rico,IBL 24-020,2023-12-28,"Animal# 24.2
+Plant# 1",10.9769264,0.453592,17.95176,-67.13414,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2839:24,Puerto Rico,IBL 24-019,2023-12-28,"Animal #: 2.00
+Plants #: 0.00",0.907184,0,18.45325,-65.96719,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3628:24,Florida,IBL 24-019,2024-01-19,NA,NA,NA,25.17249,-80.37388,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2788:24,Puerto Rico,IBL 24-018,2023-12-25,"Animal# 0
+Plant# 0",0,0,18.41984,-65.82397,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3627:24,Florida,IBL 24-018,2024-01-16,NA,NA,NA,25.04824,-80.45968,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2429:24,Puerto Rico,IBL 24-017,2023-12-08,"Animal# 7.3
+Plant# 1",3.3112216,0.453592,18.01302,-67.17053,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3626:24,Florida,IBL 24-017,2024-01-10,NA,NA,NA,25.89899,-80.1215,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2272:24,Puerto Rico,IBL 24-016,2023-12-05,"Animal 0.0 pounds
+Plant 0.0 pounds",0,0,18.08536,-67.94367,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3625:24,Florida,IBL 24-016,2024-01-10,NA,NA,NA,24.5975,-82.12664,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3624:24,Florida,IBL 24-015,2024-01-02,NA,NA,NA,24.5975,-82.12664,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2246:24,Puerto Rico,IBL 24-015,2023-12-01,"Animal# 4.5
+Plant# 0",2.041164,0,18.01302,-67.17053,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2231:24,Puerto Rico,IBL 24-014,2023-12-01,"Animal: 0.0 pounds
+plant: 0.0 pounds",0,0,18.50536,-67.14183,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3351:24,Florida,IBL 24-014,2023-12-31,NA,NA,NA,25.1724,-80.37357,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:2210:24,Puerto Rico,IBL 24-013,2023-11-29,"Animal: 1.0 pounds
+Plants: 0.0 pounds",0.453592,0,17.96529,-67.21397,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3350:24,Florida,IBL 24-013,2023-12-29,NA,NA,NA,26.09256,-80.10764,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3349:24,Florida,IBL 24-012,2023-12-04,NA,NA,NA,25.66629,-80.15592,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1655:24,Puerto Rico,IBL 24-012,2023-11-03,"Animal# 0
+Plant# 0",0,0,18.47082,-67.16866,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1433:24,Puerto Rico,IBL 24-011,2023-10-24,"ANIMAL #0
+PLANT #0",0,0,18.47348,-66.73478,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3348:24,Florida,IBL 24-011,2023-12-01,NA,NA,NA,25.8992,-80.12487,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3347:24,Florida,IBL 24-010,2023-11-28,NA,NA,NA,24.52178,-81.96297,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1344:24,Puerto Rico,IBL 24-010,2023-10-23,"ANIMAL #0
+PLANT #5",0,2.26796,18.48675,-66.43638,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1331:24,Puerto Rico,IBL 24-009,2023-10-21,"ANIMAL #20
+PLANT# 7",9.07184,3.175144,18.47761,-66.2744,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3345:24,Florida,IBL 24-009,2023-11-20,NA,NA,NA,26.05946,-80.12786,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3344:24,Florida,IBL 24-008,2023-11-14,NA,NA,NA,25.9255,-80.1208,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1200:24,Puerto Rico,IBL 24-008,2023-10-16,"ANIMAL #3
+PLANT #2",1.360776,0.907184,18.51589,-67.09145,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1198:24,Puerto Rico,IBL 24-007,2023-10-14,"Animal # 0.5
+Plant # 0.5",0.226796,0.226796,18.35525,-67.26899,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3343:24,Florida,IBL 24-007,2023-11-08,NA,NA,NA,25.90306,-80.12305,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1151:24,Puerto Rico,IBL 24-006,2023-10-12,"Animal: 4.00 pounds
+Plant: 1.5 pounds",1.814368,0.680388,17.96806,-65.98171,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3342:24,Florida,IBL 24-006,2023-10-22,NA,NA,NA,25.21801,-80.42744,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1117:24,Puerto Rico,IBL 24-005,2023-10-07,"Animal # 0.00
+Plant # 0.00",0,0,18.09385,-67.19616,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3341:24,Florida,IBL 24-005,2023-10-21,NA,NA,NA,24.93774,-80.61239,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1111:24,Puerto Rico,IBL 24-004,2023-10-06,"Animal# 17.2
+Plant# 0",7.8017824,0,18.51074,-67.12834,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3340:24,Florida,IBL 24-004,2023-10-20,NA,NA,NA,25.84765,-80.16805,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1110:24,Puerto Rico,IBL 24-003,2023-10-08,"ANIMAL# 28
+PLANT# 10",12.700576,4.53592,18.45808,-65.98995,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1075:24,Puerto Rico,IBL 24-002,2023-10-04,"Animal# 7
+Plant# 0.8",3.175144,0.3628736,18.4785,-66.75366,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3338:24,Florida,IBL 24-002,2023-10-18,NA,NA,NA,25.9072,-80.1251,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1053:24,Puerto Rico,IBL 24-001,2023-10-03,"Animal 0.0 pounds
+Plant 10.0 pounds",0,4.53592,17.9542,-67.14461,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3216:24,Florida,IBL 24-001,2023-10-11,NA,NA,NA,26.55514,-80.0413,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1205:24,Florida,IBL 23-252,2023-09-10,NA,NA,NA,25.17164,-80.37418,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1204:24,Florida,IBL 23-251,2023-09-09,NA,NA,NA,24.63227,-82.9204,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1203:24,Florida,IBL 23-250,2023-09-07,NA,NA,NA,25.11353,-80.42312,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1202:24,Florida,IBL 23-249,2023-09-01,NA,NA,NA,26.83969,-80.04431,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1118:24,Florida,IBL 23-248,2023-08-25,NA,NA,NA,26.89964,-80.05793,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:1116:24,Florida,IBL 23-247,2023-08-22,NA,NA,NA,24.62355,-81.40176,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8392:23,Florida,IBL 23-246,2023-08-05,NA,NA,NA,25.90196,-80.12464,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8261:23,Florida,IBL 23-245,2023-07-22,NA,NA,NA,25.72489,-80.15661,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8260:23,Florida,IBL 23-244,2023-07-05,NA,NA,NA,24.8039,-80.84806,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8259:23,Florida,IBL 23-243,2023-07-04,NA,NA,NA,24.71337,-81.07843,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8258:23,Florida,IBL 23-242,2023-07-02,NA,NA,NA,24.54455,-81.803,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8256:23,Florida,IBL 23-241,2023-06-24,4 GOTAWAYS,NA,NA,26.77933,-80.05139,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7945:23,Florida,IBL 23-240,2023-06-25,NA,NA,NA,25.7922,-80.1348,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7372:23,Florida,IBL 23-239,2023-05-29,NA,NA,NA,24.62522,-82.86361,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7371:23,Florida,IBL 23-238,2023-05-28,NA,NA,NA,26.2573,-80.0924,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7370:23,Florida,IBL 23-237,2023-05-20,NA,NA,NA,25.23775,-80.31547,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7369:23,Florida,IBL 23-236,2023-05-18,NA,NA,NA,24.91331,-80.63521,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6835:23,Florida,IBL 23-235,2023-05-15,Chinese migrants,NA,NA,25.9312,-80.12099,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6780:23,Florida,IBL 23-234,2023-05-13,NA,NA,NA,24.57953,-81.65267,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6779:23,Florida,IBL 23-233,2023-05-11,NA,NA,NA,25.90268,-80.12601,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6778:23,Florida,IBL 23-232,2023-05-10,NA,NA,NA,25.90268,-80.12601,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6777:23,Florida,IBL 23-231,2023-05-10,NA,NA,NA,26.54646,-80.0531,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6762:23,Florida,IBL 23-230,2023-05-04,Jet ski - 16 migrants got away.,NA,NA,26.33921,-80.0728,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6328:23,Florida,IBL 23-229,2023-04-28,NA,NA,NA,25.7976,-80.1254,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6326:23,Florida,IBL 23-228,2023-04-27,NA,NA,NA,25.90065,-80.12117,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6308:23,Florida,IBL 23-227,2023-04-25,NA,NA,NA,24.6312,-82.9217,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6305:23,Florida,IBL 23-226,2023-04-21,NA,NA,NA,24.5653,-81.7987,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6105:23,Florida,IBL 23-225,2023-04-15,NA,NA,NA,26.8349,-80.0578,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5866:23,Florida,IBL 23-224,2023-03-05,NA,NA,NA,25.90343,-80.12563,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5865:23,Florida,IBL 23-223,2023-03-04,NA,NA,NA,24.6275,-82.8723,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5864:23,Florida,IBL 23-222,2023-02-28,NA,NA,NA,26.09254,-80.10601,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5863:23,Florida,IBL 23-221,2023-02-14,NA,NA,NA,26.2589,-80.0853,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5862:23,Florida,IBL 23-220,2023-02-14,NA,NA,NA,26.83632,-80.05725,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5861:23,Florida,IBL 23-219,2023-02-03,NA,NA,NA,26.94934,-80.07391,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5860:23,Florida,IBL 23-218,2023-02-02,NA,NA,NA,24.5653,-81.7986,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5859:23,Florida,IBL 23-217,2023-02-01,NA,NA,NA,25.90292,-80.12506,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5858:23,Florida,IBL 23-216,2023-01-30,NA,NA,NA,25.90135,-80.12178,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5857:23,Florida,IBL 23-215,2023-01-11,NA,NA,NA,24.5754,-82.1033,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5856:23,Florida,IBL 23-214,2023-01-10,NA,NA,NA,26.11138,-80.1058,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5855:23,Florida,IBL 23-213,2023-01-02,NA,NA,NA,24.771,-80.912,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5725:23,Florida,IBL 23-158,2023-03-31,NA,NA,NA,24.58527,-82.11372,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5719:23,Florida,IBL 23-157,2023-03-30,NA,NA,NA,24.72836,-81.00381,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5456:23,Florida,IBL 23-156,2023-03-25,Hang glider,NA,NA,24.55613,-81.75985,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5252:23,Florida,IBL 23-155,2023-03-14,NA,NA,NA,24.6926,-81.08383,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5223:23,Florida,IBL 23-154,2023-03-11,NA,NA,NA,25.09678,-80.42929,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5186:23,Florida,IBL 23-153,2023-03-10,NA,NA,NA,26.54353,-80.04352,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5183:23,Florida,IBL 23-152,2023-03-07,NA,NA,NA,24.80358,-80.84931,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4856:23,Florida,IBL 23-151,2023-02-22,NA,NA,NA,24.62761,-82.87203,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4705:23,Florida,IBL 23-149,2023-02-09,NA,NA,NA,25.01471,-80.50661,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4704:23,Florida,IBL 23-148,2023-02-08,NA,NA,NA,24.57447,-82.09968,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4702:23,Florida,IBL 23-146,2023-01-30,NA,NA,NA,24.71624,-81.0748,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4701:23,Florida,IBL 23-145,2023-01-27,NA,NA,NA,24.5653,-81.7988,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4700:23,Florida,IBL 23-144,2023-01-21,NA,NA,NA,24.62895,-82.9225,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4699:23,Florida,IBL 23-143,2023-01-18,NA,NA,NA,24.6686,-81.254,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4698:23,Florida,IBL 23-142,2023-01-13,NA,NA,NA,24.8161,-80.8231,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4697:23,Florida,IBL 23-141,2023-01-12,NA,NA,NA,24.8161,-80.8231,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:9700:23,Puerto Rico,IBL 23-140,2023-09-28,"Animal# 0
+Plant# 0",0,0,18.09906,-67.93613,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4696:23,Florida,IBL 23-140,2023-01-12,NA,NA,NA,25.74755,-80.14631,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4695:23,Florida,IBL 23-139,2023-01-11,NA,NA,NA,24.771,-80.912,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:9649:23,Puerto Rico,IBL 23-139,2023-09-26,"Animal#0
+Plant#0",0,0,18.47714,-67.16876,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4694:23,Florida,IBL 23-138,2023-01-10,NA,NA,NA,24.71113,-81.0947,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:9549:23,Puerto Rico,IBL 23-138,2023-09-25,"Animal# 0
+Plant# 0",0,0,18.51174,-67.03473,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4693:23,Florida,IBL 23-137,2023-01-08,NA,NA,NA,24.6923,-81.0855,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:9539:23,Puerto Rico,IBL 23-137,2023-09-24,"Animal #0.0
+Plant #0.0",0,0,18.51025,-67.12948,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4692:23,Florida,IBL 23-136,2023-01-08,NA,NA,NA,25.0865,-80.4473,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:9379:23,Puerto Rico,IBL 23-136,2023-09-18,"Animal# 0
+Plant# 0",0,0,18.09906,-67.93613,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4691:23,Florida,IBL 23-135,2023-01-06,NA,NA,NA,24.6923,-81.0855,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:9233:23,Puerto Rico,IBL 23-135,2023-09-08,"Animal # 1.00
+Plant # 2.00",0.453592,0.907184,18.01298,-67.17007,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4690:23,Florida,IBL 23-134,2023-01-06,NA,NA,NA,24.5554,-81.7842,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:9181:23,Puerto Rico,IBL 23-134,2023-09-06,"ANIMAL #0
+PLANT #10",0,4.53592,18.47056,-66.45035,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4689:23,Florida,IBL 23-133,2023-01-05,NA,NA,NA,24.6613,-81.4449,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:9154:23,Puerto Rico,IBL 23-133,2023-09-04,"Animal# 4.1
+Plant# 1",1.8597271999999998,0.453592,17.95427,-67.21066,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:9115:23,Puerto Rico,IBL 23-132,2023-08-31,"Animal # 0.00
+Plant # 0.00",0,0,18.0736,-67.93185,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4688:23,Florida,IBL 23-132,2023-01-05,NA,NA,NA,25.0865,-80.4473,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4687:23,Florida,IBL 23-131,2023-01-05,NA,NA,NA,24.71113,-81.0947,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:9085:23,Puerto Rico,IBL 23-131,2023-08-30,"Animal # 28.00
+Plant # 12.00",12.700576,5.443104,18.23232,-65.62174,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4686:23,Florida,IBL 23-130,2023-01-05,NA,NA,NA,24.6238,-81.4007,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8882:23,Puerto Rico,IBL 23-130,2023-08-28,"Animal # 10.5 pounds
+Plant # 1 pound",4.762716,0.453592,18.51315,-67.11401,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4685:23,Florida,IBL 23-129,2023-01-04,NA,NA,NA,24.6238,-81.4007,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8875:23,Puerto Rico,IBL 23-129,2023-08-28,"Animal # 19.50
+Plant # 0.00",8.845044,0,18.01286,-67.16996,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4684:23,Florida,IBL 23-128,2023-01-04,NA,NA,NA,24.8161,-80.8231,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8874:23,Puerto Rico,IBL 23-128,2023-08-28,"Animal #1
+Plant #0",0.453592,0,18.5119,-67.10674,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4683:23,Florida,IBL 23-127,2023-01-04,NA,NA,NA,24.9243,-80.6278,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8873:23,Puerto Rico,IBL 23-127,2023-08-28,"Animal #1
+Plant #5",0.453592,2.26796,18.51383,-67.06235,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4682:23,Florida,IBL 23-126,2023-01-04,NA,NA,NA,24.7041,-81.1551,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8858:23,Puerto Rico,IBL 23-126,2023-08-26,"Animal # 0.0 pounds
+Plant# 0.0 pounds",0,0,18.50832,-67.13287,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4681:23,Florida,IBL 23-125,2023-01-04,NA,NA,NA,25.0865,-80.4473,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8454:23,Puerto Rico,IBL 23-125,2023-08-09,"Animal # 17.00
+Plant # 13.00",7.711064,5.896696,18.47185,-66.24832,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4680:23,Florida,IBL 23-124,2023-01-04,NA,NA,NA,24.8161,-80.8231,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8375:23,Puerto Rico,IBL 23-124,2023-08-04,"Animal# 2
+Plant# 2",0.907184,0.907184,17.94833,-67.13028,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4679:23,Florida,IBL 23-123,2023-01-03,NA,NA,NA,25.0865,-80.4473,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8363:23,Puerto Rico,IBL 23-123,2023-08-04,"Animal # 3.0 pounds
+Plant # 3.0 pounds",1.360776,1.360776,18.51263,-67.11857,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8353:23,Puerto Rico,IBL 23-122,2023-08-02,"Animal# 9
+Plant# 4.7",4.082328,2.1318824,18.51051,-67.12892,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4678:23,Florida,IBL 23-122,2023-01-03,NA,NA,NA,25.0865,-80.4473,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8284:23,Puerto Rico,IBL 23-121,2023-07-31,"Animal # 15.00
+Plant # 1.00",6.8038799999999995,0.453592,18.48497,-66.76792,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4677:23,Florida,IBL 23-121,2023-01-03,NA,NA,NA,24.824,-80.8137,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4676:23,Florida,IBL 23-120,2023-01-03,NA,NA,NA,24.9855,-80.5466,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8238:23,Puerto Rico,IBL 23-120,2023-07-26,"Animal# 3.7
+Plant# 0",1.6782904,0,18.51101,-67.0341,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8209:23,Puerto Rico,IBL 23-119,2023-07-25,"Animal # 0.0 pounds
+Plant # 0.0 pounds",0,0,18.1339,-67.18653,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4675:23,Florida,IBL 23-119,2023-01-03,NA,NA,NA,24.771,-80.912,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8199:23,Puerto Rico,IBL 23-118,2023-07-24,"Animal #1.5 pounds
+Plant # 2.0 pounds",0.680388,0.907184,18.36691,-67.26836,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4674:23,Florida,IBL 23-118,2023-01-03,NA,NA,NA,24.6246,-81.5432,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4673:23,Florida,IBL 23-117,2023-01-03,NA,NA,NA,24.5554,-81.7842,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8190:23,Puerto Rico,IBL 23-117,2023-07-24,"Animal # 8.0 pounds
+Plants # 12.0 pounds",3.628736,5.443104,18.46694,-66.22599,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4672:23,Florida,IBL 23-116,2023-01-02,NA,NA,NA,24.6923,-81.0855,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:8086:23,Puerto Rico,IBL 23-116,2023-07-16,"Animal #: 4.0
+Plant #: 0.0",1.814368,0,18.50844,-67.13275,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4671:23,Florida,IBL 23-115,2023-01-02,NA,NA,NA,24.771,-80.912,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7892:23,Puerto Rico,IBL 23-115,2023-07-01,"Animal #0
+Plant #0",0,0,18.49914,-67.14845,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7891:23,Puerto Rico,IBL 23-114,2023-07-01,"Animal #15
+Plant #4.3",6.8038799999999995,1.9504456,18.51361,-67.07102,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4669:23,Florida,IBL 23-113,2023-01-02,NA,NA,NA,25.0115,-80.5151,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7851:23,Puerto Rico,IBL 23-113,2023-06-29,"Animal # 22.00
+Plant # 15.00",9.979023999999999,6.8038799999999995,18.4667,-66.19794,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4668:23,Florida,IBL 23-112,2023-01-02,NA,NA,NA,24.721,-81.0187,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7531:23,Puerto Rico,IBL 23-112,2023-06-22,"Animal # 5.50
+Plant # 5.00",2.4947559999999998,2.26796,18.36681,-67.26869,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4667:23,Florida,IBL 23-111,2023-01-01,NA,NA,NA,24.9243,-80.6278,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7528:23,Puerto Rico,IBL 23-111,2023-06-21,"Animal # 0.00
+Plant # 24.50",0,11.113004,18.0129,-67.16997,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7460:23,Puerto Rico,IBL 23-110,2023-06-22,"Animal # 27.00
+Plant # 13.00",12.246984,5.896696,18.49116,-66.61036,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4666:23,Florida,IBL 23-110,2023-01-01,NA,NA,NA,24.721,-81.0187,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4665:23,Florida,IBL 23-109,2023-01-01,NA,NA,NA,24.9243,-80.6278,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7293:23,Puerto Rico,IBL 23-109,2023-06-19,"Animal # 0.00
+Plant # 17.00",0,7.711064,18.51526,-67.08767,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4664:23,Florida,IBL 23-108,2023-01-01,NA,NA,NA,24.6923,-81.0855,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7292:23,Puerto Rico,IBL 23-108,2023-06-17,"Animal # 12.00
+Plant # 5.00",5.443104,2.26796,18.4794,-66.26772,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7247:23,Puerto Rico,IBL 23-107,2023-06-15,"Animal #0.0 pounds
+Plant # 0.0 pounds",0,0,18.06405,-67.86712,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4663:23,Florida,IBL 23-107,2023-01-01,NA,NA,NA,24.726,-81.0446,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4662:23,Florida,IBL 23-106,2023-01-01,NA,NA,NA,24.771,-80.912,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7175:23,Puerto Rico,IBL 23-106,2023-06-12,"Animal # 6.0 pounds
+Plant # 11.0 pounds",2.721552,4.9895119999999995,18.4917,-66.94443,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:7043:23,Puerto Rico,IBL 23-105,2023-06-01,"Animal #14
+Plant #0.3",6.350288,0.1360776,18.37558,-67.23891,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4661:23,Florida,IBL 23-105,2023-01-01,NA,NA,NA,25.0865,-80.4475,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4660:23,Florida,IBL 23-104,2023-01-01,NA,NA,NA,25.0865,-80.4473,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6937:23,Puerto Rico,IBL 23-104,2023-05-28,"Animal # 45.00
+Plant # 10.00",20.41164,4.53592,18.23216,-65.62175,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4659:23,Florida,IBL 23-103,2023-01-01,NA,NA,NA,24.55975,-81.7837,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6655:23,Puerto Rico,IBL 23-103,2023-05-18,"Animal # 5.00
+Plant # 1.00",2.26796,0.453592,18.47575,-66.31863,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6336:23,Puerto Rico,IBL 23-102,2023-05-06,"Animal #0.0 pounds
+Plant #0.0 pounds",0,0,18.51211,-67.10892,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6319:23,Puerto Rico,IBL 23-101,2023-05-05,"Animal # 4.00
+Plant # 3.00",1.814368,1.360776,18.47197,-66.28492,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6233:23,Puerto Rico,IBL 23-100,2023-04-29,"Animal # 0.00
+Plant # 3.00",0,1.360776,18.49083,-66.60811,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6223:23,Puerto Rico,IBL 23-099,2023-04-28,"Animal# 0
+Plant# 0",0,0,18.50432,-67.00346,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6169:23,Puerto Rico,IBL 23-098,2023-04-24,"Animal 2.0 pounds
+Plant 0.0 pounds",0.907184,0,18.47895,-67.16879,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6128:23,Puerto Rico,IBL 23-095,2023-04-23,"Animal# 0
+Plant# 0",0,0,18.49961,-67.14807,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6127:23,Puerto Rico,IBL 23-094,2023-04-23,"Animal# 2.9
+Plant# 0",1.3154168,0,18.37627,-67.23859,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6051:23,Puerto Rico,IBL 23-093,2023-04-18,"Animal # 12.50
+Plant # 14.50",5.6699,6.577084,17.9601,-66.42958,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6024:23,Puerto Rico,IBL 23-092,2023-04-17,"Animal# 0
+Plant# 0",0,0,18.51367,-67.04667,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6022:23,Puerto Rico,IBL 23-091,2023-04-16,"Animal # 2.0 pounds
+Plant # 0.0 pounds",0.907184,0,18.44966,-65.89623,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6021:23,Puerto Rico,IBL 23-090,2023-04-15,"Animal # 4.0 pounds
+Plant # 1.0 pounds",1.814368,0.453592,18.44687,-65.90968,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6020:23,Puerto Rico,IBL 23-089,2023-04-15,"Animal # 2.5 pounds
+Plant # 1.0 pounds",1.13398,0.453592,17.9693,-67.21272,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:6004:23,Puerto Rico,IBL 23-088,2023-04-14,"Animal# 64
+Plant# 2",29.029888,0.907184,18.435669999999998,-65.86529,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5988:23,Puerto Rico,IBL 23-087,2023-04-13,"Animal # 0.0 pounds
+Plant # 0.0 pounds",0,0,18.36834,-67.2649,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5948:23,Puerto Rico,IBL 23-086,2023-04-12,"Animal# 0
+Plant# 0",0,0,18.50864,-67.02677,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5942:23,Puerto Rico,IBL 23-085,2023-04-11,"Animal# 0
+Plant# 0",0,0,18.05782,-65.80675,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5650:23,Puerto Rico,IBL 23-084,2023-03-31,"Animal # 4.5 pounds
+Plant # 0.0 pounds",2.041164,0,18.47084,-67.16856,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5655:23,Puerto Rico,IBL 23-083,2023-03-31,"Animal# 0
+Plant# 0",0,0,18.37939,-67.48145,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5611:23,Puerto Rico,IBL 23-082,2023-03-30,"Animal# 6.3
+Plant# 1",2.8576296,0.453592,18.01331,-67.1696,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5451:23,Puerto Rico,IBL 23-081,2023-03-26,"Animal# 0
+Plant# 0",0,0,18.06053,-67.19957,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5450:23,Puerto Rico,IBL 23-080,2023-03-26,"Animal# 5
+Plant# 0",2.26796,0,18.4852,-66.38518,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5449:23,Puerto Rico,IBL 23-079,2023-03-26,"Animal# 0
+Plant# 0",0,0,18.46891,-66.46675,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5426:23,Puerto Rico,IBL 23-078,2023-03-24,"ANIMAL #0
+PLANT #0",0,0,18.51588,-67.09725,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5293:23,Puerto Rico,IBL 23-077,2023-03-16,"ANIMAL #0
+PLANT #0",0,0,18.47617,-66.18988,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5267:23,Puerto Rico,IBL 23-076,2023-03-16,"Animal # 5 pounds
+Plant # 2 pounds",2.26796,0.907184,18.013,-67.17007,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5193:23,Puerto Rico,IBL 23-075,2023-03-12,"Animal# 13.1
+Plant# 1",5.9420551999999995,0.453592,18.16765,-67.18259,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5127:23,Puerto Rico,IBL 23-074,2023-03-08,"ANIMAL #0
+PLANT# 0",0,0,18.48681,-66.43592,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:5101:23,Puerto Rico,IBL 23-073,2023-03-07,"Animal# 5.2
+Plant# 0",2.3586784,0,18.51272,-67.11877,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4973:23,Puerto Rico,IBL 23-072,2023-03-06,"Animal# 34
+Plant# 6",15.422128,2.721552,18.43369,-67.15643,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4934:23,Puerto Rico,IBL 23-071,2023-03-03,"Animal # 0.0 pounds
+Plant # 0.0 pounds
+
+No product recovered.",0,0,18.36046,-67.27053,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4897:23,Puerto Rico,IBL 23-070,2023-02-27,"Animal# 8
+Plant# 0",3.628736,0,17.96945,-66.61231,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4888:23,Puerto Rico,IBL 23-069,2023-03-01,"Animal# 34
+Plant# 4",15.422128,1.814368,17.97858,-66.00461,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4865:23,Puerto Rico,IBL 23-068,2023-02-28,"Animal# 6.6
+Plant# 0",2.9937072,0,18.51576,-67.09493,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4789:23,Puerto Rico,IBL 23-067,2023-02-27,"Animal# 1.4
+Plant# 0",0.6350288,0,18.31779,-67.24554,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4788:23,Puerto Rico,IBL 23-066,2023-02-26,"Animal# 11.4
+Plant# 0",5.1709488,0,18.4884,-67.16253,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4468:23,Puerto Rico,IBL 23-065,2023-02-15,"Plants# 0
+Animal# 0",0,0,18.51345,-67.07078,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4349:23,Puerto Rico,IBL 23-064,2023-02-08,"Animal # 5.00
+Plants # 28.00",2.26796,12.700576,18.143,-65.7681,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4063:23,Puerto Rico,IBL 23-063,2023-01-22,"Animal # 0.00
+Plant # 0.00",0,0,18.15852,-67.94831,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4017:23,Puerto Rico,IBL 23-062,2023-01-22,"Animal# 17.8
+Plant# 0",8.0739376,0,18.4577,-67.16469,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4016:23,Puerto Rico,IBL 23-061,2023-01-21,"Animal# 0
+Plant# 3.6",0,1.6329312,18.23185,-65.62216,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3959:23,Puerto Rico,IBL 23-060,2023-01-16,"Animal # 0.0lbs
+Plant # 0.0lbs",0,0,18.1599,-67.94897,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3884:23,Puerto Rico,IBL 23-059,2023-01-17,"Animal #5.5lbs.
+Plant #1.5lbs",2.4947559999999998,0.680388,18.2319,-65.62181,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3875:23,Puerto Rico,IBL 23-058,2023-01-13,"Animal # 6.55
+Plant # 0.20",2.9710275999999998,0.0907184,18.29211,-67.19835,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3819:23,Puerto Rico,IBL 23-057,2023-01-12,"Animal # 9.5
+Plant # 0.5",4.309124,0.226796,18.01292,-67.16986,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3755:23,Puerto Rico,IBL 23-056,2023-01-09,"ANIMAL# 14
+PLANT# 7",6.350288,3.175144,18.47662,-66.50625,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3746:23,Puerto Rico,IBL 23-055,2023-01-09,"Animal # 0.0 
+Plant # 7.02",0,3.18421584,18.36667,-67.26904,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3697:23,Puerto Rico,IBL 23-054,2023-01-05,"Animal#0
+Plant#0",0,0,18.08246,-67.9453,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3597:23,Puerto Rico,IBL 23-053,2023-01-04,"Animal#0
+Plant#0",0,0,18.37142,-67.25468,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3538:23,Puerto Rico,IBL 23-052,2023-01-01,"ANIMAL #15
+PLANT #22",6.8038799999999995,9.979023999999999,18.45224,-66.15896,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3531:23,Puerto Rico,IBL 23-051,2023-01-01,"Animal#0
+Plant#0",0,0,18.15822,-67.94834,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4707:23,Florida,IBL 23-050,2023-02-17,NA,NA,NA,24.6915,-81.0861,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:4703:23,Florida,IBL 23-047,2023-02-05,NA,NA,NA,24.5653,-81.7987,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption
+TK:3339:24,Florida,IBL 23-003,2023-10-20,NA,NA,NA,24.62895,-82.9225,IBL,,passenger,NA,Animal_IBL,baggage,Animal,HIGH,,,swine products/by-products,personal use or consumption

@@ -35,10 +35,8 @@ system.time(rg_dat <- tbl(geo_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl
               dplyr::filter(!grepl("Not|No|Out|Cease", Operational)))
 
 ```
-# convert to spatial
-```{r}
-# convert to spatial
-rg_geo <- rg_dat |> sf::st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326)
+
+```{r save lat lon}
 
 # Create a function to simplify the types
 simplify_type <- function(type_string) {
@@ -52,7 +50,17 @@ simplify_type <- function(type_string) {
 }
 
 # Apply the function to create a new simplified type column
-rg_geo$SimpleType <- sapply(rg_geo$Type, simplify_type)
+rg_dat$SimpleType <- sapply(rg_geo$Type, simplify_type)
+
+setwd(here::here("output","regulated garbage map"))
+write.csv(rg_dat, "regulated_garbage_facilities.csv")
+
+```
+# convert to spatial
+```{r}
+# convert to spatial
+rg_geo <- rg_dat |> sf::st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326)
+
 
 library(htmlwidgets)
 

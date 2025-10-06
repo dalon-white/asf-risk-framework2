@@ -229,11 +229,11 @@ eco,package,Animal,Pizza w/ Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products
 mail,package,Animal,Pizza w/ Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
 passenger,baggage,Animal,Pizza w/ Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
 unknown,unknown,Animal,Pizza w/ Meat,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
-commercial,container,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,other products,unspecified feed
-eco,package,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,other products,unspecified feed
-mail,package,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,other products,unspecified feed
-passenger,baggage,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,other products,unspecified feed
-unknown,unknown,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,other products,unspecified feed
+commercial,container,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,other products,animal-based feed
+eco,package,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,other products,animal-based feed
+mail,package,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,other products,animal-based feed
+passenger,baggage,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,other products,animal-based feed
+unknown,unknown,Animal,Pet Food,MEDIUM,MEDIUM,MEDIUM,other products,animal-based feed
 commercial,container,Animal,Pepperoni,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,commercial
 eco,package,Animal,Pepperoni,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
 mail,package,Animal,Pepperoni,MEDIUM,MEDIUM,MEDIUM,swine products/by-products,personal use or consumption
@@ -394,3 +394,4 @@ eco,package,Animal,Animal Blood,HIGH,HIGH,HIGH,swine products/by-products,person
 mail,package,Animal,Animal Blood,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
 passenger,baggage,Animal,Animal Blood,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
 unknown,unknown,Animal,Animal Blood,HIGH,HIGH,HIGH,swine products/by-products,personal use or consumption
+passenger,baggage,Animal,Animal_IBL,HIGH,,,swine products/by-products,personal use or consumption

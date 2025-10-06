@@ -8,6 +8,19 @@ library(viridis)
 library(DT)
 library(rlang)  # For sym() function
 
+# Ensure required output directories exist
+check_create_dir <- function(path) {
+  if (!dir.exists(path)) {
+    message("Creating missing directory: ", path)
+    dir.create(path, recursive = TRUE, showWarnings = FALSE)
+  }
+}
+
+# Create any missing directories the app depends on
+check_create_dir(here("output", "aqim total distributed risk"))
+check_create_dir(here("output", "spatial layers", "risk at ports"))
+check_create_dir(here("output", "spatial layers", "risk at final destinations"))
+
 # Suppress R CMD check NOTEs about non-standard evaluation
 globalVariables(c(
   "pathway", "container", "geom", "risk_value", "short_name", "layer_name", 
@@ -55,7 +68,8 @@ ui <- navbarPage(
                                   "Current" = "current", 
                                   "Mexico/Canada" = "mex_can", 
                                   "Other" = "other",
-                                  "EANs" = "EAN"),
+                                  "EANs" = "EAN",
+                                  "Illegal Boat Landings" = "IBL"),
                       selected = "current"),
           hr(),
           # Dynamic checkboxes for port layer selection
@@ -66,9 +80,10 @@ ui <- navbarPage(
           selectInput("port_container_filter", "Filter by Container:", choices = NULL, multiple = TRUE),
           hr(),
           checkboxInput("port_auto_update", "Auto-update map", value = FALSE),
-          actionButton("port_update_map", "Update Map"),
-          hr(),          # Point size control
-          sliderInput("point_size", "Heat Radius:", min = 5, max = 30, value = 15),
+          actionButton("port_update_map", "Update Map"),          hr(),          # Point size control
+          sliderInput("point_size", "Base Marker Size:", min = 5, max = 30, value = 15),
+          helpText("Marker sizes and transparency scale with risk values."),
+          helpText("Higher risk = larger, more opaque markers."),
           # Blur control for heatmap
           sliderInput("blur_size", "Heat Blur:", min = 5, max = 30, value = 15),          # Minimum opacity for the heatmap
           sliderInput("min_opacity", "Heat Minimum Opacity:", min = 0.1, max = 1.0, value = 0.5, step = 0.1),
@@ -146,11 +161,36 @@ server <- function(input, output, session) {
   #===============================
   # DESTINATION RISK TAB FUNCTIONS
   #===============================
-  
-  # Load all available layers
+    # Load all available layers
   available_layers <- reactive({
-    # Read the layer catalog
-    layer_catalog <- read.csv(here("output", "aqim total distributed risk", "distributed_risk_summary.csv"))
+    # Read the layer catalog - try current first, then mex_can, then fall back to any available file
+    file_path <- here("output", "aqim total distributed risk", "distributed_risk_summary_current.csv")
+    
+    if (!file.exists(file_path)) {
+      # Try mex_can if current doesn't exist
+      file_path <- here("output", "aqim total distributed risk", "distributed_risk_summary_mex_can.csv")
+      
+      # If that doesn't exist, try to find any summary file
+      if (!file.exists(file_path)) {
+        potential_files <- list.files(here("output", "aqim total distributed risk"), 
+                                    pattern = "distributed_risk_summary.*\\.csv$", 
+                                    full.names = TRUE)
+        if (length(potential_files) > 0) {
+          file_path <- potential_files[1]
+        } else {
+          # No summary files found, return empty data frame
+          warning("No distributed_risk_summary files found")
+          return(data.frame(short_name = character(), 
+                           layer_name = character(), 
+                           total_risk = numeric(),
+                           pathway = character(),
+                           container = character()))
+        }
+      }
+    }
+    
+    # Read the file we found
+    layer_catalog <- read.csv(file_path)
     return(layer_catalog)
   })
   
@@ -182,6 +222,10 @@ server <- function(input, output, session) {
     catalog <- available_layers()
     updateSelectInput(session, "pathway_filter", choices = c("All", unique(catalog$pathway)))
     updateSelectInput(session, "container_filter", choices = c("All", unique(catalog$container)))
+
+#Add product pathway and subpathway filters at a later date when the time comes
+    # updateSelectInput(session, "product_pathway_filter", choices = c("All", unique(catalog$product_pathway)))
+    # updateSelectInput(session, "product_subpathway_filter", choices = c("All", unique(catalog$product_subpathway)))
   })
   
   # Load the selected layers and combine them
@@ -199,9 +243,9 @@ server <- function(input, output, session) {
       if (length(selected) == 0) {
         return(NULL)
       }
-      
-      # Load and combine the selected layers
+        # Load and combine the selected layers
       all_layers <- lapply(selected, function(layer_name) {
+        # Try first with direct naming pattern
         file_path <- here("output", "spatial layers", "risk at final destinations", 
                           paste0("risk_", layer_name, ".gpkg"))
         
@@ -212,16 +256,21 @@ server <- function(input, output, session) {
         }
         
         # Read the layer and transform to WGS84
-        layer <- st_read(file_path, quiet = TRUE)
-        
-        # Debug info - uncomment if needed
-        # print(paste("Loaded layer:", layer_name, "with", nrow(layer), "features"))
-        # print(paste("Original CRS:", st_crs(layer)$input))
-        
-        # Transform to WGS84 for Leaflet compatibility
-        layer <- st_transform(layer, 4326)
-        
-        return(layer)
+        tryCatch({
+          layer <- st_read(file_path, quiet = TRUE)
+          
+          # Debug info - uncomment if needed
+          message(paste("Loaded layer:", layer_name, "with", nrow(layer), "features"))
+          # print(paste("Original CRS:", st_crs(layer)$input))
+          
+          # Transform to WGS84 for Leaflet compatibility
+          layer <- st_transform(layer, 4326)
+          
+          return(layer)
+        }, error = function(e) {
+          warning("Error reading ", file_path, ": ", e$message)
+          return(NULL)
+        })
       })
       
       # Remove any NULL layers (files that couldn't be loaded)
@@ -230,14 +279,44 @@ server <- function(input, output, session) {
       if (length(all_layers) == 0) {
         return(NULL)
       }
-      
-      # Combine layers by summing risk values at each location
-      combined <- bind_rows(all_layers) %>%
-        group_by(geom) %>%
-        summarize(combined_risk = sum(risk_value, na.rm = TRUE))
+        # Combine layers by summing risk values at each location
+      combined <- tryCatch({
+        if (length(all_layers) == 0) {
+          return(NULL)
+        }
+        
+        # Check if risk_value column exists in all layers
+        has_risk_value <- sapply(all_layers, function(layer) {
+          "risk_value" %in% colnames(layer)
+        })
+        
+        # If not all layers have risk_value, add it with NA values
+        for (i in which(!has_risk_value)) {
+          message("Adding missing risk_value column to layer ", i)
+          all_layers[[i]]$risk_value <- NA
+        }
+        
+        combined_data <- bind_rows(all_layers) 
+        
+        # Check if we have a valid combined dataset
+        if (is.null(combined_data) || nrow(combined_data) == 0) {
+          warning("No valid data after combining layers")
+          return(NULL)
+        }
+        
+        # Group and summarize
+        combined_data %>%
+          group_by(geom) %>%
+          summarize(combined_risk = sum(risk_value, na.rm = TRUE))
+      }, error = function(e) {
+        warning("Error combining layers: ", e$message)
+        return(NULL)
+      })
       
       # Ensure final data is in WGS84
-      combined <- st_transform(combined, 4326)
+      if (!is.null(combined)) {
+        combined <- st_transform(combined, 4326)
+      }
       
       # Debug info - uncomment if needed
       # bbox <- st_bbox(combined)
@@ -320,7 +399,9 @@ server <- function(input, output, session) {
   
   #=========================
   # PORT RISK TAB FUNCTIONS
-  #=========================  # Load available port risk layers
+  #=========================
+  
+  # Load available port risk layers
   available_port_layers <- reactive({
     # Get the selected scenario
     scenario <- input$scenario_filter
@@ -436,7 +517,11 @@ server <- function(input, output, session) {
       input$port_update_map
     }
     
-    req(input$selected_port_layers)
+    # Handle case when no layers are selected
+    if(is.null(input$selected_port_layers) || length(input$selected_port_layers) == 0) {
+      return(NULL)
+    }
+    
     scenario <- input$scenario_filter
     
     isolate({
@@ -523,9 +608,7 @@ server <- function(input, output, session) {
           if (!file.exists(file_path)) {
             # Try without scenario suffix as fallback
             alt_file_path <- here("output", "spatial layers", "risk at ports", 
-                               paste0(layer_name, ".gpkg"))
-            
-            # If still doesn't exist, give warning and return NULL
+                               paste0(layer_name, ".gpkg"))          # If still doesn't exist, give warning and return NULL
             if (!file.exists(alt_file_path)) {
               warning("Port risk file not found: ", file_path)
               return(NULL)
@@ -632,18 +715,24 @@ server <- function(input, output, session) {
       return(combined_ports_summarized)
     })
   })
-  
-  # Render the port risk map
+    # Render the port risk map
   output$port_risk_map <- renderLeaflet({
     leaflet() %>%
       addProviderTiles(providers$CartoDB.Positron) %>%
       setView(lng = -95, lat = 39, zoom = 4)
-  })  # Update port risk map when combined layer changes
+  })
+    # Update port risk map when combined layer changes
   observe({
-    port_data <- port_layers_data()
+    port_data <- tryCatch({
+      port_layers_data()
+    }, error = function(e) {
+      warning("Error loading port layers data: ", e$message)
+      NULL
+    })
+    
     scenario <- input$scenario_filter
     
-    if (is.null(port_data)) {
+    if (is.null(port_data) || nrow(port_data) == 0) {
       leafletProxy("port_risk_map") %>%
         clearMarkers() %>%
         clearControls()
@@ -693,32 +782,46 @@ server <- function(input, output, session) {
         "<strong>Layers (", layer_count, "):</strong> ", layer_name, "<br>",
         "<strong>Scenario:</strong> ", scenario
       )
-    }, port_data$LOCATION_NAME, port_data[[risk_col]], port_data$layer_name, port_data$layer_count, SIMPLIFY = FALSE)
+    }, port_data$LOCATION_NAME, port_data[[risk_col]], port_data$layer_name, port_data$layer_count, SIMPLIFY = FALSE)    # Scale point size based on risk level
+    # Calculate relative sizes between min_size (point_size/2) and max_size (point_size*1.5)
+    min_size <- max(point_size/2, 2)  # Don't go below 2px
+    max_size <- point_size*1.5
+
+    # Calculate transparency values - minimum alpha = 0.1, maximum = 0.85
+    min_alpha <- 0.1
+    max_alpha <- 0.85
     
-    # Scale point size based on number of layers if needed
-    # Uncomment below if you want points with more layers to be larger
-    # adjusted_size <- ifelse(port_data$layer_count > 1, 
-    #                       point_size * (1 + 0.2 * pmin(port_data$layer_count - 1, 4)), 
-    #                       point_size)
+    # Get risk range
+    min_risk <- min(port_data[[risk_col]], na.rm = TRUE)
+    max_risk <- max(port_data[[risk_col]], na.rm = TRUE)
+    
+    # If there's no variation in risk, use constant values
+    if (max_risk == min_risk) {
+      adjusted_size <- rep(point_size, nrow(port_data))
+      adjusted_opacity <- rep(0.8, nrow(port_data))
+    } else {
+      # Scale sizes and opacity based on risk values
+      risk_scale <- (port_data[[risk_col]] - min_risk) / (max_risk - min_risk)
+      adjusted_size <- min_size + risk_scale * (max_size - min_size)
+      adjusted_opacity <- min_alpha + risk_scale * (max_alpha - min_alpha)
+    }
     
     leafletProxy("port_risk_map") %>%
       clearMarkers() %>%
-      clearControls() %>%
-      addCircleMarkers(
+      clearControls() %>%      addCircleMarkers(
         data = port_data,
-        radius = point_size,
+        radius = adjusted_size,  # Use scaled size based on risk
         fillColor = ~pal(port_data[[risk_col]]),
         color = "black",
-        weight = 1,
+        weight = 0,
         opacity = 1,
-        fillOpacity = 0.8,
+        fillOpacity = adjusted_opacity,  # Use scaled opacity based on risk
         popup = popup_content
-      ) %>%
-      addLegend(
+      )%>%      addLegend(
         position = "bottomright",
         pal = pal,
         values = port_data[[risk_col]],
-        title = paste0("Combined Risk Level (", scenario, ")"),
+        title = paste0("Combined Risk Level (", scenario, ")\nColor, Size & Opacity = Risk Value"),
         opacity = 0.8
       )
   })# Scenario information text
@@ -832,13 +935,19 @@ if (threshold_applied) {
     "Total risk value: ", formatC(total_risk, format = "f", digits = 2)
   ))
 }
-  })
-  # Create data table for port risk data
+  })  # Create data table for port risk data
   output$port_data_table <- renderDT({
-    port_data <- port_layers_data()
+    port_data <- tryCatch({
+      port_layers_data()
+    }, error = function(e) {
+      warning("Error getting port data for table: ", e$message)
+      NULL
+    })
     
-    if (is.null(port_data)) {
-      return(NULL)
+    if (is.null(port_data) || nrow(port_data) == 0) {
+      return(datatable(data.frame(Message = "No data available"),
+                      options = list(dom = 't'),
+                      rownames = FALSE))
     }
     
     # The risk column should now be total_mean_kg from our summarization

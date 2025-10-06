@@ -1,0 +1,211 @@
+---
+title: "IBL data prep"
+author: "Dalon White"
+date: "2025-09-30"
+output: 
+
+
+params:
+  years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
+  ibl_geolocated_filename: "ibl_records_geocoded"
+---
+
+```{r setup, include=FALSE}
+input_dir <- file.path(here::here(),"input", "data", "illegal boat landings")
+output_dir <- file.path(here::here(),"output", "IBLs")
+layer_dir <- file.path(here::here(),"output", "spatial_layers")
+```
+
+```{r parameters, include=FALSE}
+# Function to load the shared parameters if available
+load_shared_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    message("Loading shared parameters from 00_asf_risk_parameters.Rmd")
+    return(readRDS(params_file))
+  } else {
+    message("Shared parameter file not found. Using script-specific parameters.")
+    return(NULL)
+  }
+}
+
+# load shared params
+shared_params <- load_shared_params()
+
+# Use shared params if available, otherwise use script-specific params
+if (!exists("params")) {
+  if (!is.null(shared_params)) {
+    params <- shared_params
+  } else {
+    # Default params specific to this script
+    params <- list(
+      begin_date = "2000-01-01",
+      end_date = "2024-12-31",
+      US_grid_cell_size = 30000,
+      ibl_geolocated_filename = "ibl_records_geocoded"
+    )
+  }
+}
+```
+
+```{r load data}
+library(readr)
+library(dplyr)
+library(stringr)
+library(readxl)  # Added for reading Excel files
+
+# Read Excel files instead of CSV
+locs <- read_excel(file.path(input_dir, "IBL 8-13-2025 2-32-25 PM.xlsx"))
+dat <- read_excel(file.path(input_dir, "All IBL Tasks 8-13-2025 2-33-08 PM.xlsx"))
+
+
+```
+```{r clean data}
+#---- Clean and select relevant columns ----
+locs <- locs |> dplyr::select(`Structure name`, `Structure Entry Latitude`, `Structure Entry Longitude`, `Access Group`) |>
+rename(structure_name = `Structure name`, lat = `Structure Entry Latitude`, lon = `Structure Entry Longitude`, access_group = `Access Group`)
+
+
+dat <- dat |> 
+dplyr::select(`TK: ID#`,Owner, `Sub-Category`, `Start Date`, `Completion comments`) |>
+rename(task = `TK: ID#`, owner = Owner, sub_category = `Sub-Category`, start_date = `Start Date`, completion_comments = `Completion comments`)
+```
+
+```{r extract kgs}
+#---- Create animal and plant kg data columns---- 
+dat$completion_comments <- str_replace_all(dat$completion_comments, "(?i)anima\\b", "animal")  # Correct 'anima' to 'animal'
+dat$completion_comments <- str_replace_all(dat$completion_comments, "(?i)plan\\b", "plant")   # Correct 'plan' to 'plant'
+dat$completion_comments <- str_replace_all(dat$completion_comments, "(?<=\\s|^)\\.(\\d+)", "0.\\1")  # Replace .5 with 0.5
+
+#--Regex patterns to extract numbers
+animal_pattern <- "(?i)animal(?:s|\\s*products?)?\\s*[:#;\\-]?\\s*(\\d+(\\.\\d+)?)\\s*(pounds|lbs|#)?"
+plant_pattern <- "(?i)plants?(?:\\s*products?)?\\s*[:#;\\-]?\\s*(\\d+(\\.\\d+)?)\\s*(pounds|lbs|#)?"
+ 
+#--Additional regex patterns to capture numbers after "#:" or "#: " separators
+animal_separator_pattern <- "(?i)animal\\s*#:\\s*(\\d+(\\.\\d+)?)"
+plant_separator_pattern <- "(?i)plant[s]?\\s*#:\\s*(\\d+(\\.\\d+)?)"
+ 
+#--First, extract using the main patterns
+dat$Animal.kg <- as.numeric(str_extract(dat$completion_comments, animal_pattern) %>%
+                              str_extract("\\d+(\\.\\d+)?"))
+ 
+dat$Plant.kg <- as.numeric(str_extract(dat$completion_comments, plant_pattern) %>%
+                             str_extract("\\d+(\\.\\d+)?"))
+ 
+#--Now, extract using the separator patterns
+dat$Animal.kg[is.na(dat$Animal.kg)] <- as.numeric(str_extract(dat$completion_comments[is.na(dat$Animal.kg)], animal_separator_pattern) %>%
+                                                    str_extract("\\d+(\\.\\d+)?"))
+
+dat$Plant.kg[is.na(dat$Plant.kg)] <- as.numeric(str_extract(dat$completion_comments[is.na(dat$Plant.kg)], plant_separator_pattern) %>%
+                                                  str_extract("\\d+(\\.\\d+)?"))
+ 
+#--Convert pounds to kilograms
+dat$Animal.kg <- dat$Animal.kg * 0.453592
+dat$Plant.kg <- dat$Plant.kg * 0.453592
+```
+
+```{r merge data}
+# join
+ibl_data <- dat %>%
+  # First, do a left join based on structure name
+  left_join(locs, by = c("sub_category" = "structure_name", "owner" = "access_group"))
+
+ibl_data |> count(sub_category, owner) |> filter(n >1)
+
+#View(ibl_data |> count(sub_category, owner) |> filter(n >1)) 
+# There are repeated incidents, but not many. I'm not seeing any items on them. I think they are perhaps multiple visits to the same site, or a broken vessel arriving, perhaps.
+```
+
+# assign PATHWAY name
+```{r assign pathway name}
+# Assign PATHWAY name based on sub-category
+ibl_data <- ibl_data %>%
+  mutate(PATHWAY = "IBL"
+  )
+```
+Load pathway to entry type reference table:
+
+```{r load pathway to entry type reference table}
+setwd(here::here('input', 'data', 'PATHWAY name reference'))
+# Load the pathway reference table
+pathway_ref <- read.csv("pathway to entry type reference table.csv", stringsAsFactors = FALSE)
+ibl_data <- ibl_data %>%
+  left_join(pathway_ref, by = "PATHWAY", relationship = "many-to-one")
+
+get_entry_type <- function(pathway_str) {
+  for (i in 1:nrow(pathway_ref)) {
+    ref_pathway <- pathway_ref$PATHWAY[i]
+    if (grepl(ref_pathway, pathway_str, fixed = TRUE)) {
+      return(pathway_ref$entry_type[i])
+    }
+  }
+  return(NA_character_)
+}
+
+# Apply the function to each pathway in ibl_data
+ibl_data <- ibl_data %>%
+  rowwise() %>%
+  mutate(entry_type = get_entry_type(PATHWAY)) %>%
+  ungroup()
+```
+
+
+# Match with the product reference list, which incldues a special category I created(ITEM == 'Animal_IBL') which has 'HIGH' ASF risk
+
+## IBL product name classification
+IBLs don't have a classfication other than animal product in #'s, converted to kgs. FOr other pathways, this is pulled straight from the Commodity Brg table. Here, we will assign it directly.
+
+- these steps just help it fit in the pipeline in case something changes later - it's a long way of doing it
+```{r assign product pathway}
+ibl_data <- ibl_data %>%
+  mutate(COMMODITY_DISPLAY_NAME = "Animal_IBL")
+```
+
+load product reference list
+```{r identify products of risk}
+setwd(here::here("input","data","asf affected product names"))
+asf_product_ref <- read.csv(params$affected_product_file)
+
+match_asf_risk <- function(data, reference_table) {
+  # Try matching on COMMODITY_DISPLAY_NAME
+  asf_product_match <- data %>%
+    inner_join(reference_table, 
+               by = c("COMMODITY_DISPLAY_NAME" = "ITEM", "entry_type" = "entry_type"), 
+               relationship = "many-to-many",
+               copy = TRUE)
+  
+  return(asf_product_match)
+}
+
+# Apply to eans
+at_risk_ibl <- match_asf_risk(ibl_data, asf_product_ref)
+```
+
+# Could do sampling to predict based on a volume
+- Not currently helpful, we don't know how many IBLs might come in
+  - otherwise, it would be 1) change the at_risk_ibl to be only if the item exists, 2) predict the likelihood of the IBL having risk in FL vs PR, 3) create distribution of kgs, 4) provide a volume number, and 5) sample from that approach rate and size distribution to create a predicted volume of risk coming in
+
+- BUT for now, just leave it as is
+
+# Filter dates
+```{r filter dates}
+#---- Filter by years specified in params ----
+ibl_data_filtered <- at_risk_ibl %>%
+  mutate(start_date = as.Date(start_date)) %>%
+  filter(lubridate::year(start_date) %in% params$years)
+
+```
+
+```{r save data}
+#---- Save cleaned and merged data ----
+
+#save the R file for picking up in the next script
+saveRDS(ibl_data_filtered, here::here("output", "intermediate files",(params$ibl_geolocated_filename)))
+
+#save a copy of the full dataset as a .csv
+write_csv(ibl_data, file.path(output_dir, "all_ibl_data.csv"))
+
+#save a copy of the filtered data set as a .csv
+write_csv(ibl_data_filtered, file.path(output_dir, paste0(min(params$years), "_to_", max(params$years),"_ibl_data.csv")))
+```

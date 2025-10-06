@@ -40,6 +40,8 @@ Land border,Passenger,Baggage,swine product and byproduct,personal use,LandBorde
 Land border,Passenger,Baggage,swine product and byproduct,smuggled commercial product,LandBorderTruckConveyance_bag_swi_smu,Mex/Can,32,644895
 Land border,Passenger,Baggage,swine product and byproduct,smuggled commercial product,LandBorderTruckConveyance_bag_swi_smu,Mex/Can,42,46279
 Land border,Passenger,Vehicle,fomite,plant-based feed,LandBorderTruckConveyance_con_fom_pla,Mex/Can,32,207
+Maritime,Mail,Package,other swine product,animal-based feed,MaritimePortVesselMailCBP_pac_oth_ani,Mex/Can,8,1370.554
+Maritime,Mail,Package,swine product and byproduct,personal use,MaritimePortVesselMailCBP_pac_swi_per,Mex/Can,8,4815.059912
 Land border,Passenger,Baggage,other swine product,unspecified,PedestrianSB_bag_oth_uns,Mex/Can,29,2569
 Land border,Passenger,Baggage,swine product and byproduct,personal use,PedestrianSB_bag_swi_per,Mex/Can,29,178039
 Land border,Passenger,Baggage,swine product and byproduct,smuggled commercial product,PedestrianSB_bag_swi_smu,Mex/Can,29,59909
@@ -54,3 +56,5 @@ Air,Eco,Package,swine product and byproduct,smuggled commercial product,Expressc
 Land border,Passenger,Baggage,swine product and byproduct,personal use,LandBorderTruckConveyance_bag_swi_per,Predicted,42,280
 Maritime,Cargo,Container,other swine product,animal-based feed,MaritimePortVesselCargoCB_con_oth_ani,Predicted,53,165948
 Maritime,Cargo,Container,swine product and byproduct,commercial imports,MaritimePortVesselCargoCB_con_swi_com,Predicted,53,511542
+Maritime,Mail,Package,other swine product,animal-based feed,MaritimePortVesselMailCBP_pac_oth_ani,Predicted,8,2365.073267
+Maritime,Mail,Package,swine product and byproduct,personal use,MaritimePortVesselMailCBP_pac_swi_per,Predicted,8,128853

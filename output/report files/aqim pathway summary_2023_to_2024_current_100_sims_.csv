@@ -1,12 +1,14 @@
 "PATHWAY","container","product_pathway","product_subpathway","total_mean_kg"
-"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",33360.3090587042
-"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",1612566.29115994
-"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",98541.1289047125
-"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",252.426
-"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",5489.96134615892
-"Express_courier","package","other products","unspecified feed",10917.25
-"Express_courier","package","swine products/by-products","personal use or consumption",526433.522612397
-"Express_courier","package","swine products/by-products","smuggled commercial products",73708.62
-"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",306.685235203248
-"Maritime Port - Vessel - Cargo - CBP","container","other products","animal-based feed",166801.64
-"Maritime Port - Vessel - Cargo - CBP","container","swine products/by-products","commercial",512632.25
+"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",33243.3952898205
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",1611843.46072098
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",98071.5817288861
+"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",253.449
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",5471.94173639184
+"Express_courier","package","other products","unspecified feed",10907.65
+"Express_courier","package","swine products/by-products","personal use or consumption",526736.284794464
+"Express_courier","package","swine products/by-products","smuggled commercial products",73675.97
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",318.940993018463
+"Maritime Port - Vessel - Cargo - CBP","container","other products","animal-based feed",164042.97
+"Maritime Port - Vessel - Cargo - CBP","container","swine products/by-products","commercial",523408.4
+"Maritime Port - Vessel - Mail - CBP","package","other products","animal-based feed",2365.07326660037
+"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption",128853.186874589

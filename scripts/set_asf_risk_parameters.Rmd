@@ -62,7 +62,8 @@ asf_params <- list(
   aqim_qmi_size_distribution_filename = "pathway_weight_distribution_models",
   pathway_volumes_filename = "volume_of_risk_by_pathway",
   ean_geolocated_filename = "ean_records_geocoded",
-  
+  ibl_geolocated_filename = "ibl_records_geocoded",
+
   # Simulation settings
   # Default is 100 for production, can be reduced for testing
   n_sims_for_volume = 100,
@@ -115,7 +116,10 @@ pipeline_scripts <- c(
   "01_07 aqim volume spatial layers.Rmd",
   "03_01 ean data.Rmd",
   "03_02 ean geolocation.Rmd",
-  "03_03 ean port and destination layers.Rmd"
+  "03_03 ean port and destination layers.Rmd",
+  "04_01 IBL data.Rmd",
+  "04_02 IBL port and destination layers.Rmd",
+  "04_03 IBL report output.R"
 )
 
 # You can run the pipeline using the run_pipeline.R script:

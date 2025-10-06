@@ -6,7 +6,7 @@ library(tidyverse)
 library(here)
 
 setwd(here::here('output','report files'))
-df <- read.csv("report_i_made_from_risk_at_port_summary_layers.csv")
+df <- read.csv("report_i_made_from_risk_at_port_summary_layers.csv", row.names=TRUE)
 df$total_risk <- as.numeric(df$total_risk)
 
 summ_1 <- df  |> dplyr::select(-layer_name, -point_count) |>  group_by(scenario, Container, PoE, Conveyance.type.pathway, Product.pathway, Product.subpathway) |> summarize(total_risk = sum(total_risk), na.rm = TRUE) |> ungroup() |> pivot_wider(names_from = scenario, values_from = total_risk)
@@ -17,10 +17,24 @@ summ_2 <- df |> group_by(scenario, PoE, Conveyance.type.pathway, Product.pathway
 summ_3 <- df |> dplyr::select(-layer_name, -point_count, -Container, -PoE) |> group_by(scenario, Conveyance.type.pathway, Product.pathway, Product.subpathway) |> summarize(total_risk = sum(total_risk), na.rm = TRUE) |> pivot_wider(names_from = scenario, values_from = total_risk)
 
 
-write.csv(summ_1, "summary_by_scenario.csv")
 write.csv(summ_2, "summary_by_scenario_no_container.csv")
 write.csv(summ_3, "summary_by_scenario_no_container_no_PoE.csv")
 
+```
+
+```{r manipulate summary for expected arrival}
+# create a column for expected_volume
+# expected_volume is the amount in `Predicted` unless the amount in `Intercepted` is not NA. In that case, it is `Predicted - Intercepted`. If that value is negative, set it to 0.
+summ_1 <- summ_1 |> mutate(Expected = ifelse(!is.na(Intercepted), pmax(Predicted - Intercepted, 0), Predicted))
+
+summ_1 <- summ_1 |> mutate(Expected = case_when(
+  !is.na(Intercepted) & !is.na(Predicted) ~ pmax(Predicted - Intercepted, 0),
+  !is.na(Predicted) ~ Predicted,
+  !is.na(Intercepted) ~ Intercepted,
+  .default = 0
+))
+
+write.csv(summ_1, "summary_by_scenario.csv")
 ```
 
 # trying some graphs
@@ -33,13 +47,15 @@ library(tidyr)
 # Assuming you're using the 'current' risk column
 # Prepare the data for Sankey diagram
 sankey_data <- summ_1 %>%
-  dplyr::select(PoE, Product.pathway, Container, current) %>%
-  filter(!is.na(current)) %>%
+  dplyr::select(PoE, Conveyance.type.pathway, Product.pathway, Product.subpathway, Container, Expected) %>%
+  filter(Expected != 0) %>%
   # Create source-target pairs for the network
   mutate(
     PoE = paste0("PoE_", PoE),            # Prefix to avoid node name conflicts
+    Conveyance = paste0("Conv_", Conveyance.type.pathway),
+    Container = paste0("Cont_", Container),
     Product = paste0("Prod_", Product.pathway),
-    Container = paste0("Cont_", Container)
+    ProductSub = paste0("Sub_", Product.subpathway)
   )
 
 # Create nodes data frame
@@ -47,37 +63,60 @@ sankey_data <- summ_1 %>%
 nodes <- data.frame(
   name = c(
     unique(sankey_data$PoE),
+    unique(sankey_data$Conveyance),
+    unique(sankey_data$Container),
     unique(sankey_data$Product),
-    unique(sankey_data$Container)
+    unique(sankey_data$ProductSub)
   )
 )
 nodes$id <- 0:(nrow(nodes)-1)  # Zero-indexed node IDs
 
 # Create links data frame
-# First set of links: PoE to Product
-links_poe_prod <- sankey_data %>%
-  group_by(PoE, Product) %>%
-  summarise(value = sum(current, na.rm = TRUE), .groups = 'drop') %>%
+# First set of links: PoE to Conveyance
+links_poe_conv <- sankey_data %>%
+  group_by(PoE, Conveyance) %>%
+  summarise(value = sum(Expected, na.rm = TRUE), .groups = 'drop') %>%
   mutate(
     source = match(PoE, nodes$name) - 1,
-    target = match(Product, nodes$name) - 1
+    target = match(Conveyance, nodes$name) - 1
   )
 
-# Second set of links: Product to Container
-links_prod_cont <- sankey_data %>%
-  group_by(Product, Container) %>%
-  summarise(value = sum(current, na.rm = TRUE), .groups = 'drop') %>%
+# Second set of links: Conveyance to Container
+links_conv_cont <- sankey_data %>%
+  group_by(Conveyance, Container) %>%
+  summarise(value = sum(Expected, na.rm = TRUE), .groups = 'drop') %>%
   mutate(
-    source = match(Product, nodes$name) - 1,
+    source = match(Conveyance, nodes$name) - 1,
     target = match(Container, nodes$name) - 1
   )
 
+  # Third set of links: Container to Product
+links_cont_prod <- sankey_data %>%
+  group_by(Container, Product) %>%
+  summarise(value = sum(Expected, na.rm = TRUE), .groups = 'drop') %>%
+  mutate(
+    source = match(Container, nodes$name) - 1,
+    target = match(Product, nodes$name) - 1
+  )
+
+  # Fourth set of links: Product to subproduct
+links_prod_subprod <- sankey_data %>%
+  group_by(Product, ProductSub) %>%
+  summarise(value = sum(Expected, na.rm = TRUE), .groups = 'drop') %>%
+  mutate(
+    source = match(Product, nodes$name) - 1,
+    target = match(ProductSub, nodes$name) - 1
+  )
+
 # Combine the links
-links <- bind_rows(links_poe_prod, links_prod_cont) %>%
+links <- bind_rows(links_poe_conv, links_conv_cont, links_cont_prod, links_prod_subprod) %>%
   dplyr::select(source, target, value)
 
+# Format link values for display (rounding to 2 decimal places)
+links$formattedValue <- round(links$value, 2)
+
 # Create the Sankey diagram
-sankeyNetwork(
+sankey_plot <- sankeyNetwork(
   Links = links, 
   Nodes = nodes, 
   Source = "source", 
@@ -91,655 +130,107 @@ sankeyNetwork(
   height = 800,
   width = 1200
 )
-```
 
-
-poe > container > product
-
-```{r sankey deus}
-library(networkD3)
-library(dplyr)
-library(tidyr)
-
-# Prepare the data for Sankey diagram
-sankey_data <- summ_1 %>%
-  select(PoE, Container, Product.pathway, current) %>%
-  filter(!is.na(current)) %>%
-  # Create source-target pairs for the network
-  mutate(
-    PoE = paste0("PoE_", PoE),            # Prefix to avoid node name conflicts
-    Container = paste0("Cont_", Container),
-    Product = paste0("Prod_", Product.pathway)
-  )
-
-# Create nodes data frame - now ordering matters!
-# Order as PoE -> Container -> Product
-poe_nodes <- unique(sankey_data$PoE)
-container_nodes <- unique(sankey_data$Container)
-product_nodes <- unique(sankey_data$Product)
-
-nodes <- data.frame(
-  name = c(poe_nodes, container_nodes, product_nodes)
+# Add tooltips with flow values
+sankey_plot <- htmlwidgets::onRender(
+  sankey_plot,
+  '
+  function(el, x) {
+    // Add tooltips to the links
+    d3.select(el).selectAll(".link")
+      .append("title")
+      .text(function(d) { 
+        return "Flow value: " + d.value.toFixed(2); 
+      });
+  }
+  '
 )
-nodes$id <- 0:(nrow(nodes)-1)  # Zero-indexed node IDs
 
-# Create first set of links: PoE to Container
-links_poe_cont <- sankey_data %>%
-  group_by(PoE, Container) %>%
-  summarise(value = sum(current, na.rm = TRUE), .groups = 'drop') %>%
-  mutate(
-    source = match(PoE, nodes$name) - 1,
-    target = match(Container, nodes$name) - 1
-  )
+# Add title to the Sankey diagram using htmlwidgets
+library(htmlwidgets)
+sankey_plot <- htmlwidgets::prependContent(sankey_plot, 
+  htmltools::tags$h2("Conveyance and Product Pathways for At-risk Items Entering the US", 
+                     style = "text-align: center; color: #333333; font-family: Arial;"))
 
-# Second set: Container to Product
-links_cont_prod <- sankey_data %>%
-  group_by(Container, Product) %>%
-  summarise(value = sum(current, na.rm = TRUE), .groups = 'drop') %>%
-  mutate(
-    source = match(Container, nodes$name) - 1,
-    target = match(Product, nodes$name) - 1
-  )
+# Define output directory for the Sankey diagram
+sankey_output_dir <- here::here("output", "report files")
+if (!dir.exists(sankey_output_dir)) {
+  dir.create(sankey_output_dir, recursive = TRUE)
+}
 
-# Combine the links
-links <- bind_rows(links_poe_cont, links_cont_prod) %>%
-  select(source, target, value)
+# Create filename with timestamp for uniqueness
+timestamp <- format(Sys.time(), "%Y%m%d_%H%M")
+sankey_html_filename <- file.path(sankey_output_dir, paste0("asf_sankey_diagram_", timestamp, ".html"))
+sankey_png_filename <- file.path(sankey_output_dir, paste0("asf_sankey_diagram_", timestamp, ".png"))
 
-# Create the Sankey diagram with nodes ordered PoE -> Container -> Product
-sankeyNetwork(
+# Save the Sankey diagram as HTML with title
+htmlwidgets::saveWidget(sankey_plot, sankey_html_filename, selfcontained = TRUE)
+
+# Save as PNG using webshot package (if available)
+if (requireNamespace("webshot", quietly = TRUE)) {
+  webshot::webshot(sankey_html_filename, sankey_png_filename, 
+                  delay = 1, vwidth = 1200, vheight = 800)
+} else {
+  message("The webshot package is not installed. To save as PNG, please install webshot package with:\n  install.packages('webshot')\n  webshot::install_phantomjs()")
+}
+
+# Create a version without node labels
+sankey_plot_no_labels <- sankeyNetwork(
   Links = links, 
   Nodes = nodes, 
   Source = "source", 
   Target = "target", 
   Value = "value", 
   NodeID = "name",
-  fontSize = 12,
+  fontSize = 0,  # Set font size to 0 to hide labels
   nodeWidth = 30,
-  sinksRight = TRUE,  # Set to TRUE to enforce left-to-right flow
-  colourScale = JS("d3.scaleOrdinal().range(d3.schemeCategory20)"), # Color scheme
+  sinksRight = FALSE,
+  colourScale = JS("d3.scaleOrdinal().range(d3.schemeCategory20)"),
   height = 800,
   width = 1200
 )
 
-#These nodes are messed up
-```
-
-
-```{r diff between current and mex_can}
-#calculate the difference between current and mex_can scenarios
-#visualize the difference
-summ_1 <- summ_1 %>%
-  mutate(current = as.numeric(current),
-         mex_can = as.numeric(mex_can),
-    diff = mex_can / (mex_can + current)*100)
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-````{r chord diagram}
-library(circlize)
-library(chorddiag)
-
-# Create a matrix of flows between PoE and Product
-chord_matrix <- summ_1 %>%
-  select(PoE, Product.pathway, current) %>%
-  filter(!is.na(current)) %>%
-  group_by(PoE, Product.pathway) %>%
-  summarise(value = sum(current, na.rm = TRUE), .groups = 'drop') %>%
-  pivot_wider(
-    names_from = Product.pathway,
-    values_from = value,
-    values_fill = 0
-  ) %>%
-  column_to_rownames("PoE") %>%
-  as.matrix()
-
-# Color by container type
-container_colors <- summ_1 %>%
-  select(PoE, Container) %>%
-  distinct() %>%
-  # Assign colors based on container
-  mutate(color = case_when(
-    Container == "baggage" ~ "#1f77b4",
-    Container == "package" ~ "#ff7f0e",
-    Container == "cargo" ~ "#2ca02c",
-    Container == "mail" ~ "#d62728",
-    TRUE ~ "#9467bd"
-  ))
-
-# Create the chord diagram
-chorddiag(
-  data = chord_matrix,
-  groupColors = container_colors$color,
-  groupnamePadding = 20,
-  groupPadding = 3,
-  showTicks = FALSE
+# Add tooltips with node names and flow values to no-label version (so names are still accessible on hover)
+sankey_plot_no_labels <- htmlwidgets::onRender(
+  sankey_plot_no_labels,
+  '
+  function(el, x) {
+    // Add tooltips to the links
+    d3.select(el).selectAll(".link")
+      .append("title")
+      .text(function(d) { 
+        return "Flow value: " + d.value.toFixed(2); 
+      });
+    
+    // Add tooltips to the nodes
+    d3.select(el).selectAll(".node")
+      .append("title")
+      .text(function(d) {
+        return d.name;
+      });
+  }
+  '
 )
 
-```
+# Add title to the version without labels
+sankey_plot_no_labels <- htmlwidgets::prependContent(sankey_plot_no_labels, 
+  htmltools::tags$h2("Conveyance and Product Pathways (No Labels)", 
+                     style = "text-align: center; color: #333333; font-family: Arial;"))
 
+# Save the version without labels
+sankey_nolabel_html_filename <- file.path(sankey_output_dir, paste0("asf_sankey_diagram_nolabels_", timestamp, ".html"))
+sankey_nolabel_png_filename <- file.path(sankey_output_dir, paste0("asf_sankey_diagram_nolabels_", timestamp, ".png"))
 
-```{r circlize chord}
-# Convert your data
-chord_data <- summ_1 %>%
-  dplyr::select(PoE, Product.pathway, current) %>%
-  filter(!is.na(current)) %>%
-  group_by(PoE, Product.pathway) %>%
-  summarise(value = sum(current, na.rm = TRUE), .groups = 'drop')
+htmlwidgets::saveWidget(sankey_plot_no_labels, sankey_nolabel_html_filename, selfcontained = TRUE)
 
-# Create matrix
-chord_matrix <- chord_data %>%
-  pivot_wider(
-    names_from = Product.pathway,
-    values_from = value,
-    values_fill = 0
-  ) %>%
-  column_to_rownames("PoE") %>%
-  as.matrix()
-
-# Create chord diagram
-circlize::chordDiagram(chord_matrix)
-
-```
-
-```{r hierarchical_chord_diagram, fig.width=8, fig.height=8, dpi=100}
-library(circlize)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(scales)
-library(RColorBrewer)
-library(viridis)
-library(grid)
-library(gridExtra)
-
-# Prepare the data for hierarchical chord diagram
-chord_data <- summ_1 %>%
-  dplyr::select(PoE, Conveyance.type.pathway, Product.pathway, Product.subpathway, current) %>%
-  filter(!is.na(current)) %>%
-  # Create hierarchical groups
-  mutate(
-    # Create source group: PoE + Conveyance.type.pathway
-    source_group = paste0(PoE, ":", Conveyance.type.pathway),
-    # Create target group: Product.pathway + Product.subpathway
-    target_group = paste0(Product.pathway, ":", Product.subpathway)
-  ) %>%
-  # Group by the new hierarchical categories and sum the values
-  group_by(source_group, target_group) %>%
-  summarise(value = sum(current, na.rm = TRUE), .groups = "drop")
-
-# Sort the data by value to improve visualization
-chord_data <- chord_data %>% arrange(desc(value))
-
-# Extract unique source and target groups
-source_groups <- unique(chord_data$source_group)
-target_groups <- unique(chord_data$target_group)
-
-# Create a matrix for the chord diagram
-chord_matrix <- chord_data %>%
-  pivot_wider(
-    names_from = target_group,
-    values_from = value,
-    values_fill = 0
-  ) %>%
-  column_to_rownames("source_group") %>%
-  as.matrix()
-
-# Define custom grid colors based on the parent categories
-source_parent_categories <- str_extract(rownames(chord_matrix), "^[^:]+")
-target_parent_categories <- str_extract(colnames(chord_matrix), "^[^:]+")
-
-# Get unique parent categories
-all_parent_categories <- unique(c(source_parent_categories, target_parent_categories))
-
-# Create a better color palette - using viridis for distinct colors
-# and combining with RColorBrewer for a wider range
-n_categories <- length(all_parent_categories)
-viridis_colors <- viridis(min(9, n_categories), option = "D")
-brewer_colors <- brewer.pal(min(9, n_categories), "Set1")
-spectral_colors <- brewer.pal(min(11, n_categories), "Spectral")
-
-# Combine color palettes if we have many categories
-if (n_categories > 11) {
-  parent_colors <- setNames(
-    colorRampPalette(c(viridis_colors, brewer_colors, spectral_colors))(n_categories),
-    all_parent_categories
-  )
-} else {
-  # Use a mix of palettes for better distinction
-  mixed_palette <- c(viridis_colors[1:min(5, n_categories)], 
-                     brewer_colors[1:min(4, max(0, n_categories-5))],
-                     spectral_colors[1:min(2, max(0, n_categories-9))])
-  parent_colors <- setNames(mixed_palette[1:n_categories], all_parent_categories)
+# Save no-label version as PNG if webshot is available
+if (requireNamespace("webshot", quietly = TRUE)) {
+  webshot::webshot(sankey_nolabel_html_filename, sankey_nolabel_png_filename, 
+                  delay = 1, vwidth = 1200, vheight = 800)
 }
 
-# Get colors for source and target groups
-source_colors <- parent_colors[source_parent_categories]
-target_colors <- parent_colors[target_parent_categories]
-
-# Combine source and target colors
-grid_colors <- c(source_colors, target_colors)
-
-# Reset the circos environment
-circos.clear()
-
-# Parameters for better visualization
-gap_degree <- 2  # Slightly reduced gap to use space more efficiently
-transparency <- 0.7  # Transparency for better visibility
-link_border <- "white"  # Border color for links
-bg_color <- "#FCFCFC"  # Light background color
-
-# Set up the plotting parameters - using equal margins to center the plot
-par(mar = c(2, 2, 4, 2), bg = bg_color, cex = 1.1)
-
-# Create the chord diagram with improved parameters for readability
-circos.par(
-  gap.degree = gap_degree,
-  track.margin = c(0.03, 0.03),  # Slightly increased margin for better spacing
-  start.degree = 90,
-  clock.wise = FALSE,
-  points.overflow.warning = FALSE,
-  # More moderate canvas size to fit the page better
-  canvas.xlim = c(-0.85, 0.85),  # Adjusted for better page fit
-  canvas.ylim = c(-0.85, 0.85)   # Adjusted for better page fit
-)
-
-# Create the chord diagram with improved visual appeal
-chordDiagram(
-  chord_matrix,
-  grid.col = grid_colors,
-  transparency = transparency,
-  link.border = link_border,
-  link.lwd = 0.6,  # Slightly thicker links
-  link.sort = TRUE,  # Sort links for better appearance
-  link.largest.ontop = TRUE,  # Place largest flows on top
-  annotationTrack = c("grid", "axis"),  # Add axis for scale reference
-  preAllocateTracks = list(track.height = 0.12),  # Increased height  directional = 0,  # Removed directional arrows (was 1)
-  # Removed direction-related parameters
-  # link.arr.length and link.arr.width no longer needed
-  # link.arr.col no longer needed
-  annotationTrackHeight = c(0.05, 0.12),  # Height of annotation tracks
-  diffHeight = 0.05,  # Increased height difference for sectors
-  reduce = 0.01  # Small reduction factor to avoid overlaps
-)
-
-# Add custom labels with improved parent/child hierarchy formatting
-circos.track(
-  track.index = 1,
-  panel.fun = function(x, y) {
-    sector.name <- get.cell.meta.data("sector.index")
-    # Extract parent and child parts
-    parts <- strsplit(sector.name, ":")[[1]]
-    parent <- parts[1]
-    child <- ifelse(length(parts) > 1, parts[2], "")
-    
-    xlim = get.cell.meta.data("xlim")
-    ylim = get.cell.meta.data("ylim")
-    
-    # Get sector index to determine position in the circle
-    sector.index = get.cell.meta.data("sector.numeric.index")
-    total.sectors = get.cell.meta.data("num.sectors")
-    
-    # Calculate angle to determine the best text orientation
-    sector_angle <- (sector.index / total.sectors) * 360
-    
-    # Choose text orientation based on position in the circle
-    if (sector_angle > 90 && sector_angle < 270) {
-      facing_direction <- "outside"
-      adj_value <- c(0.5, 1)  # Adjust text position
-      y_offset <- mm_y(-1)  # Move text away from circle
-    } else {
-      facing_direction <- "outside"
-      adj_value <- c(0.5, 0)
-      y_offset <- mm_y(2)  # Default position
-    }
-    
-    # Adjust text size based on sector size and data value
-    sector_size <- xlim[2] - xlim[1]
-    sector_value <- sum(chord_matrix[sector.name,], na.rm=TRUE) + sum(chord_matrix[,sector.name], na.rm=TRUE)
-    rel_importance <- sector_value / max(rowSums(chord_matrix) + colSums(chord_matrix), na.rm=TRUE)
-    
-    # Adjust text size based on sector size and importance
-    text_cex <- min(1.0, max(0.65, sector_size/25 * (0.7 + 0.3*rel_importance)))
-    
-    # Position for the labels
-    text_pos <- mean(xlim)
-    
-    # Format the label differently based on position and length
-    # For all labels: show parent in bold, child in regular text with indentation
-    
-    # First line: Parent category (bold)
-    circos.text(
-      text_pos, ylim[1] + mm_y(3) + y_offset, 
-      parent,
-      cex = text_cex, adj = adj_value,
-      facing = facing_direction, 
-      niceFacing = TRUE,
-      font = 2  # Bold font
-    )
-    
-    if (child != "") {
-      # Second line: Child category with indentation
-      circos.text(
-        text_pos, ylim[1] + mm_y(7) + y_offset, 
-        paste0(" ", child),  # Add space for indentation
-        cex = text_cex * 0.9, adj = adj_value,
-        facing = facing_direction, 
-        niceFacing = TRUE,
-        col = "#404040"  # Dark gray for better visibility
-      )
-    }
-  }
-)
-
-# Legend function is defined but not called - keeping it for future use if needed
-create_custom_legend <- function() {
-  # Create a transparent plotting area for the legend in top-right corner
-  par(new = TRUE, fig = c(0.75, 0.98, 0.70, 0.95))
-  plot.new()
-  
-  # Create a filled rectangle as background for the legend with more transparency
-  rect(0, 0, 1, 1, border = NA, col = alpha("white", 0.85))
-  
-  # Increase number of columns to make the legend more compact
-  num_cols <- min(4, ceiling(length(parent_colors) / 3))
-  
-  # Format the legend labels to be more concise
-  legend_labels <- names(parent_colors)
-  
-  # Draw the legend with a border, smaller text size for compactness
-  legend(
-    "center",
-    legend = legend_labels,
-    fill = unname(parent_colors),
-    title = "Categories",
-    cex = 0.65,  # Smaller text size
-    box.col = "#888888",
-    box.lwd = 1,
-    ncol = num_cols,
-    bg = alpha("white", 0.9),
-    title.col = "#333333",
-    title.adj = 0.5
-  )
-}
-
-# Legend is turned off - not calling create_custom_legend()
-
-# Add a more informative and attractive title
-title(
-  main = "ASF Risk Flow: Hierarchical Pathway Analysis",
-  sub = "Source: Port of Entry + Conveyance Type → Target: Product Pathway + Subpathway",
-  cex.main = 1.2,  # Slightly smaller title to leave more room for diagram
-  font.main = 2,
-  col.main = "#333333",
-  cex.sub = 0.8,  # Slightly smaller subtitle
-  col.sub = "#555555",
-  line = 0.5
-)
-
-# Add a caption with data information
-mtext(
-  text = paste0("Data shows relative risk flows between", 
-                " hierarchical categories (n=", nrow(chord_data), ")"),
-  side = 1, 
-  line = 0.5,
-  cex = 0.8,
-  col = "#666666"
-)
-
-# Save the hierarchical chord diagram as an image file
-library(grDevices)
-
-# Define output directories
-output_dir <- here::here("output", "html_reports")
-if (!dir.exists(output_dir)) {
-  dir.create(output_dir, recursive = TRUE)
-}
-
-# Create filename with timestamp for uniqueness
-timestamp <- format(Sys.time(), "%Y%m%d_%H%M")
-png_filename <- file.path(output_dir, paste0("asf_hierarchical_chord_diagram_", timestamp, ".png"))
-pdf_filename <- file.path(output_dir, paste0("asf_hierarchical_chord_diagram_", timestamp, ".pdf"))
-
-# Save as high-resolution PNG file
-png(png_filename, width = 2400, height = 2400, res = 300)
-# Recreate the chord diagram (this is necessary when saving to a file device)
-circos.clear()
-circos.par(
-  gap.degree = gap_degree,
-  track.margin = c(0.03, 0.03),
-  start.degree = 90,
-  clock.wise = FALSE,
-  canvas.xlim = c(-0.85, 0.85),
-  canvas.ylim = c(-0.85, 0.85)
-)
-
-# Create the chord diagram
-chordDiagram(
-  chord_matrix,
-  grid.col = grid_colors,
-  transparency = transparency,
-  link.border = link_border,
-  link.lwd = 0.6,
-  link.sort = TRUE,
-  link.largest.ontop = TRUE,
-  annotationTrack = c("grid", "axis"),
-  preAllocateTracks = list(track.height = 0.12),
-  directional = 1,
-  direction.type = "arrows",
-  link.arr.length = 0.07,
-  link.arr.width = 0.07,
-  link.arr.col = "#454545",
-  annotationTrackHeight = c(0.05, 0.12),
-  diffHeight = 0.05,
-  reduce = 0.01
-)
-
-# Add custom labels
-circos.track(
-  track.index = 1,
-  panel.fun = function(x, y) {
-    sector.name <- get.cell.meta.data("sector.index")
-    parts <- strsplit(sector.name, ":")[[1]]
-    parent <- parts[1]
-    child <- ifelse(length(parts) > 1, parts[2], "")
-    
-    xlim = get.cell.meta.data("xlim")
-    ylim = get.cell.meta.data("ylim")
-    sector.index = get.cell.meta.data("sector.numeric.index")
-    total.sectors = get.cell.meta.data("num.sectors")
-    sector_angle <- (sector.index / total.sectors) * 360
-    
-    if (sector_angle > 90 && sector_angle < 270) {
-      facing_direction <- "outside"
-      adj_value <- c(0.5, 1)
-      y_offset <- mm_y(-1)
-    } else {
-      facing_direction <- "outside"
-      adj_value <- c(0.5, 0)
-      y_offset <- mm_y(2)
-    }
-    
-    sector_size <- xlim[2] - xlim[1]
-    sector_value <- sum(chord_matrix[sector.name,], na.rm=TRUE) + sum(chord_matrix[,sector.name], na.rm=TRUE)
-    rel_importance <- sector_value / max(rowSums(chord_matrix) + colSums(chord_matrix), na.rm=TRUE)
-    text_cex <- min(1.0, max(0.65, sector_size/25 * (0.7 + 0.3*rel_importance)))
-    text_pos <- mean(xlim)
-    
-    circos.text(
-      text_pos, ylim[1] + mm_y(3) + y_offset, 
-      parent,
-      cex = text_cex, adj = adj_value,
-      facing = facing_direction, 
-      niceFacing = TRUE,
-      font = 2
-    )
-    
-    if (child != "") {
-      circos.text(
-        text_pos, ylim[1] + mm_y(7) + y_offset, 
-        paste0(" ", child),
-        cex = text_cex * 0.9, adj = adj_value,
-        facing = facing_direction, 
-        niceFacing = TRUE,
-        col = "#404040"
-      )
-    }
-  }
-)
-
-# Add title
-title(
-  main = "ASF Risk Flow: Hierarchical Pathway Analysis",
-  sub = "Source: Port of Entry + Conveyance Type → Target: Product Pathway + Subpathway",
-  cex.main = 1.2,
-  font.main = 2,
-  col.main = "#333333",
-  cex.sub = 0.8,
-  col.sub = "#555555"
-)
-
-# Add caption
-mtext(
-  text = paste0("Data shows relative risk flows between hierarchical categories (n=", nrow(chord_data), ")"),
-  side = 1,
-  line = 0.5,
-  cex = 0.8,
-  col = "#666666"
-)
-
-# Close the PNG device
-dev.off()
-
-# Also save as PDF for high-quality vector graphics
-pdf(pdf_filename, width = 10, height = 10)
-# Recreate the chart for PDF (same code as above)
-circos.clear()
-circos.par(
-  gap.degree = gap_degree,
-  track.margin = c(0.03, 0.03),
-  start.degree = 90,
-  clock.wise = FALSE,
-  canvas.xlim = c(-0.85, 0.85),
-  canvas.ylim = c(-0.85, 0.85)
-)
-chordDiagram(
-  chord_matrix,
-  grid.col = grid_colors,
-  transparency = transparency,
-  link.border = link_border,
-  link.lwd = 0.6,
-  link.sort = TRUE,
-  link.largest.ontop = TRUE,
-  annotationTrack = c("grid", "axis"),
-  preAllocateTracks = list(track.height = 0.12),
-  directional = 1,
-  direction.type = "arrows",
-  link.arr.length = 0.07,
-  link.arr.width = 0.07,
-  link.arr.col = "#454545",
-  annotationTrackHeight = c(0.05, 0.12),
-  diffHeight = 0.05,
-  reduce = 0.01
-)
-# Add labels and title (same as above)
-circos.track(
-  track.index = 1,
-  panel.fun = function(x, y) {
-    sector.name <- get.cell.meta.data("sector.index")
-    parts <- strsplit(sector.name, ":")[[1]]
-    parent <- parts[1]
-    child <- ifelse(length(parts) > 1, parts[2], "")
-    
-    xlim = get.cell.meta.data("xlim")
-    ylim = get.cell.meta.data("ylim")
-    sector.index = get.cell.meta.data("sector.numeric.index")
-    total.sectors = get.cell.meta.data("num.sectors")
-    sector_angle <- (sector.index / total.sectors) * 360
-    
-    if (sector_angle > 90 && sector_angle < 270) {
-      facing_direction <- "outside"
-      adj_value <- c(0.5, 1)
-      y_offset <- mm_y(-1)
-    } else {
-      facing_direction <- "outside"
-      adj_value <- c(0.5, 0)
-      y_offset <- mm_y(2)
-    }
-    
-    sector_size <- xlim[2] - xlim[1]
-    sector_value <- sum(chord_matrix[sector.name,], na.rm=TRUE) + sum(chord_matrix[,sector.name], na.rm=TRUE)
-    rel_importance <- sector_value / max(rowSums(chord_matrix) + colSums(chord_matrix), na.rm=TRUE)
-    text_cex <- min(1.0, max(0.65, sector_size/25 * (0.7 + 0.3*rel_importance)))
-    text_pos <- mean(xlim)
-    
-    circos.text(
-      text_pos, ylim[1] + mm_y(3) + y_offset, 
-      parent,
-      cex = text_cex, adj = adj_value,
-      facing = facing_direction, 
-      niceFacing = TRUE,
-      font = 2
-    )
-    
-    if (child != "") {
-      circos.text(
-        text_pos, ylim[1] + mm_y(7) + y_offset, 
-        paste0(" ", child),
-        cex = text_cex * 0.9, adj = adj_value,
-        facing = facing_direction, 
-        niceFacing = TRUE,
-        col = "#404040"
-      )
-    }
-  }
-)
-title(
-  main = "ASF Risk Flow: Hierarchical Pathway Analysis",
-  sub = "Source: Port of Entry + Conveyance Type → Target: Product Pathway + Subpathway",
-  cex.main = 1.2,
-  font.main = 2,
-  col.main = "#333333",
-  cex.sub = 0.8,
-  col.sub = "#555555"
-)
-mtext(
-  text = paste0("Data shows relative risk flows between hierarchical categories (n=", nrow(chord_data), ")"),
-  side = 1,
-  line = 0.5,
-  cex = 0.8,
-  col = "#666666"
-)
-dev.off()
-
-# Print file locations
-cat("Hierarchical chord diagram saved as:\n")
-cat("1. PNG: ", png_filename, "\n")
-cat("2. PDF: ", pdf_filename, "\n")
+# Display the original Sankey diagram with title
+sankey_plot
 
 ```
+
