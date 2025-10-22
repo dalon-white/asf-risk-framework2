@@ -324,6 +324,9 @@ aqim_data <- sf::st_transform(aqim_data, 5070)
 ```
 
 ```{r create US grid}
+
+bandwidth = 2.5*params$US_grid_cell_size #in meters; for SpatialKDE::create_grid_hexagonal here and for use in KDE function in later chunk
+
 #create a raster of US
 us_bounds <- tigris::states(cb = FALSE) |> 
                   st_union() |>  sf::st_transform(5070)
@@ -331,15 +334,18 @@ us_bounds <- sf::st_transform(us_bounds, crs = 5070)
 #us_bounds <- as(us_bounds, "Spatial")
 
 us_bounds_sf <- st_sf(geometry = us_bounds)
+
 us_grid <- SpatialKDE::create_grid_hexagonal(
   us_bounds_sf,
   cell_size = params$US_grid_cell_size,
-  only_inside = TRUE
+  only_inside = FALSE,
+  side_offset = bandwidth
 )
 us_grid <- sf::st_intersection(us_bounds_sf, us_grid)
 
 saveRDS(us_bounds_sf, here::here("output","intermediate files", "US hex grid","us_bounds.rds"))
 saveRDS(us_grid, here::here("output","intermediate files", "US hex grid","us_grid.rds"))
+
 ```
 
 ```{r limit destinations to within US}
@@ -366,7 +372,7 @@ for (i in seq_along(pathway_groups)) {
 }
 
 
-bandwidth = 2.5*params$US_grid_cell_size #in meters
+# bandwidth created create US grid chunk
 
 setwd(here::here("output","proportional destination layers"))
 # Loop through each group and save results as soon as they're created

@@ -24,6 +24,8 @@ library(DBI)
 ```{r parameters, include=FALSE}
 # Load parameters
 source(file.path(here::here(), "scripts", "initialize_params.R"))
+# Create params as a copy of asf_params
+params <- asf_params
 ```
 
 # Access lat lon data for the correct years
@@ -94,15 +96,27 @@ cbp_poe <- tbl(geo_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_CBP_POEs]"
 # Convert CBP POE to sf object
 cbp_poe_sf <- cbp_poe  %>%
   filter(!is.na(LON) & !is.na(LAT)) %>%
+  # Add row_id column to use for joining later
+  mutate(row_id = row_number()) %>%
   sf::st_as_sf(coords = c("LON", "LAT"), crs = 4326) %>%
   sf::st_transform(crs = 5070)
-# Method 1: Using st_nearest_feature with direct indexing (cleaner approach)
-# Find nearest POE for each IBL point and join
-ibl_data_with_poe <- sf::st_join(
-  ibl_data_sf_filtered,
-  cbp_poe_sf %>% dplyr::select(CBP_NAME, CBP_CODE, `Port of Entry Name`),
-  join = sf::st_nearest_feature
-)
+  
+# Find nearest POE for each IBL point
+ibl_with_poe <- sf::st_nearest_feature(ibl_data_sf_filtered, cbp_poe_sf)
+
+# Join POE details back to IBL data
+ibl_data_with_poe <- ibl_data_sf_filtered %>%
+  mutate(POE_ID = ibl_with_poe)
+  
+# Join using the row_id we created
+ibl_data_with_poe <- ibl_data_with_poe %>%
+  left_join(cbp_poe_sf %>%
+              st_set_geometry(NULL),
+            by = c("POE_ID" = "row_id"))
+
+# Extract state code from "Port of Entry Name" which typically has format "Name, ST"
+ibl_data_with_poe <- ibl_data_with_poe %>%
+  mutate(LOCATION_STATE_CODE = str_extract(`Port of Entry Name`, "(?<=, )\\w{2}$"))
 ```
 
 
@@ -110,13 +124,9 @@ ibl_data_with_poe <- sf::st_join(
 
 ```{r summarize-for-spatial-layers}
 # Group by location and pathway combinations and summarize
-spatial_layers_summary <- ibl_data_with_poe %>% rename(LOCATION_ID = CBP_CODE,
-LOCATION_NAME = CBP_NAME) |> 
-  mutate(LOCATION_STATE_CODE = (
-    #get state code from any letters after ',' in LOCATION_NAME
-    str_extract(`Port of Entry Name`, "(?<=, )\\w{2}$")
-  )) |>
-  mutate(LOCATION_NAME = paste0(LOCATION_NAME, " (", LOCATION_ID, ")")) |>
+spatial_layers_summary <- ibl_data_with_poe %>% 
+  dplyr::rename(LOCATION_ID = CBP_CODE,
+                LOCATION_NAME = CBP_NAME) %>%
   group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, 
            container, product_pathway, product_subpathway) %>%
   summarize(
@@ -125,6 +135,8 @@ LOCATION_NAME = CBP_NAME) |>
   ) %>%
   # Filter out incomplete records
   filter(!is.na(container) & !is.na(product_pathway) & !is.na(product_subpathway))
+
+
 ```
 
 
@@ -249,13 +261,66 @@ spatial_layers <- create_spatial_layers(
 ```
 
 
+# destination layer
 
+The destination layer needs to take all observations and assign them to the hex grid polygons
+In essence, this process should just duplicate the destination layer creation in 01_01
+ In this case, we're aggregating point data to the hex grid
 
-# currently spit an error until destination risk layers are corrected
+```{r working on destinations}
+# Aggregate IBL points to hex grid cells by summing Animal.kg values
+us_grid <- us_grid %>% mutate(grid_id = row_number())
+# Perform spatial join to assign each IBL point to a grid cell
+ibl_with_grid <- ibl_data_sf_filtered %>%
+  st_join(us_grid, left = FALSE)  # left = FALSE drops points outside the grid
 
-```{r error until destination risk layers completed, eval=FALSE}
-stop("Destination risk layers creation not yet implemented") 
+# Check how many points were assigned to grid cells
+cat(sprintf("Total IBL points: %d\n", nrow(ibl_data_sf_filtered)))
+cat(sprintf("Points assigned to grid cells: %d\n", nrow(ibl_with_grid)))
+cat(sprintf("Points outside grid: %d\n", nrow(ibl_data_sf_filtered) - nrow(ibl_with_grid)))
+
+# Group by grid cell and sum Animal.kg values
+ibl_grid_aggregated <- ibl_with_grid %>%
+  st_drop_geometry() %>%  # Drop point geometry
+  group_by(grid_id) %>%  # Assuming us_grid has a grid_id column; adjust if different
+  summarize(
+    total_animal_kg = sum(Animal.kg, na.rm = TRUE),
+    n_points = n(),
+    .groups = 'drop'
+  )
+
+# Join back to the grid to get polygon geometries
+ibl_destination_layer <- us_grid %>%
+  left_join(ibl_grid_aggregated, by = "grid_id") %>%  # Adjust join column as needed
+  # Replace NA values with 0 for cells with no IBL points
+  mutate(
+    total_animal_kg = ifelse(is.na(total_animal_kg), 0, total_animal_kg),
+    n_points = ifelse(is.na(n_points), 0, n_points)
+  ) %>%
+  # Filter to only cells with risk > 0
+  filter(total_animal_kg > 0)
+
+# Summary statistics
+cat(sprintf("\nDestination layer summary:\n"))
+cat(sprintf("- Grid cells with IBL risk: %d\n", nrow(ibl_destination_layer)))
+cat(sprintf("- Total Animal.kg: %.2f\n", sum(ibl_destination_layer$total_animal_kg, na.rm = TRUE)))
+cat(sprintf("- Mean Animal.kg per cell: %.2f\n", mean(ibl_destination_layer$total_animal_kg, na.rm = TRUE)))
+cat(sprintf("- Max Animal.kg in a cell: %.2f\n", max(ibl_destination_layer$total_animal_kg, na.rm = TRUE)))
+
+# View the aggregated data
+mapview::mapview(ibl_destination_layer, zcol = "total_animal_kg")
 ```
+
+
+# Destination risk layers have been implemented above using hex grid aggregation
+
+
+
+
+
+
+
+
 
 
 
@@ -281,11 +346,8 @@ write.csv(pathway_spatial_layers_summary, paste("IBL pathway summary", min(param
 # 10. Create Final Destination Risk Layers Function
 
 ```{r distribute-pathway-risks-function}
-# Function to distribute pathway risks to final destination spatial grids
-distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
-  # List all available KDE files (kernel density estimation grids)
-  kde_files <- list.files(path = kde_folder_path, pattern = "kde_scaled_.*\\.rds", full.names = TRUE)
-  
+# Function to create IBL destination risk layers from aggregated hex grid data
+distribute_pathway_risks <- function(pathway_summary, aggregated_grid_data) {
   # Create output directory for final destination risk layers
   output_dir <- here::here('output', 'spatial layers', 'risk at final destinations')
   if (!dir.exists(output_dir)) {
@@ -303,53 +365,58 @@ distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
     product_subpathway = character(),
     stringsAsFactors = FALSE
   )
+    # For IBL data, we need to create destination layers from the aggregated hex grid
+  # The aggregated_grid_data contains the total_animal_kg summed across all pathways
+  # We'll distribute this proportionally based on the pathway_summary proportions
   
-  # Process each unique pathway
-  for (pathway in unique(pathway_summary$PATHWAY)) {
-    # Find the matching KDE file for this pathway
-    kde_filename_pattern <- paste0("kde_scaled_", pathway, ".rds")
-    matching_files <- grep(kde_filename_pattern, kde_files, value = TRUE, fixed = TRUE)
+  # Process each combination in pathway_summary
+  for (i in seq_len(nrow(pathway_summary))) {
+    combo <- pathway_summary[i,]
     
-    if (length(matching_files) == 0) {
-      cat(sprintf("No KDE file found for pathway: %s\n", pathway))
+    cat(sprintf("Processing combination %d/%d: %s\n", i, nrow(pathway_summary), combo$PATHWAY))
+    
+    # Create abbreviated name components for file naming
+    pathway_abbr <- substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 27)
+    container_abbr <- substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3)
+    prod_path_abbr <- substr(gsub("[^[:alnum:]]", "", combo$product_pathway), 1, 3)
+    prod_subpath_abbr <- substr(gsub("[^[:alnum:]]", "", combo$product_subpathway), 1, 3)
+    
+    # Create short name for file (with unique index)
+    short_combo_name <- paste(pathway_abbr, container_abbr, prod_path_abbr, prod_subpath_abbr, i, sep = "_")
+    
+    # Create full descriptive name for reference
+    full_combo_name <- paste(
+      gsub("[^[:alnum:]]", "_", combo$PATHWAY),
+      gsub("[^[:alnum:]]", "_", combo$container),
+      gsub("[^[:alnum:]]", "_", combo$product_pathway),
+      gsub("[^[:alnum:]]", "_", combo$product_subpathway),
+      sep = "_"
+    )
+    
+    # Calculate the proportion of total risk for this combination
+    total_risk_all_combos <- sum(pathway_summary$total_mean_kg, na.rm = TRUE)
+    combo_proportion <- combo$total_mean_kg / total_risk_all_combos
+    
+    # Apply this proportion to the aggregated grid data
+    # This distributes the total risk across the grid based on where IBL points were found
+    distributed_layer <- aggregated_grid_data %>%
+      mutate(
+        risk_value = total_animal_kg * combo_proportion,
+        pathway = combo$PATHWAY,
+        container = combo$container,
+        product_pathway = combo$product_pathway,
+        product_subpathway = combo$product_subpathway
+      ) %>%
+      # Only keep cells with risk > 0
+      filter(risk_value > 0)
+    
+    if(nrow(distributed_layer) == 0) {
+      cat(sprintf("No grid cells with risk for combination: %s\n", full_combo_name))
       next
     }
-    
-    # Load the KDE grid for this pathway
-    kde_grid <- readRDS(matching_files[1])
-    
-    # Get all combinations for this pathway
-    pathway_combos <- pathway_summary %>% filter(PATHWAY == pathway)
-    
-    # Process each combination
-    for (i in seq_len(nrow(pathway_combos))) {
-      combo <- pathway_combos[i,]
-      risk_value <- combo$total_mean_kg
-      
-      # Create abbreviated name components for file naming
-      pathway_abbr <- substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 27)
-      container_abbr <- substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3)
-      prod_path_abbr <- substr(gsub("[^[:alnum:]]", "", combo$product_pathway), 1, 3)
-      prod_subpath_abbr <- substr(gsub("[^[:alnum:]]", "", combo$product_subpathway), 1, 3)
-      
-      # Create short name for file (with unique index)
-      short_combo_name <- paste(pathway_abbr, container_abbr, prod_path_abbr, prod_subpath_abbr, i, sep = "_")
-      
-      # Create full descriptive name for reference
-      full_combo_name <- paste(
-        gsub("[^[:alnum:]]", "_", combo$PATHWAY),
-        gsub("[^[:alnum:]]", "_", combo$container),
-        gsub("[^[:alnum:]]", "_", combo$product_pathway),
-        gsub("[^[:alnum:]]", "_", combo$product_subpathway),
-        sep = "_"
-      )
-      
-      # Apply the risk value to the KDE grid to create distributed risk
-      distributed_kde <- kde_grid %>%
-        dplyr::mutate(risk_value = kde_value * risk_value)
       
       # Store in layers list
-      distributed_layers[[full_combo_name]] <- distributed_kde
+      distributed_layers[[full_combo_name]] <- distributed_layer
       
       # Add mapping entry
       new_mapping <- data.frame(
@@ -367,13 +434,15 @@ distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
       output_file <- file.path(output_dir, paste0("risk_", short_combo_name, ".gpkg"))
       
       tryCatch({
-        sf::st_write(distributed_kde, output_file, delete_layer = TRUE)
-        cat(sprintf("Processed %s → %s with risk %f\n", full_combo_name, short_combo_name, risk_value))
+        sf::st_write(distributed_layer, output_file, delete_layer = TRUE)
+        total_risk <- sum(distributed_layer$risk_value, na.rm=TRUE)
+        cat(sprintf("Processed %s → %s with risk %f (%d points)\n", 
+                   full_combo_name, short_combo_name, total_risk, nrow(distributed_layer)))
       }, error = function(e) {
         cat(sprintf("ERROR: Could not write %s - %s\n", short_combo_name, e$message))
       })
     }
-  }
+  
   
   # Save the name mapping file for reference
   write.csv(mapping_df, file.path(output_dir, "filename_mapping.csv"), row.names = FALSE)
@@ -390,10 +459,14 @@ distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
   # Save the catalog
   write.csv(layer_catalog, file.path(output_dir, "layer_catalog.csv"), row.names = FALSE)
   
+  # Mark these as IBL scenario data
+  scenario_string <- "IBL"
+  
   return(list(
     layers = distributed_layers,
     mapping = mapping_df,
-    catalog = layer_catalog
+    catalog = layer_catalog,
+    scenario = scenario_string
   ))
 }
 ```
@@ -404,7 +477,7 @@ distribute_pathway_risks <- function(pathway_summary, kde_folder_path) {
 # Apply the function to distribute risks to final destinations
 distributed_risks <- distribute_pathway_risks(
   pathway_summary = pathway_spatial_layers_summary,
-  kde_folder_path = here::here("output", "proportional destination layers")
+  aggregated_grid_data = ibl_destination_layer
 )
 
 # Save a compact version of the catalog for Shiny app use
@@ -422,8 +495,50 @@ risk_summary <- distributed_risks$catalog %>%
 
 # Save the summary for reference
 write.csv(risk_summary, 
-          here::here("output", "aqim total distributed risk", paste0("distributed_risk_summary_", params$affected_countries,".csv")), 
+          here::here("output", "aqim total distributed risk", paste0("distributed_risk_summary_IBL.csv")), 
           row.names = FALSE)
 
 cat("Spatial risk layers created and ready for use in Shiny app\n")
+```
+
+
+```{r}
+library(sf)
+library(here)
+
+# Path to the IBL GeoPackage file
+gpkg_path <- here::here("output", "spatial layers", "risk at final destinations", "risk_IBL_bag_swi_per_1.gpkg")
+
+# Check what layers are in the file
+layers <- st_layers(gpkg_path)
+print(layers)
+
+# Read the data
+ibl_data <- st_read(gpkg_path)
+
+# View the data structure
+str(ibl_data)
+
+# Plot a basic map
+plot(st_geometry(ibl_data))
+
+
+
+
+
+# Path to the IBL GeoPackage file
+gpkg_path <- here::here("output", "spatial layers", "risk at final destinations", "risk_PedestrianSB_bag_oth_uns_1.gpkg")
+
+# Check what layers are in the file
+layers <- st_layers(gpkg_path)
+print(layers)
+
+# Read the data
+ped_data <- st_read(gpkg_path)
+
+# View the data structure
+str(ped_data)
+
+# Plot a basic map
+plot(st_geometry(ped_data))
 ```

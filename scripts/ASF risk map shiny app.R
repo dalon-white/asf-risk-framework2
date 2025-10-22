@@ -31,13 +31,20 @@ globalVariables(c(
 # UI definition with tabbed interface
 ui <- navbarPage(
   title = "ASF Risk Explorer",
-  
-  # Tab 1: Destination Risk
+    # Tab 1: Destination Risk
   tabPanel(
     "Destination Risk", 
     fluidPage(
       sidebarLayout(
         sidebarPanel(
+          # Scenario selection dropdown
+          selectInput("dest_scenario_filter", "Select Scenario:", 
+                      choices = c("All" = "all",
+                                  "Current" = "current", 
+                                  "Mexico/Canada" = "mex_can", 
+                                  "Illegal Boat Landings" = "IBL"),
+                      selected = "all"),
+          hr(),
           # Dynamic checkboxes for layer selection
           uiOutput("layer_selector"),
           hr(),
@@ -157,52 +164,79 @@ ui <- navbarPage(
 
 # Server logic
 server <- function(input, output, session) {
-  
-  #===============================
+    #===============================
   # DESTINATION RISK TAB FUNCTIONS
   #===============================
     # Load all available layers
   available_layers <- reactive({
-    # Read the layer catalog - try current first, then mex_can, then fall back to any available file
-    file_path <- here("output", "aqim total distributed risk", "distributed_risk_summary_current.csv")
-    
-    if (!file.exists(file_path)) {
-      # Try mex_can if current doesn't exist
-      file_path <- here("output", "aqim total distributed risk", "distributed_risk_summary_mex_can.csv")
-      
-      # If that doesn't exist, try to find any summary file
-      if (!file.exists(file_path)) {
-        potential_files <- list.files(here("output", "aqim total distributed risk"), 
+    # Find all distributed risk summary files
+    all_summary_files <- list.files(here("output", "aqim total distributed risk"), 
                                     pattern = "distributed_risk_summary.*\\.csv$", 
                                     full.names = TRUE)
-        if (length(potential_files) > 0) {
-          file_path <- potential_files[1]
-        } else {
-          # No summary files found, return empty data frame
-          warning("No distributed_risk_summary files found")
-          return(data.frame(short_name = character(), 
-                           layer_name = character(), 
-                           total_risk = numeric(),
-                           pathway = character(),
-                           container = character()))
-        }
-      }
+    
+    # If no files found, return empty data frame
+    if (length(all_summary_files) == 0) {
+      warning("No distributed_risk_summary files found")
+      return(data.frame(short_name = character(), 
+                        layer_name = character(), 
+                        total_risk = numeric(),
+                        pathway = character(),
+                        container = character()))
     }
     
-    # Read the file we found
-    layer_catalog <- read.csv(file_path)
+    # Read and combine all summary files
+    all_catalogs <- lapply(all_summary_files, function(file_path) {
+      tryCatch({
+        read.csv(file_path)
+      }, error = function(e) {
+        warning("Error reading ", file_path, ": ", e$message)
+        NULL
+      })
+    })
+    
+    # Remove any NULL entries (failed reads)
+    all_catalogs <- all_catalogs[!sapply(all_catalogs, is.null)]
+    
+    # If all reads failed, return empty data frame
+    if (length(all_catalogs) == 0) {
+      warning("Failed to read any distributed_risk_summary files")
+      return(data.frame(short_name = character(), 
+                        layer_name = character(), 
+                        total_risk = numeric(),
+                        pathway = character(),
+                        container = character()))
+    }
+    
+    # Combine all catalogs into one
+    layer_catalog <- do.call(rbind, all_catalogs)
+    
+    # Return the combined catalog
     return(layer_catalog)
   })
-  
-  # Create dynamic layer checkboxes based on available layers
+    # Create dynamic layer checkboxes based on available layers
   output$layer_selector <- renderUI({
     catalog <- available_layers()
     
-    # Apply filters if selected
+    # Filter by scenario if selected (not "all")
+    if (!is.null(input$dest_scenario_filter) && input$dest_scenario_filter != "all") {
+      # Look for scenario in pathway or in summary file name embedded in the layer name
+      if (input$dest_scenario_filter == "IBL") {
+        # For IBL, look for "IBL" at the start of layer name
+        catalog <- catalog %>% filter(grepl("^IBL_", layer_name) | pathway == "IBL")
+      } else {
+        # For other scenarios, check if the layer source contains the scenario name
+        catalog <- catalog %>% filter(grepl(input$dest_scenario_filter, layer_name, ignore.case = TRUE) | 
+                                     pathway == input$dest_scenario_filter)
+      }
+    }
+    
+    # Apply pathway filter if selected
     if (!is.null(input$pathway_filter) && length(input$pathway_filter) > 0 && 
         !("All" %in% input$pathway_filter)) {
       catalog <- catalog %>% filter(pathway %in% input$pathway_filter)
     }
+    
+    # Apply container filter if selected
     if (!is.null(input$container_filter) && length(input$container_filter) > 0 && 
         !("All" %in% input$container_filter)) {
       catalog <- catalog %>% filter(container %in% input$container_filter)
@@ -787,9 +821,9 @@ server <- function(input, output, session) {
     min_size <- max(point_size/2, 2)  # Don't go below 2px
     max_size <- point_size*1.5
 
-    # Calculate transparency values - minimum alpha = 0.1, maximum = 0.85
+    # Calculate transparency values - minimum alpha = 0.1, maximum = 0.9
     min_alpha <- 0.1
-    max_alpha <- 0.85
+    max_alpha <- 0.9
     
     # Get risk range
     min_risk <- min(port_data[[risk_col]], na.rm = TRUE)

@@ -249,3 +249,8 @@ spatial_layers <- create_spatial_layers(
 
 # create destination layers
 - i dont yet know how to make destination layers because every destination I can find is empty.
+
+10/9/25 - I need to create a destination layer for EANs. 
+ - I will need to identify the appropriate destination points for these EANs and create a spatial layer that represents the risk associated with them.
+    - I need to have their destination addresses. Once I do, I can use the some KDE process from before to create the destination layers
+    - This will 
