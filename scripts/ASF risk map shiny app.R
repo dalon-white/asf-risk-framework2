@@ -25,7 +25,9 @@ check_create_dir(here("output", "spatial layers", "risk at final destinations"))
 globalVariables(c(
   "pathway", "container", "geom", "risk_value", "short_name", "layer_name", 
   "total_risk", "risk_percentage", "components", "LOCATION_NAME", 
-  "LOCATION_STATE_CODE", "Risk", "Layer", "Location", "State"
+  "LOCATION_STATE_CODE", "Risk", "Layer", "Location", "State", "lon", "lat",
+  "lon_rounded", "lat_rounded", "percentage", "scenario", "combined_risk",
+  "product_pathway", "product_subpathway", "layer_count", "location_key"
 ))
 
 # UI definition with tabbed interface
@@ -114,8 +116,7 @@ ui <- navbarPage(
           sliderInput("risk_threshold", "Max Risk Value to Display:",
                      min = 0, max = 100, value = 100, 
                      step = 1, post = "%",
-                     animate = animationOptions(interval = 300))
-        ),        mainPanel(
+                     animate = animationOptions(interval = 300))        ),        mainPanel(
           leafletOutput("port_risk_map", height = "600px"),
           hr(),
           h4("Port Risk Summary"),
@@ -129,7 +130,28 @@ ui <- navbarPage(
                     textOutput("active_port_layers_count")
                   )
             ),
-            column(6, DTOutput("port_data_table"))          )
+            column(6, DTOutput("port_data_table"))
+          ),
+          hr(),
+          # Location Details Panel (shown when a location is clicked)
+          conditionalPanel(
+            condition = "output.location_clicked",
+            wellPanel(
+              h4("Location Details", style = "color: #337ab7;"),
+              fluidRow(
+                column(6,
+                  h5("Location Information"),
+                  verbatimTextOutput("clicked_location_info")
+                ),
+                column(6,
+                  h5("Component Breakdown"),
+                  DTOutput("clicked_location_components")
+                )
+              ),
+              actionButton("clear_selection", "Clear Selection", 
+                          icon = icon("times"), class = "btn-warning btn-sm")
+            )
+          )
         )
       )
     )
@@ -581,7 +603,7 @@ server <- function(input, output, session) {
         # Handle the "All" scenario differently
         if (scenario == "all") {
           # Look for all possible scenario files for this layer
-          scenario_options <- c("current", "mex_can", "other", "EAN")
+          scenario_options <- c("current", "mex_can", "other", "EAN", "IBL")
           found_files <- FALSE
           
           # Try each possible scenario suffix
@@ -711,8 +733,7 @@ server <- function(input, output, session) {
                         type = "warning", duration = 5)
         return(NULL)
       }
-      
-      # Combine layers and summarize total_mean_kg for the same geometry
+        # Combine layers and summarize total_mean_kg for the same geometry
       combined_ports <- bind_rows(port_layers)
       
       # Find risk value column - might be total_mean_kg or another column with "risk" in the name
@@ -728,21 +749,51 @@ server <- function(input, output, session) {
       # Summarize points with the same geometry by summing risk values
       progress$set(message = "Summarizing risk at locations", value = 0.9)
       
-      # Use the sf geometry to identify points at the same location
+      # Convert to regular dataframe with coordinates for detailed grouping
+      coords_df <- st_coordinates(combined_ports)
+      combined_ports$lon <- coords_df[, "X"]
+      combined_ports$lat <- coords_df[, "Y"]      # Group by coordinates (rounded to handle slight differences) and create detailed summaries
+      # First create a lookup table for component details (drop geometry to avoid sf join error)
+      component_lookup <- combined_ports %>%
+        st_drop_geometry() %>%
+        mutate(
+          lon_rounded = round(lon, 6),
+          lat_rounded = round(lat, 6),
+          location_key = paste(lon_rounded, lat_rounded, sep = "_")
+        ) %>%
+        group_by(location_key) %>%
+        summarise(
+          component_details = list(data.frame(
+            layer_name = layer_name,
+            risk_value = get(risk_col),
+            scenario = scenario,
+            stringsAsFactors = FALSE
+          )),
+          .groups = 'drop'
+        )
+        # Now summarize the main data (drop geometry first, rebuild later)
       combined_ports_summarized <- combined_ports %>%
-        group_by(geom) %>%
+        st_drop_geometry() %>%
+        mutate(
+          lon_rounded = round(lon, 6),
+          lat_rounded = round(lat, 6),
+          location_key = paste(lon_rounded, lat_rounded, sep = "_")
+        ) %>%
+        group_by(lon_rounded, lat_rounded, location_key) %>%
         summarize(
-          # Sum the risk values
           total_mean_kg = sum(!!sym(risk_col), na.rm = TRUE),
-          # Keep other important attributes
           LOCATION_NAME = first(LOCATION_NAME),
           LOCATION_STATE_CODE = first(LOCATION_STATE_CODE),
-          # Create combined layer name for identification
           layer_name = paste(unique(layer_name), collapse = ", "),
           scenario = first(scenario),
-          # Count number of layers combined at this point
-          layer_count = n()
-        )
+          layer_count = dplyr::n(),
+          lon = first(lon),
+          lat = first(lat),
+          .groups = 'drop'
+        ) %>%
+        left_join(component_lookup, by = "location_key") %>%
+        select(-location_key) %>%
+        st_as_sf(coords = c("lon", "lat"), crs = 4326)
       
       progress$set(value = 1, message = "Processing complete")
       
@@ -802,21 +853,13 @@ server <- function(input, output, session) {
     
     # Update point size from slider
     point_size <- input$point_size
-    
-    # Ensure we have columns for the popup
+      # Ensure we have columns for display
     if(!"LOCATION_NAME" %in% names(port_data)) port_data$LOCATION_NAME <- "Unknown Location"
     if(!"layer_name" %in% names(port_data)) port_data$layer_name <- "Unknown Layer"
     if(!"layer_count" %in% names(port_data)) port_data$layer_count <- 1
-    
-    # Create the popup content
-    popup_content <- mapply(function(loc_name, risk_value, layer_name, layer_count) {
-      paste0(
-        "<strong>Location:</strong> ", loc_name, "<br>",
-        "<strong>Combined Risk Value:</strong> ", round(risk_value, 4), "<br>",
-        "<strong>Layers (", layer_count, "):</strong> ", layer_name, "<br>",
-        "<strong>Scenario:</strong> ", scenario
-      )
-    }, port_data$LOCATION_NAME, port_data[[risk_col]], port_data$layer_name, port_data$layer_count, SIMPLIFY = FALSE)    # Scale point size based on risk level
+
+    # Add stable marker ids for click capture
+    port_data$marker_id <- paste0("port_", seq_len(nrow(port_data)))# Scale point size based on risk level
     # Calculate relative sizes between min_size (point_size/2) and max_size (point_size*1.5)
     min_size <- max(point_size/2, 2)  # Don't go below 2px
     max_size <- point_size*1.5
@@ -838,19 +881,25 @@ server <- function(input, output, session) {
       risk_scale <- (port_data[[risk_col]] - min_risk) / (max_risk - min_risk)
       adjusted_size <- min_size + risk_scale * (max_size - min_size)
       adjusted_opacity <- min_alpha + risk_scale * (max_alpha - min_alpha)
-    }
+    }    # Store the displayed data for click handling
+    displayed_port_data(port_data)
     
     leafletProxy("port_risk_map") %>%
       clearMarkers() %>%
       clearControls() %>%      addCircleMarkers(
         data = port_data,
+        layerId = ~marker_id,
         radius = adjusted_size,  # Use scaled size based on risk
-        fillColor = ~pal(port_data[[risk_col]]),
+        fillColor = ~pal(total_mean_kg),
         color = "black",
         weight = 0,
         opacity = 1,
         fillOpacity = adjusted_opacity,  # Use scaled opacity based on risk
-        popup = popup_content
+        popup = ~paste0(
+          "<strong>", LOCATION_NAME, "</strong><br>",
+          "Combined Risk: ", round(total_mean_kg, 4), "<br>",
+          "Layers: ", layer_count
+        )
       )%>%      addLegend(
         position = "bottomright",
         pal = pal,
@@ -864,6 +913,7 @@ server <- function(input, output, session) {
     
     # Format the scenario name nicely for display
     scenario_display <- switch(scenario,
+                              "IBL" = "Illegal Boat Landings",
                               "current" = "Current Risk Assessment",
                               "mex_can" = "Mexico/Canada Scenario",
                               "other" = "Other International Scenario",
@@ -1023,8 +1073,7 @@ if (threshold_applied) {
     
     # Sort by risk
     port_table_data <- port_table_data[order(port_table_data$Risk, decreasing = TRUE), ]
-    
-    # Return a formatted datatable
+      # Return a formatted datatable
     datatable(port_table_data, 
               options = list(
                 pageLength = 5,
@@ -1033,6 +1082,113 @@ if (threshold_applied) {
               ),
               rownames = FALSE) %>%
       formatRound(columns = 'Risk', digits = 4)
+  })
+    #====================================
+  # PORT MAP CLICK FUNCTIONALITY
+  #====================================
+  
+  # Reactive value to store clicked location data and the displayed data
+  clicked_location <- reactiveVal(NULL)
+  displayed_port_data <- reactiveVal(NULL)
+  
+  # Observer for map clicks
+  observeEvent(input$port_risk_map_marker_click, {
+    click <- input$port_risk_map_marker_click
+    
+    if (!is.null(click)) {
+      # Get the marker_id from the click
+      clicked_id <- click$id
+      
+      # Get the displayed port data (filtered version)
+      port_data <- displayed_port_data()
+      
+      if (!is.null(port_data) && nrow(port_data) > 0) {
+        # Find the row with matching marker_id
+        matching_rows <- which(port_data$marker_id == clicked_id)
+        
+        if (length(matching_rows) > 0) {
+          clicked_data <- port_data[matching_rows[1], ]
+          clicked_location(clicked_data)
+        }
+      }
+    }
+  })
+  
+  # Clear selection when button is clicked
+  observeEvent(input$clear_selection, {
+    clicked_location(NULL)
+  })
+  
+  # Output to control visibility of location details panel
+  output$location_clicked <- reactive({
+    !is.null(clicked_location())
+  })
+  outputOptions(output, "location_clicked", suspendWhenHidden = FALSE)
+  
+  # Output for clicked location information
+  output$clicked_location_info <- renderText({
+    data <- clicked_location()
+    
+    if (is.null(data)) {
+      return("")
+    }
+    
+    # Extract coordinates
+    coords <- st_coordinates(data)
+    
+    paste0(
+      "Location: ", data$LOCATION_NAME, "\n",
+      "State: ", data$LOCATION_STATE_CODE, "\n",
+      "Coordinates: ", round(coords[1], 4), ", ", round(coords[2], 4), "\n",
+      "Total Risk Value: ", round(data$total_mean_kg, 4), "\n",
+      "Number of Components: ", data$layer_count, "\n",
+      "Scenario: ", data$scenario
+    )
+  })
+  
+  # Output for clicked location component breakdown
+  output$clicked_location_components <- renderDT({
+    data <- clicked_location()
+    
+    if (is.null(data) || is.null(data$component_details)) {
+      return(datatable(data.frame(Message = "No component data available"),
+                      options = list(dom = 't'),
+                      rownames = FALSE))
+    }
+    
+    # Extract component details
+    components_df <- data$component_details[[1]]
+    
+    if (is.null(components_df) || nrow(components_df) == 0) {
+      return(datatable(data.frame(Message = "No component data available"),
+                      options = list(dom = 't'),
+                      rownames = FALSE))
+    }
+    
+    # Clean up and format the component data
+    components_df <- components_df %>%
+      arrange(desc(risk_value)) %>%
+      mutate(
+        risk_value = round(risk_value, 4),
+        percentage = round(100 * risk_value / sum(risk_value), 1)
+      ) %>%
+      rename(
+        "Layer Name" = layer_name,
+        "Risk Value" = risk_value,
+        "% of Total" = percentage,
+        "Scenario" = scenario
+      )
+    
+    # Return formatted datatable
+    datatable(components_df,
+              options = list(
+                pageLength = 10,
+                scrollX = TRUE,
+                dom = 'ftip',
+                order = list(list(1, 'desc'))  # Sort by Risk Value descending
+              ),
+              rownames = FALSE) %>%
+      formatRound(columns = 'Risk Value', digits = 4)
   })
 }
 
