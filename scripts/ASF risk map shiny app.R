@@ -884,9 +884,74 @@ server <- function(input, output, session) {
     }    # Store the displayed data for click handling
     displayed_port_data(port_data)
     
+    # Create custom cluster icon function that colors by total risk
+    # Get the risk range for color scaling
+    risk_range <- range(port_data[[risk_col]], na.rm = TRUE)
+    
+    # Generate JavaScript code for the icon creation function
+    # This function will sum the risk values and color the cluster accordingly
+    icon_create_js <- sprintf(
+      "function(cluster) {
+        var markers = cluster.getAllChildMarkers();
+        var totalRisk = 0;
+        for (var i = 0; i < markers.length; i++) {
+          totalRisk += markers[i].options.risk_value || 0;
+        }
+        
+        // Color scale based on risk (viridis approximation)
+        var minRisk = %f;
+        var maxRisk = %f;
+        var riskScale = (totalRisk - minRisk) / (maxRisk - minRisk);
+        riskScale = Math.max(0, Math.min(1, riskScale)); // Clamp between 0 and 1
+        
+        // Get color from the selected palette
+        var color;
+        var palette = '%s';
+        
+        // Approximate color palettes in JavaScript
+        if (palette === 'magma') {
+          if (riskScale < 0.25) color = '#000004';
+          else if (riskScale < 0.5) color = '#7e03a8';
+          else if (riskScale < 0.75) color = '#f1605d';
+          else color = '#fcfdbf';
+        } else if (palette === 'plasma') {
+          if (riskScale < 0.25) color = '#0d0887';
+          else if (riskScale < 0.5) color = '#cc4778';
+          else if (riskScale < 0.75) color = '#f89540';
+          else color = '#f0f921';
+        } else if (palette === 'inferno') {
+          if (riskScale < 0.25) color = '#000004';
+          else if (riskScale < 0.5) color = '#9f2a63';
+          else if (riskScale < 0.75) color = '#f98e09';
+          else color = '#fcffa4';
+        } else if (palette === 'cividis') {
+          if (riskScale < 0.25) color = '#00224e';
+          else if (riskScale < 0.5) color = '#575d6d';
+          else if (riskScale < 0.75) color = '#a69c75';
+          else color = '#fdea45';
+        } else { // viridis default
+          if (riskScale < 0.25) color = '#440154';
+          else if (riskScale < 0.5) color = '#31688e';
+          else if (riskScale < 0.75) color = '#35b779';
+          else color = '#fde724';
+        }
+        
+        // Size scales with risk
+        var size = 30 + (riskScale * 20);
+        
+        return L.divIcon({
+          html: '<div style=\"background-color:' + color + '; width: ' + size + 'px; height: ' + size + 'px; border-radius: 50%%; border: 2px solid white; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; text-shadow: 1px 1px 2px black;\"><span>' + totalRisk.toFixed(2) + '</span></div>',
+          className: 'custom-cluster-icon',
+          iconSize: L.point(size, size)
+        });
+      }",
+      risk_range[1], risk_range[2], input$color_scheme
+    )
+    
     leafletProxy("port_risk_map") %>%
       clearMarkers() %>%
-      clearControls() %>%      addCircleMarkers(
+      clearControls() %>%
+      addCircleMarkers(
         data = port_data,
         layerId = ~marker_id,
         radius = adjusted_size,  # Use scaled size based on risk
@@ -895,16 +960,27 @@ server <- function(input, output, session) {
         weight = 0,
         opacity = 1,
         fillOpacity = adjusted_opacity,  # Use scaled opacity based on risk
+        # Add risk_value as a custom option for cluster calculation
+        options = list(risk_value = port_data[[risk_col]]),
         popup = ~paste0(
           "<strong>", LOCATION_NAME, "</strong><br>",
           "Combined Risk: ", round(total_mean_kg, 4), "<br>",
           "Layers: ", layer_count
+        ),
+        clusterOptions = markerClusterOptions(
+          showCoverageOnHover = TRUE,
+          zoomToBoundsOnClick = TRUE,
+          spiderfyOnMaxZoom = TRUE,
+          removeOutsideVisibleBounds = TRUE,
+          maxClusterRadius = 80,
+          iconCreateFunction = JS(icon_create_js)
         )
-      )%>%      addLegend(
+      ) %>%
+      addLegend(
         position = "bottomright",
         pal = pal,
         values = port_data[[risk_col]],
-        title = paste0("Combined Risk Level (", scenario, ")\nColor, Size & Opacity = Risk Value"),
+        title = paste0("Combined Risk Level (", scenario, ")\nColor & Size = Risk Value"),
         opacity = 0.8
       )
   })# Scenario information text
