@@ -347,7 +347,7 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
     
     # Create clean name for layer using abbreviations
     layer_name <- paste(
-      substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 25),
+      substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 27),
       substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3),
       substr(gsub("[^[:alnum:]]", "", combo$product_pathway), 1, 3),
       substr(gsub("[^[:alnum:]]", "", combo$product_subpathway), 1, 3),
