@@ -2,8 +2,7 @@
 title: "IBL geolocations and layers for port and destination"
 author: "Dalon White"
 date: "2025-09-30"
-output: 
-
+output: html_document
 
 params:
   years: 2023:2024 # The years to include which countries have ASF from the `asf affected countries.csv` file
@@ -22,10 +21,22 @@ library(DBI)
 # Parameters
 
 ```{r parameters, include=FALSE}
-# Load parameters
-source(file.path(here::here(), "scripts", "initialize_params.R"))
-# Create params as a copy of asf_params
-params <- asf_params
+# Function to load the shared parameters if available
+load_shared_params <- function() {
+  params_file <- here::here("output", "intermediate files", "asf_risk_params.rds")
+  
+  if (file.exists(params_file)) {
+    message("Loading shared parameters from 00_asf_risk_parameters.Rmd")
+    return(readRDS(params_file))
+  } else {
+    message("Shared parameter file not found. Using script-specific parameters.")
+    return(NULL)
+  }
+}
+
+# Try to load shared params
+shared_params <- load_shared_params()
+
 ```
 
 # Access lat lon data for the correct years
@@ -72,7 +83,7 @@ Need to convert the IBLs to closest port locatoin
  - this would require import PoE locations and assigning closest to locations
     - then summarize by PoE, pathway, container, product_pathway, product_subpathway
 
-```{r summarize-for-spatial-layers}
+```{r collect poe locs}
 
 geo_conn <- dbConnect(odbc::odbc(),.connection_string = 
                      "Driver=SQL Server;
@@ -156,6 +167,17 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
   # Create list to store the layers
   spatial_layers <- list()
 
+  # Initialize mapping dataframe
+  mapping_df <- data.frame(
+    short_name = character(),
+    full_name = character(),
+    pathway = character(),
+    container = character(),
+    product_pathway = character(),
+    product_subpathway = character(),
+    stringsAsFactors = FALSE
+  )
+
   # Create scenario string that specifies IBLs
   scenario_string <- "IBL"
   
@@ -169,7 +191,7 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
       slice(1) %>%
       as.list()
     
-    # Create clean name for layer using abbreviations
+    # Create clean name for layer using abbreviations (short name)
     layer_name <- paste(
       substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 27),
       substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3),
@@ -178,8 +200,29 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
       sep = "_"
     )
     
-    # Store in list with clean name
+    # Create full descriptive name for reference
+    full_combo_name <- paste(
+      gsub("[^[:alnum:]]", "_", combo$PATHWAY),
+      gsub("[^[:alnum:]]", "_", combo$container),
+      gsub("[^[:alnum:]]", "_", combo$product_pathway),
+      gsub("[^[:alnum:]]", "_", combo$product_subpathway),
+      sep = "_"
+    )
+    
+    # Store in list with short name
     spatial_layers[[layer_name]] <- current_split
+    
+    # Add mapping entry
+    new_mapping <- data.frame(
+      short_name = layer_name,
+      full_name = full_combo_name,
+      pathway = combo$PATHWAY,
+      container = combo$container,
+      product_pathway = combo$product_pathway,
+      product_subpathway = combo$product_subpathway,
+      stringsAsFactors = FALSE
+    )
+    mapping_df <- rbind(mapping_df, new_mapping)
     
     # Save to file if requested
     if (save_files && !is.null(output_dir)) {
@@ -226,22 +269,27 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
       scenario = scenario_string
     ) %>%
     dplyr::select(layer_name, scenario, point_count, total_risk) %>%
-    arrange(desc(total_risk))
-  
+    arrange(desc(total_risk))  
   # Print summary
   cat(paste0("\nSummary of spatial layers for scenario '", scenario_string, "' (top 10 by risk):\n"))
   print(head(layer_summary, 10))
   
-  # Also save the summary table as CSV for reference
+  # Also save the summary table and mapping table as CSV for reference
   if (save_files && !is.null(output_dir)) {
     summary_path <- file.path(output_dir, paste0("layer_summary_", scenario_string, ".csv"))
     write.csv(layer_summary, summary_path, row.names = FALSE)
     cat(sprintf("\nSaved summary table to: %s\n", summary_path))
+    
+    # Save the name mapping file
+    mapping_path <- file.path(output_dir, paste0("filename_mapping_", scenario_string, ".csv"))
+    write.csv(mapping_df, mapping_path, row.names = FALSE)
+    cat(sprintf("Saved mapping table to: %s\n", mapping_path))
   }
   
   return(list(
     layers = spatial_layers,
     summary = layer_summary,
+    mapping = mapping_df,
     scenario = scenario_string
   ))
 }

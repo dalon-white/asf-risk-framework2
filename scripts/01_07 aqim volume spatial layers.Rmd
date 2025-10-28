@@ -327,6 +327,17 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
   # Create list to store the layers
   spatial_layers <- list()
   
+  # Initialize mapping dataframe
+  mapping_df <- data.frame(
+    short_name = character(),
+    full_name = character(),
+    pathway = character(),
+    container = character(),
+    product_pathway = character(),
+    product_subpathway = character(),
+    stringsAsFactors = FALSE
+  )
+  
   # Create scenario string based on affected_countries parameter
   scenario_string <- dplyr::case_when(
     params$affected_countries == "current" ~ "current",
@@ -345,7 +356,7 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
       slice(1) %>%
       as.list()
     
-    # Create clean name for layer using abbreviations
+    # Create clean name for layer using abbreviations (short name)
     layer_name <- paste(
       substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 27),
       substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3),
@@ -354,8 +365,29 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
       sep = "_"
     )
     
-    # Store in list with clean name
+    # Create full descriptive name for reference
+    full_combo_name <- paste(
+      gsub("[^[:alnum:]]", "_", combo$PATHWAY),
+      gsub("[^[:alnum:]]", "_", combo$container),
+      gsub("[^[:alnum:]]", "_", combo$product_pathway),
+      gsub("[^[:alnum:]]", "_", combo$product_subpathway),
+      sep = "_"
+    )
+    
+    # Store in list with short name
     spatial_layers[[layer_name]] <- current_split
+    
+    # Add mapping entry
+    new_mapping <- data.frame(
+      short_name = layer_name,
+      full_name = full_combo_name,
+      pathway = combo$PATHWAY,
+      container = combo$container,
+      product_pathway = combo$product_pathway,
+      product_subpathway = combo$product_subpathway,
+      stringsAsFactors = FALSE
+    )
+    mapping_df <- rbind(mapping_df, new_mapping)
     
     # Save to file if requested
     if (save_files && !is.null(output_dir)) {
@@ -402,22 +434,27 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
       scenario = scenario_string
     ) %>%
     dplyr::select(layer_name, scenario, point_count, total_risk) %>%
-    arrange(desc(total_risk))
-  
+    arrange(desc(total_risk))  
   # Print summary
   cat(paste0("\nSummary of spatial layers for scenario '", scenario_string, "' (top 10 by risk):\n"))
   print(head(layer_summary, 10))
   
-  # Also save the summary table as CSV for reference
+  # Also save the summary table and mapping table as CSV for reference
   if (save_files && !is.null(output_dir)) {
     summary_path <- file.path(output_dir, paste0("layer_summary_", scenario_string, ".csv"))
     write.csv(layer_summary, summary_path, row.names = FALSE)
     cat(sprintf("\nSaved summary table to: %s\n", summary_path))
+    
+    # Save the name mapping file
+    mapping_path <- file.path(output_dir, paste0("filename_mapping_", scenario_string, ".csv"))
+    write.csv(mapping_df, mapping_path, row.names = FALSE)
+    cat(sprintf("Saved mapping table to: %s\n", mapping_path))
   }
   
   return(list(
     layers = spatial_layers,
     summary = layer_summary,
+    mapping = mapping_df,
     scenario = scenario_string
   ))
 }
@@ -604,29 +641,29 @@ cat("Spatial risk layers created and ready for use in Shiny app\n")
 ```
 
 ```{r test open} 
-library(sf)
+# library(sf)
 
-# Open a GeoPackage file
-gpkg_data <- st_read(here::here("output", "spatial layers", "risk at final destinations", "risk_Air_bag_swi_per_2.gpkg"))
+# # Open a GeoPackage file
+# gpkg_data <- st_read(here::here("output", "spatial layers", "risk at final destinations", "risk_Air_bag_swi_per_2.gpkg"))
 
-# View the data
-head(gpkg_data)
+# # View the data
+# head(gpkg_data)
 
-# If you want to see the structure
-str(gpkg_data)
+# # If you want to see the structure
+# str(gpkg_data)
 
-# Plot the spatial data
-plot(gpkg_data$geom)  # Basic plot
-plot(st_geometry(gpkg_data))  # Alternative syntax
+# # Plot the spatial data
+# plot(gpkg_data$geom)  # Basic plot
+# plot(st_geometry(gpkg_data))  # Alternative syntax
 
 
-valid_geoms <- st_is_valid(gpkg_data)
-if(all(valid_geoms)) {
-  plot(gpkg_data)
-} else {
-  # Try to fix invalid geometries
-  fixed_gpkg <- st_make_valid(gpkg_data)
-  plot(fixed_gpkg)
-}
+# valid_geoms <- st_is_valid(gpkg_data)
+# if(all(valid_geoms)) {
+#   plot(gpkg_data)
+# } else {
+#   # Try to fix invalid geometries
+#   fixed_gpkg <- st_make_valid(gpkg_data)
+#   plot(fixed_gpkg)
+# }
 
 ```

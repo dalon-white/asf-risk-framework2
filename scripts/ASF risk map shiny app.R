@@ -27,7 +27,9 @@ globalVariables(c(
   "total_risk", "risk_percentage", "components", "LOCATION_NAME", 
   "LOCATION_STATE_CODE", "Risk", "Layer", "Location", "State", "lon", "lat",
   "lon_rounded", "lat_rounded", "percentage", "scenario", "combined_risk",
-  "product_pathway", "product_subpathway", "layer_count", "location_key"
+  "product_pathway", "product_subpathway", "layer_count", "location_key",
+  "entry_type", "port", "conveyance_pathway", "conveyance_subpathway",
+  "PATHWAY", "display_name", "marker_id"
 ))
 
 # UI definition with tabbed interface
@@ -45,14 +47,21 @@ ui <- navbarPage(
                                   "Current" = "current", 
                                   "Mexico/Canada" = "mex_can", 
                                   "Illegal Boat Landings" = "IBL"),
-                      selected = "all"),
-          hr(),
+                      selected = "all"),          hr(),
           # Dynamic checkboxes for layer selection
           uiOutput("layer_selector"),
           hr(),
           # Category filters
           selectInput("pathway_filter", "Filter by Pathway:", choices = NULL, multiple = TRUE),
           selectInput("container_filter", "Filter by Container:", choices = NULL, multiple = TRUE),
+          selectInput("product_pathway_filter", "Filter by Product Pathway:", choices = NULL, multiple = TRUE),
+          selectInput("product_subpathway_filter", "Filter by Product Use:", choices = NULL, multiple = TRUE),
+          hr(),
+          # Conveyance and entry type filters
+          selectInput("entry_type_filter", "Filter by Entry Type:", choices = NULL, multiple = TRUE),
+          selectInput("port_filter", "Filter by Port Type:", choices = NULL, multiple = TRUE),
+          selectInput("conveyance_pathway_filter", "Filter by Conveyance:", choices = NULL, multiple = TRUE),
+          selectInput("conveyance_subpathway_filter", "Filter by Vehicle Type:", choices = NULL, multiple = TRUE),
           hr(),
           checkboxInput("auto_update", "Auto-update map", value = FALSE),
           actionButton("update_map", "Update Map")
@@ -186,10 +195,29 @@ ui <- navbarPage(
 
 # Server logic
 server <- function(input, output, session) {
-    #===============================
+  #===============================
   # DESTINATION RISK TAB FUNCTIONS
   #===============================
-    # Load all available layers
+  
+  # Load pathway reference table for enriching layer metadata
+  pathway_reference <- reactive({
+    ref_path <- here("input", "data", "PATHWAY name reference", "pathway to entry type reference table.csv")
+    if (file.exists(ref_path)) {
+      read.csv(ref_path, stringsAsFactors = FALSE)
+    } else {
+      warning("Pathway reference table not found")
+      data.frame(
+        PATHWAY = character(),
+        entry_type = character(),
+        port = character(),
+        conveyance_pathway = character(),
+        conveyance_subpathway = character(),
+        stringsAsFactors = FALSE
+      )
+    }
+  })
+  
+  # Load all available layers
   available_layers <- reactive({
     # Find all distributed risk summary files
     all_summary_files <- list.files(here("output", "aqim total distributed risk"), 
@@ -215,8 +243,7 @@ server <- function(input, output, session) {
         NULL
       })
     })
-    
-    # Remove any NULL entries (failed reads)
+      # Remove any NULL entries (failed reads)
     all_catalogs <- all_catalogs[!sapply(all_catalogs, is.null)]
     
     # If all reads failed, return empty data frame
@@ -229,13 +256,72 @@ server <- function(input, output, session) {
                         container = character()))
     }
     
-    # Combine all catalogs into one
-    layer_catalog <- do.call(rbind, all_catalogs)
+    # Combine all catalogs into one using bind_rows to handle different column structures
+    layer_catalog <- bind_rows(all_catalogs)
+    
+    # Enrich with pathway reference data
+    pathway_ref <- pathway_reference()
+    if (nrow(pathway_ref) > 0) {
+      # Clean column names in pathway_ref to avoid spaces
+      names(pathway_ref) <- gsub(" ", "_", names(pathway_ref))
+      
+      layer_catalog <- layer_catalog %>%
+        left_join(pathway_ref, by = c("pathway" = "PATHWAY"), relationship = "many-to-one")
+    }
     
     # Return the combined catalog
     return(layer_catalog)
   })
-    # Create dynamic layer checkboxes based on available layers
+  
+  # Helper function to create readable layer names for destination risk
+  create_dest_readable_name <- function(pathway, container, product_pathway, product_subpathway, 
+                                        entry_type = NA, port_type = NA, conv_pathway = NA, conv_subpathway = NA) {
+    parts <- c()
+    
+    # Add port type if available
+    if (!is.na(port_type) && port_type != "" && port_type != "NA") {
+      parts <- c(parts, paste0("Port: ", port_type))
+    }
+    
+    # Add conveyance pathway if available
+    if (!is.na(conv_pathway) && conv_pathway != "" && conv_pathway != "NA") {
+      parts <- c(parts, paste0("Conveyance: ", conv_pathway))
+    }
+    
+    # Add conveyance subpathway if available
+    if (!is.na(conv_subpathway) && conv_subpathway != "" && conv_subpathway != "NA") {
+      parts <- c(parts, paste0("Vehicle: ", conv_subpathway))
+    }
+    
+    # Add entry type if available
+    if (!is.na(entry_type) && entry_type != "" && entry_type != "NA") {
+      parts <- c(parts, paste0("Type: ", entry_type))
+    }
+    
+    # Add container if available
+    if (!is.na(container) && container != "") {
+      parts <- c(parts, paste0("Container: ", container))
+    }
+    
+    # Add product pathway if available
+    if (!is.na(product_pathway) && product_pathway != "") {
+      parts <- c(parts, paste0("Product: ", product_pathway))
+    }
+    
+    # Add product subpathway if available
+    if (!is.na(product_subpathway) && product_subpathway != "") {
+      parts <- c(parts, paste0("Use: ", product_subpathway))
+    }
+    
+    # If no parts, return pathway
+    if (length(parts) == 0) {
+      return(ifelse(!is.na(pathway) && pathway != "", pathway, "Unknown"))
+    }
+    
+    # Join all parts with " | "
+    return(paste(parts, collapse = " | "))
+  }
+  # Create dynamic layer checkboxes based on available layers
   output$layer_selector <- renderUI({
     catalog <- available_layers()
     
@@ -264,24 +350,99 @@ server <- function(input, output, session) {
       catalog <- catalog %>% filter(container %in% input$container_filter)
     }
     
-    # Create checkboxes
+    # Apply product pathway filter if selected
+    if (!is.null(input$product_pathway_filter) && length(input$product_pathway_filter) > 0 && 
+        !("All" %in% input$product_pathway_filter)) {
+      catalog <- catalog %>% filter(product_pathway %in% input$product_pathway_filter)
+    }
+    
+    # Apply product subpathway filter if selected
+    if (!is.null(input$product_subpathway_filter) && length(input$product_subpathway_filter) > 0 && 
+        !("All" %in% input$product_subpathway_filter)) {
+      catalog <- catalog %>% filter(product_subpathway %in% input$product_subpathway_filter)
+    }
+    
+    # Apply entry type filter if selected
+    if (!is.null(input$entry_type_filter) && length(input$entry_type_filter) > 0 && 
+        !("All" %in% input$entry_type_filter)) {
+      catalog <- catalog %>% filter(entry_type %in% input$entry_type_filter)
+    }
+    
+    # Apply port filter if selected
+    if (!is.null(input$port_filter) && length(input$port_filter) > 0 && 
+        !("All" %in% input$port_filter)) {
+      catalog <- catalog %>% filter(port %in% input$port_filter)
+    }
+    
+    # Apply conveyance pathway filter if selected
+    if (!is.null(input$conveyance_pathway_filter) && length(input$conveyance_pathway_filter) > 0 && 
+        !("All" %in% input$conveyance_pathway_filter)) {
+      catalog <- catalog %>% filter(conveyance_pathway %in% input$conveyance_pathway_filter)
+    }
+    
+    # Apply conveyance subpathway filter if selected
+    if (!is.null(input$conveyance_subpathway_filter) && length(input$conveyance_subpathway_filter) > 0 && 
+        !("All" %in% input$conveyance_subpathway_filter)) {
+      catalog <- catalog %>% filter(conveyance_subpathway %in% input$conveyance_subpathway_filter)
+    }
+    
+    # Create readable display names
+    catalog <- catalog %>%
+      rowwise() %>%
+      mutate(
+        display_name = create_dest_readable_name(
+          pathway, container, product_pathway, product_subpathway,
+          entry_type, port, conveyance_pathway, conveyance_subpathway
+        )
+      ) %>%
+      ungroup()
+    
+    # Create checkboxes with readable names
     checkboxGroupInput(
       "selected_layers",
       "Select Layers:",
-      choices = setNames(catalog$short_name, catalog$layer_name),
+      choices = setNames(catalog$short_name, catalog$display_name),
       selected = NULL
     )
   })
-  
-  # Update filter choices when data loads
+    # Update filter choices when data loads
   observe({
     catalog <- available_layers()
-    updateSelectInput(session, "pathway_filter", choices = c("All", unique(catalog$pathway)))
-    updateSelectInput(session, "container_filter", choices = c("All", unique(catalog$container)))
-
-#Add product pathway and subpathway filters at a later date when the time comes
-    # updateSelectInput(session, "product_pathway_filter", choices = c("All", unique(catalog$product_pathway)))
-    # updateSelectInput(session, "product_subpathway_filter", choices = c("All", unique(catalog$product_subpathway)))
+    
+    # Get unique values for each filter, removing NAs and empty strings
+    pathways <- unique(catalog$pathway)
+    pathways <- pathways[!is.na(pathways) & pathways != ""]
+    
+    containers <- unique(catalog$container)
+    containers <- containers[!is.na(containers) & containers != ""]
+    
+    product_pathways <- unique(catalog$product_pathway)
+    product_pathways <- product_pathways[!is.na(product_pathways) & product_pathways != ""]
+    
+    product_subpathways <- unique(catalog$product_subpathway)
+    product_subpathways <- product_subpathways[!is.na(product_subpathways) & product_subpathways != ""]
+    
+    entry_types <- unique(catalog$entry_type)
+    entry_types <- entry_types[!is.na(entry_types) & entry_types != "" & entry_types != "NA"]
+    
+    ports <- unique(catalog$port)
+    ports <- ports[!is.na(ports) & ports != "" & ports != "NA"]
+    
+    conv_pathways <- unique(catalog$conveyance_pathway)
+    conv_pathways <- conv_pathways[!is.na(conv_pathways) & conv_pathways != "" & conv_pathways != "NA"]
+    
+    conv_subpathways <- unique(catalog$conveyance_subpathway)
+    conv_subpathways <- conv_subpathways[!is.na(conv_subpathways) & conv_subpathways != "" & conv_subpathways != "NA"]
+    
+    # Update all filter inputs
+    updateSelectInput(session, "pathway_filter", choices = c("All", sort(pathways)))
+    updateSelectInput(session, "container_filter", choices = c("All", sort(containers)))
+    updateSelectInput(session, "product_pathway_filter", choices = c("All", sort(product_pathways)))
+    updateSelectInput(session, "product_subpathway_filter", choices = c("All", sort(product_subpathways)))
+    updateSelectInput(session, "entry_type_filter", choices = c("All", sort(entry_types)))
+    updateSelectInput(session, "port_filter", choices = c("All", sort(ports)))
+    updateSelectInput(session, "conveyance_pathway_filter", choices = c("All", sort(conv_pathways)))
+    updateSelectInput(session, "conveyance_subpathway_filter", choices = c("All", sort(conv_subpathways)))
   })
   
   # Load the selected layers and combine them
@@ -456,71 +617,223 @@ server <- function(input, output, session) {
   #=========================
   # PORT RISK TAB FUNCTIONS
   #=========================
-  
-  # Load available port risk layers
+    # Load available port risk layers
   available_port_layers <- reactive({
     # Get the selected scenario
     scenario <- input$scenario_filter
     
+    # Try to read the mapping file first (preferred source for full names)
+    mapping_path <- here("output", "spatial layers", "risk at ports", 
+                        paste0("filename_mapping_", scenario, ".csv"))
+    
     # First try to read the summary file
-    port_summary_path <- here("output", "spatial layers", "risk at ports", paste0("layer_summary_", scenario, ".csv"))
+    port_summary_path <- here("output", "spatial layers", "risk at ports", 
+                             paste0("layer_summary_", scenario, ".csv"))
     
     if (file.exists(port_summary_path)) {
       # Read from summary file if it exists
       port_catalog <- read.csv(port_summary_path, stringsAsFactors = FALSE)
       
-      # Add components for filtering
-      port_catalog <- port_catalog %>%
-        mutate(
-          components = strsplit(as.character(layer_name), "_"),
-          pathway = sapply(components, function(x) if(length(x) > 0) x[1] else NA),
-          container = sapply(components, function(x) if(length(x) > 1) x[2] else NA),
-          product_pathway = sapply(components, function(x) if(length(x) > 2) x[3] else NA),
-          product_subpathway = sapply(components, function(x) if(length(x) > 3) x[4] else NA)
-        ) %>%
-        select(-components)
+      # Try to enrich with mapping file data
+      if (file.exists(mapping_path)) {
+        mapping_data <- read.csv(mapping_path, stringsAsFactors = FALSE)
+        
+        # Join with mapping data to get full component names
+        port_catalog <- port_catalog %>%
+          left_join(mapping_data, by = c("layer_name" = "short_name"), 
+                   relationship = "many-to-one")
+        
+        # If join was successful, we'll have pathway, container, etc. from mapping
+        # Otherwise, extract from layer_name as fallback
+        if (!"pathway" %in% names(port_catalog)) {
+          port_catalog <- port_catalog %>%
+            mutate(
+              components = strsplit(as.character(layer_name), "_"),
+              pathway = sapply(components, function(x) if(length(x) > 0) x[1] else NA),
+              container = sapply(components, function(x) if(length(x) > 1) x[2] else NA),
+              product_pathway = sapply(components, function(x) if(length(x) > 2) x[3] else NA),
+              product_subpathway = sapply(components, function(x) if(length(x) > 3) x[4] else NA)
+            ) %>%
+            select(-components)
+        }
+      } else {
+        # No mapping file, extract components from layer names
+        port_catalog <- port_catalog %>%
+          mutate(
+            components = strsplit(as.character(layer_name), "_"),
+            pathway = sapply(components, function(x) if(length(x) > 0) x[1] else NA),
+            container = sapply(components, function(x) if(length(x) > 1) x[2] else NA),
+            product_pathway = sapply(components, function(x) if(length(x) > 2) x[3] else NA),
+            product_subpathway = sapply(components, function(x) if(length(x) > 3) x[4] else NA)
+          ) %>%
+          select(-components)
+      }
       
-      return(port_catalog)
-    } else {
+      return(port_catalog)    } else {
       # If summary doesn't exist, scan the directory
       port_files_dir <- here("output", "spatial layers", "risk at ports")
       all_port_files <- list.files(path = port_files_dir, pattern = ".*\\.gpkg$", full.names = FALSE)
       
-      # Filter files by scenario
-      scenario_pattern <- paste0("_", scenario, "\\.gpkg$")
-      port_files <- all_port_files[grepl(scenario_pattern, all_port_files)]
-      
-      # If no files match the scenario, fall back to all files
-      if (length(port_files) == 0) {
-        message("No files found for scenario: ", scenario, ". Using all files.")
-        port_files <- all_port_files
+      # Handle "all" scenario differently - need to extract scenario from each filename
+      if (scenario == "all") {
+        # Get all files and extract their scenarios
+        # Pattern: layername_scenario.gpkg
+        scenario_options <- c("current", "mex_can", "other", "EAN", "IBL")
+        
+        # Try to load mapping files for all scenarios
+        all_mapping_data <- list()
+        for (scen in scenario_options) {
+          mapping_path <- here("output", "spatial layers", "risk at ports", 
+                             paste0("filename_mapping_", scen, ".csv"))
+          if (file.exists(mapping_path)) {
+            mapping_df <- read.csv(mapping_path, stringsAsFactors = FALSE)
+            mapping_df$scenario <- scen
+            all_mapping_data[[scen]] <- mapping_df
+          }
+        }
+        
+        # If we have mapping data, use it
+        if (length(all_mapping_data) > 0) {
+          port_catalog <- bind_rows(all_mapping_data)
+          # Rename short_name to layer_name for consistency
+          if ("short_name" %in% names(port_catalog)) {
+            port_catalog <- port_catalog %>%
+              rename(layer_name = short_name)
+          }
+          # Add point_count and total_risk as NA if not present
+          if (!"point_count" %in% names(port_catalog)) port_catalog$point_count <- NA
+          if (!"total_risk" %in% names(port_catalog)) port_catalog$total_risk <- NA
+          
+          return(port_catalog)
+        }
+        
+        # Fallback: Create catalog by extracting scenario from each file
+        port_catalog_list <- lapply(all_port_files, function(file) {
+          # Try to match each scenario pattern
+          matched_scenario <- NA
+          layer_name <- NA
+          
+          for (scen in scenario_options) {
+            pattern <- paste0("_", scen, "\\.gpkg$")
+            if (grepl(pattern, file)) {
+              matched_scenario <- scen
+              layer_name <- gsub(pattern, "", file)
+              break
+            }
+          }
+          
+          # If no scenario matched, try without scenario suffix
+          if (is.na(matched_scenario)) {
+            layer_name <- gsub("\\.gpkg$", "", file)
+            matched_scenario <- "unknown"
+          }
+          
+          data.frame(
+            filename = file,
+            layer_name = layer_name,
+            scenario = matched_scenario,
+            point_count = NA,
+            total_risk = NA,
+            stringsAsFactors = FALSE
+          )
+        })
+        
+        port_catalog <- do.call(rbind, port_catalog_list)
+          } else {
+        # For specific scenarios, try to use mapping file
+        mapping_path <- here("output", "spatial layers", "risk at ports", 
+                           paste0("filename_mapping_", scenario, ".csv"))
+        
+        if (file.exists(mapping_path)) {
+          # Use mapping file
+          port_catalog <- read.csv(mapping_path, stringsAsFactors = FALSE)
+          port_catalog$scenario <- scenario
+          
+          # Rename short_name to layer_name for consistency
+          if ("short_name" %in% names(port_catalog)) {
+            port_catalog <- port_catalog %>%
+              rename(layer_name = short_name)
+          }
+          
+          # Add point_count and total_risk as NA if not present
+          if (!"point_count" %in% names(port_catalog)) port_catalog$point_count <- NA
+          if (!"total_risk" %in% names(port_catalog)) port_catalog$total_risk <- NA
+          
+          return(port_catalog)
+        }
+        
+        # Fallback: scan files if no mapping exists
+        scenario_pattern <- paste0("_", scenario, "\\.gpkg$")
+        port_files <- all_port_files[grepl(scenario_pattern, all_port_files)]
+        
+        # If no files match the scenario, fall back to all files
+        if (length(port_files) == 0) {
+          message("No files found for scenario: ", scenario, ". Using all files.")
+          port_files <- all_port_files
+        }
+        
+        # Create a catalog dataframe
+        port_catalog <- data.frame(
+          filename = port_files,
+          layer_name = gsub(paste0("_", scenario, "\\.gpkg$"), "", port_files),
+          scenario = scenario,
+          point_count = NA,
+          total_risk = NA,
+          stringsAsFactors = FALSE
+        )
       }
       
-      # Create a catalog dataframe
-      port_catalog <- data.frame(
-        filename = port_files,
-        layer_name = gsub(paste0("_", scenario, "\\.gpkg$"), "", port_files),
-        scenario = scenario,
-        point_count = NA,
-        total_risk = NA,
-        stringsAsFactors = FALSE
-      )
-      
-      # Extract components from layer names
-      port_catalog <- port_catalog %>%
-        mutate(
-          components = strsplit(as.character(layer_name), "_"),
-          pathway = sapply(components, function(x) if(length(x) > 0) x[1] else NA),
-          container = sapply(components, function(x) if(length(x) > 1) x[2] else NA),
-          product_pathway = sapply(components, function(x) if(length(x) > 2) x[3] else NA),
-          product_subpathway = sapply(components, function(x) if(length(x) > 3) x[4] else NA)
-        ) %>%
-        select(-components)
+      # Extract components from layer names (fallback if no mapping data)
+      if (!"pathway" %in% names(port_catalog)) {
+        port_catalog <- port_catalog %>%
+          mutate(
+            components = strsplit(as.character(layer_name), "_"),
+            pathway = sapply(components, function(x) if(length(x) > 0) x[1] else NA),
+            container = sapply(components, function(x) if(length(x) > 1) x[2] else NA),
+            product_pathway = sapply(components, function(x) if(length(x) > 2) x[3] else NA),
+            product_subpathway = sapply(components, function(x) if(length(x) > 3) x[4] else NA)
+          ) %>%
+          select(-components)
+      }
       
       return(port_catalog)
     }
   })
-    # Create dynamic port layer checkboxes
+  
+  # Helper function to create readable layer names for port risk
+  create_port_readable_name <- function(pathway, container, product_pathway, product_subpathway) {
+    parts <- c()
+    
+    # Add pathway if available
+    if (!is.na(pathway) && pathway != "" && pathway != "NA") {
+      parts <- c(parts, pathway)
+    }
+    
+    # Add container if available
+    if (!is.na(container) && container != "" && container != "NA") {
+      parts <- c(parts, container)
+    }
+    
+    # Add product pathway if available
+    if (!is.na(product_pathway) && product_pathway != "" && product_pathway != "NA") {
+      parts <- c(parts, product_pathway)
+    }
+    
+    # Add product subpathway if available
+    if (!is.na(product_subpathway) && product_subpathway != "" && product_subpathway != "NA") {
+      parts <- c(parts, product_subpathway)
+    }
+    
+    # If no parts, return "Unknown"
+    if (length(parts) == 0) {
+      return("Unknown")
+    }
+    
+    # Join all parts with " | "
+    return(paste(parts, collapse = " | "))
+  }
+  
+  # Create dynamic port layer checkboxes
   output$port_layer_selector <- renderUI({
     port_catalog <- available_port_layers()
     scenario <- input$scenario_filter
@@ -535,14 +848,54 @@ server <- function(input, output, session) {
       port_catalog <- port_catalog %>% filter(container %in% input$port_container_filter)
     }
     
+    # Add sorting options
+    sort_options <- c("Pathway" = "pathway", 
+                     "Container" = "container", 
+                     "Product Pathway" = "product_pathway",
+                     "Product Use" = "product_subpathway",
+                     "Risk (High to Low)" = "risk_desc",
+                     "Risk (Low to High)" = "risk_asc")
+    
+    # Apply sorting based on input (default to pathway)
+    sort_by <- if (!is.null(input$port_sort_by)) input$port_sort_by else "pathway"
+    
+    if (sort_by == "risk_desc" && "total_risk" %in% names(port_catalog)) {
+      port_catalog <- port_catalog %>% arrange(desc(total_risk))
+    } else if (sort_by == "risk_asc" && "total_risk" %in% names(port_catalog)) {
+      port_catalog <- port_catalog %>% arrange(total_risk)
+    } else if (sort_by %in% names(port_catalog)) {
+      port_catalog <- port_catalog %>% arrange(!!sym(sort_by))
+    }
+    
+    # Create readable display names
+    port_catalog <- port_catalog %>%
+      rowwise() %>%
+      mutate(
+        display_name = create_port_readable_name(pathway, container, product_pathway, product_subpathway)
+      ) %>%
+      ungroup()
+    
+    # Add scenario to display name when "all" is selected
+    if (tolower(scenario) == "all" && "scenario" %in% colnames(port_catalog)) {
+      port_catalog <- port_catalog %>%
+        mutate(display_name = paste0(display_name, " (", scenario, ")"))
+    }
+    
+    # Create choices list
+    choices_list <- setNames(port_catalog$layer_name, port_catalog$display_name)
+    
     # Show some info about the available layers
     tagList(
       h4(paste0("Available Layers (", scenario, " scenario)")),
       p(paste0("Found ", nrow(port_catalog), " layer(s) matching your criteria")),
+      # Add sorting dropdown
+      selectInput("port_sort_by", "Sort layers by:",
+                 choices = sort_options,
+                 selected = "pathway"),
       checkboxGroupInput(
         "selected_port_layers",
         "Select Port Risk Layers:",
-        choices = setNames(port_catalog$layer_name, port_catalog$layer_name),
+        choices = choices_list,
         selected = NULL
       ),
       actionButton("refresh_port_layers", "Refresh Layers List", 
@@ -947,12 +1300,13 @@ server <- function(input, output, session) {
       }",
       risk_range[1], risk_range[2], input$color_scheme
     )
-    
+      # Use clearGroup to properly clear clustered markers
     leafletProxy("port_risk_map") %>%
-      clearMarkers() %>%
+      clearGroup("port_markers") %>%
       clearControls() %>%
       addCircleMarkers(
         data = port_data,
+        group = "port_markers",  # Add group identifier
         layerId = ~marker_id,
         radius = adjusted_size,  # Use scaled size based on risk
         fillColor = ~pal(total_mean_kg),
@@ -981,7 +1335,8 @@ server <- function(input, output, session) {
         pal = pal,
         values = port_data[[risk_col]],
         title = paste0("Combined Risk Level (", scenario, ")\nColor & Size = Risk Value"),
-        opacity = 0.8
+        opacity = 0.8,
+        layerId = "port_legend"  # Add layerId for proper legend replacement
       )
   })# Scenario information text
   output$scenario_info <- renderText({

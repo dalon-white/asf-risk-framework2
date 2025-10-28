@@ -73,7 +73,10 @@ get_pipeline_scripts <- function() {
     "01_07 aqim volume spatial layers.Rmd",
     "03_01 ean data.Rmd",
     "03_02 ean geolocation.Rmd",
-    "03_03 ean port and destination layers.Rmd"
+    "03_03 ean port and destination layers.Rmd",
+    "04_01 IBL data.Rmd",
+    "04_02 IBL port and destination layers.Rmd",
+    "04_03 IBL report output.R"
   ))
 }
 

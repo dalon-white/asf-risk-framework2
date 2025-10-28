@@ -334,9 +334,7 @@ print(poor_fits)
 
 setwd(here::here("output","item size sampling distributions","aqim"))
 # Save the distribution model object
-saveRDS(pathway_distributions, paste(params$aqim_qmi_size_distribution_filename, ".rds", sep = "")
-)
-
+saveRDS(pathway_distributions, paste(params$aqim_qmi_size_distribution_filename, ".rds", sep = ""))
 ```
 
 # Summarize and visualize the pathway distributions

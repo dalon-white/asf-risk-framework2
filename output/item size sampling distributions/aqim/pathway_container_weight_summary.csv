@@ -1,11 +1,11 @@
 "PATHWAY","container","product_pathway","product_subpathway","mean_weight","median_weight","total_samples","min_weight","max_weight"
-"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","personal use or consumption",2.14398988823842,1,3758,0.01,18
-"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",1.09287822222222,0.5,1125,0.001,16.8
-"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",1.23664415156507,0.6,607,0.02,15
+"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","personal use or consumption",2.14424966869865,1,3773,0.01,18
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",1.09208156028369,0.5,1128,0.001,16.8
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",1.24074384236453,0.6,609,0.02,15
 "Pedestrian SB","baggage","swine products/by-products","personal use or consumption",1.99165177858439,1,551,0.00013,19.81
 "Land Border - Truck - Conveyance - CBP SB","baggage","other products","animal-based feed",2.72263888888889,2,288,0.05,19.5
 "Land Border - Truck - Conveyance - CBP NB","baggage","other products","animal-based feed",1.94419928825623,1,281,0.05,18
-"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",0.432771739130435,0.2,276,0.01,4
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",0.433014440433213,0.2,277,0.01,4
 "Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","smuggled commercial products",33.1309090909091,25,66,20,132
 "Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",1.8119298245614,1.5,57,0.1,10
 "Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",0.275375,0.2,40,0.01,3

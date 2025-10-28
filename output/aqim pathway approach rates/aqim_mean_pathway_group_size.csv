@@ -1,14 +1,14 @@
 "PATHWAY","avg_group_size","median_group_size","min_group_size","max_group_size","count"
-"Airport - Aircraft - Cargo - CBP",1,1,1,1,5364
-"Airport - Aircraft - Passenger - Predeparture",1.94779695517578,2,1,99,70743
-"Airport - Aircraft - Person - CBP",1.40590547106075,1,1,86,318823
-"Airport - Aircraft - Person - Pre-Clearance",1.65739759218596,1,1,50,52828
+"Airport - Aircraft - Cargo - CBP",1,1,1,1,5391
+"Airport - Aircraft - Passenger - Predeparture",1.94743661971831,2,1,99,71000
+"Airport - Aircraft - Person - CBP",1.40585170640953,1,1,86,320351
+"Airport - Aircraft - Person - Pre-Clearance",1.65775158658205,1,1,50,52944
 "Cruise_ship",1.88407706650093,2,1,21,40225
 "Express_courier",1,1,1,1,67910
-"Land Border - Truck - Cargo - CBP NB",1,1,1,1,8382
-"Land Border - Truck - Cargo - CBP SB",1,1,1,1,1944
-"Land Border - Truck - Conveyance - CBP NB",2.13628561145104,2,1,83,144476
-"Land Border - Truck - Conveyance - CBP SB",1.95551570242387,2,1,51,268207
-"Maritime Port - Vessel - Cargo - CBP",1,1,1,1,13579
-"Maritime Port - Vessel - Mail - CBP",1,1,1,1,64238
+"Land Border - Truck - Cargo - CBP NB",1,1,1,1,8397
+"Land Border - Truck - Cargo - CBP SB",1,1,1,1,1945
+"Land Border - Truck - Conveyance - CBP NB",2.13581474347025,2,1,83,144837
+"Land Border - Truck - Conveyance - CBP SB",1.95524003660251,2,1,51,268834
+"Maritime Port - Vessel - Cargo - CBP",1,1,1,1,13665
+"Maritime Port - Vessel - Mail - CBP",1,1,1,1,64296
 "Pedestrian SB",1.54081809324321,1,1,400,294563
