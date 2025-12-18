@@ -10,14 +10,21 @@ output: html_document
 pacman::p_load(tidyverse, dplyr)
 ```
 
+# Get places that have already been geolocated by Amber
+
 ```{r get known locations}
 #read in the file
 setwd(here::here("input","data","place names and geolocation"))
 #read all files within
 files = file.info(list.files(here::here("input","data","place names and geolocation"), full.names = T))
 geolocs = read_csv("city state geolocations.csv")
+
+print('`geolocs` loaded with known geolocations by AT')
 ```
 
+# Get unknown locations to geolocate
+These are being shunted from 01_01.
+  Any known matching locations will be in the above file. All AQIM locations are tested against that file. If there is not a match, it gets saved as the unknown location file to be geolocated here.
 
 ```{r get unknown locations}
 
@@ -25,88 +32,199 @@ geolocs = read_csv("city state geolocations.csv")
 setwd(here::here("output","geoplaces",'unknown locations'))
 unknown_destinations <- read.csv("unknown locations.csv") 
 
+# #for testing purposes only
+# unknown_destinations = unknown_destinations[1:4,]
 ```
 
-Correct names with fuzzy matching
+# Correct names with fuzzy matching
+Parse unknown locations to correct any misspellings before re-geolocating
 
-Still under construction -- need to fix the fuzzy matching function
+## Adjust to use 2 types - first run using OSA which will correct simple typos, then JW for those not found
+
 ```{r correct names and re-geolocate}
 
 # Reference table of cities and states (e.g., us_cities)
 # us_cities <- data.frame(city = ..., state = ..., lat = ..., lon = ...)
 setwd(here::here('input',"data",'place names and geolocation','US places'))
-files = file.info(list.files(here::here("input","data","place names and geolocation",'US places'), full.names = T))
-gazetteer <- read.delim(base::rownames(files)[which.max(files$mtime)], sep = "\t", header = TRUE)
+files_gaz = here::here("input","data","place names and geolocation",'US places') |> list.files(full.names = T) |> file.info()
+gazetteer <- read.delim(base::rownames(files_gaz)[which.max(files_gaz$mtime)], sep = "\t", header = TRUE)
 
 
-#### Fix below function ####
+#reference table of geoplaces from geonames - right now I'm using cities1000 (12/5/25)
+files_geo <- here::here("input","data","place names and geolocation",'geonames') |> list.files(full.names = T) |> file.info()
+geonames <- read.delim(base::rownames(files_geo)[which.max(files_geo$mtime)], sep = "\t", header = FALSE) |> filter(grepl("US|PR|GU|VI|AS|MP", V9)) #v9 filters to US and territories, see 00_06
+
+#geonames has territory state code in V9 and conus state code in v11; combine
+geonames <- geonames |> mutate(
+  state = case_when(
+    V9 == "US" ~ V11,
+    TRUE ~ V9
+    )
+  )
+
+
+#standardize city state and lat longs
+geonames <- geonames |> mutate(
+  state = toupper(state),
+  city = tools::toTitleCase(tolower(V3)),
+  lat = as.numeric(V5),
+  lon = as.numeric(V6)
+) |> dplyr::select(state, city, lat, lon)
+
+gazetteer <- gazetteer |> mutate(
+  state = toupper(USPS),
+  city = tools::toTitleCase(tolower(NAME)),
+  lat = as.numeric(INTPTLAT),
+  lon = as.numeric(INTPTLONG)
+) |> dplyr::select(state, city, lat, lon)
+
+combined_ref = geonames |> bind_rows(gazetteer)
+nrow(combined_ref) #check number of rows
+combined_ref <- combined_ref |> distinct(state, city, lat, lon, .keep_all = T)
+nrow(combined_ref |> distinct(state, city)) #check number of rows again
+# Theres ~400 with the same names but distinct lat longs between the 2 datasets
+
+# Check for duplicates
+duplicates <- combined_ref |> group_by(state, city) |> filter(n() > 1)
+View(duplicates)
+
+#A quick look tells me that these are slight variations in lat long for the same city between the 2 datasets, so we can just keep one of them
+# Looking at the first few examples, geonames seems to have more precise lat longs, so we'll keep those when duplicates exist
+#For example, Jefferson, GA was lat = 33.4 for gazetteer and 34.1 for geonames; I looked it up and found that google maps has 34.1 as the correct lat
+# Since we are binding gazetteer to geonames, it will keep the geonames version when we distinct()
+combined_ref <- combined_ref |> distinct(state, city, .keep_all = T)
+
+
 # Fuzzy match function
-correct_city <- function(city, state, ref_table, max_dist = 2) {
-  state <- toupper(state)
-  city <- tools::toTitleCase(tolower(city))
+correct_city <- function(city, state, ref_table, ref_city_col, ref_state_col, max_dist, method = 'jw') {
+  # Handle NA inputs early
+  if (is.na(city) || is.na(state)) {
+    return(data.frame(corrected_city = NA_character_, lat = NA_real_, lon = NA_real_))
+  }
+  
+  # Normalize input
+  state_lookup <- toupper(state)
+  city_lookup <- tools::toTitleCase(tolower(city))
+  
+  # Filter candidates by state (using the normalized state_lookup variable)
   candidates <- ref_table %>%
-    mutate(city = tools::toTitleCase(tolower(city)),
-           state = toupper(state)) %>%
-    filter(state == state)
-  if (nrow(candidates) == 0 || is.na(city) || is.na(state)) {
-    return(NA_character_)
+    mutate(
+      city_clean = tools::toTitleCase(tolower(.data[[ref_city_col]])),
+      state_clean = toupper(.data[[ref_state_col]])
+    ) %>%
+    filter(state_clean == state_lookup)
+  
+  if (nrow(candidates) == 0) {
+    return(data.frame(corrected_city = NA_character_, lat = NA_real_, lon = NA_real_))
   }
-  # Calculate string distances
-  dists <- stringdist::stringdist(city, candidates$city, method = "jw")
+    # Calculate string distances using Optimal String Alignment (OSA)
+  # OSA is more forgiving for typos like substitutions (D -> S)
+  dists <- stringdist::stringdist(city_lookup, candidates$city_clean, method = method)
   min_idx <- which.min(dists)
-  # Only correct if distance is below threshold
+  
+  # Only correct if distance is below threshold (for OSA, this is number of edits)
+  # max_dist should be something like 2-3 for OSA (2-3 character changes allowed)
   if (length(min_idx) == 0 || dists[min_idx] > max_dist) {
-    return(NA_character_)
+    return(data.frame(corrected_city = NA_character_, lat = NA_real_, lon = NA_real_))
   }
-  candidates$city[min_idx]
+
+  # # Return the corrected city name
+  # candidates$city_clean[min_idx]
+   # Return a dataframe with the corrected name, lat, and lon
+  return(data.frame(
+    corrected_city = candidates$city_clean[min_idx],
+    lat = candidates$lat[min_idx],
+    lon = candidates$lon[min_idx]
+  ))
 }
-
-test<- unknown_destinations[1:100,]
-
-#### Fix below function ####
-
-
-# Apply correction
-# Currently doesnt work, it just changes the letter case
-test$corrected_city <- mapply(correct_city, test$CITY_DEST_NAME, test$STATE_DEST_CD, MoreArgs = list(ref_table = gazetteer, max_dist = 0.2))
-
-
-
-# Apply correction
-test$corrected_city <- mapply(correct_city, test$CITY_DEST_NAME, test$STATE_DEST_CD, MoreArgs = list(ref_table = gazetteer))
-
-
-
-
-
-
-
-# Apply correction
-unknown_destinations$corrected_city <- mapply(correct_city, unknown_destinations$CITY_DEST_NAME, unknown_destinations$STATE_DEST_CD, MoreArgs = list(ref_table = gazetteer))
-
-# Geocode using corrected names
-unknown_destinations <- tidygeocoder::geocode(unknown_destinations, city = corrected_city, state = state, method = "osm")
 ```
 
-## once the above is fixed to correctly identify corrected_city, replace `city = CITY_DEST_NAME` with `city = corrected_city` below
 
-```{r identify unknown locations}
+# correct the city names
+```{r apply name correction}
 
-#identify how many records to pass at a time
-number = 100
+# Initialize the corrected_city column
+unknown_destinations$corrected_city <- NA_character_
 
-#write function to pass and save those combinations
-save_destinations_func <- function(number, unknowns) for(i in seq(1, nrow(unknowns), by=number)) {
-  setwd(here::here('output','data','geoplaces'))
-  destinations <- tidygeocoder::geocode(
-  unknowns[i:(i+number-1),],
-  method = 'osm', state = STATE_DEST_CD, city = CITY_DEST_NAME)
-  write.csv(destinations,
-            paste("destinations", i, "to", (i+number)-1, ".csv",
-                  sep = " "))
+unknown_destinations$lat <- NA_character_
+unknown_destinations$lon <- NA_character_
+
+# Define a helper function to apply correction only to unmatched rows
+apply_correction_sequentially <- function(df, ...) {
+  # Identify which rows still need a correction (are NA in corrected_city)
+  rows_to_correct_idx <- which(is.na(df$corrected_city))
+  
+  # If all rows are corrected, do nothing
+  if (length(rows_to_correct_idx) == 0) {
+    return(df)
+  }
+  
+  # Run mapply only on the subset of rows that need correction
+  # mapply will return a list of data frames
+  new_corrections_list <- mapply(correct_city, 
+                                 df$CITY_DEST_NAME[rows_to_correct_idx], 
+                                 df$STATE_DEST_CD[rows_to_correct_idx], 
+                                 MoreArgs = list(...),
+                                 SIMPLIFY = FALSE) # Return a list
+  
+  # Convert the list of data frames to a single data frame
+  new_corrections_df <- do.call(rbind, new_corrections_list)
+  
+  # Place the new corrections back into the original dataframe
+  df$corrected_city[rows_to_correct_idx] <- new_corrections_df$corrected_city
+  df$lat[rows_to_correct_idx] <- new_corrections_df$lat
+  df$lon[rows_to_correct_idx] <- new_corrections_df$lon
+  
+  # Return the updated dataframe
+  return(df)
+
+
+
 }
 
-save_destinations_func(number = number, unknowns = unknown_destinations)
+# --- Run correction steps sequentially in chunks ---
+
+# Define chunk size and output directory
+chunk_size <- 50
+
+#This directory will save the corrected chunks, which will be used to compile the known and unknown locations, and then be deleted and cleared
+output_dir <- here::here("output", "geoplaces", "corrected_chunks")
+#This will save each correction permanently
+saved_corrections_dir <- here::here("output", "geoplaces", "city name corrections")
+
+# Create the output directory if it doesn't exist
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+# Loop through the dataframe in chunks
+for (i in seq(1, nrow(unknown_destinations), by = chunk_size)) {
+  # Define the current chunk
+  start_index <- i
+  end_index <- min(i + chunk_size - 1, nrow(unknown_destinations))
+  chunk <- unknown_destinations[start_index:end_index, ]
+  
+  # Initialize columns for the chunk
+  chunk$corrected_city <- NA_character_
+  chunk$lat <- NA_real_
+  chunk$lon <- NA_real_
+  
+  # --- Apply correction logic to the current chunk ---
+  # 1. Combined Ref with OSA (best for typos)
+  chunk <- apply_correction_sequentially(chunk, ref_table = combined_ref, max_dist = 3, method = 'osa', ref_city_col = "city", ref_state_col = "state")
+  
+  # 2. Combined Ref with JW (best for different word orders or missing words)
+  chunk <- apply_correction_sequentially(chunk, ref_table = combined_ref, max_dist = 0.15, method = 'jw', ref_city_col = "city", ref_state_col = "state")
+  
+  # --- Save the processed chunk ---
+  chunk_filename <- file.path(output_dir, paste0("corrected_chunk_", start_index, "_to_", end_index, ".csv"))
+  write.csv(chunk, chunk_filename, row.names = FALSE)
+
+  correction_filename <- file.path(saved_corrections_dir, paste0("city_name_corrections_", start_index, "_to_", end_index, Sys.Date(), ".csv"))
+  write.csv(chunk, correction_filename, row.names = FALSE)
+
+  print(paste("Processed and saved chunk:", chunk_filename))
+}
 ```
 
 
@@ -115,22 +233,127 @@ save_destinations_func(number = number, unknowns = unknown_destinations)
 
 ```{r compile geolocation data and integrate in knowns}
 
-files = file.info(list.files(here::here("output","data","geoplaces"), full.names = T))
+# Point to the directory with the corrected chunk files
+output_dir <- here::here("output", "geoplaces", "corrected_chunks")
+files <- list.files(output_dir, full.names = TRUE, pattern = "\\.csv$")
 
-all_data <- do.call(rbind, lapply(rownames(files), read.csv))
+# Read and combine all chunk files
+all_data <- do.call(rbind, lapply(files, read.csv))
 
-known_places <- all_data |> mutate(x = long,
-                   y = lat) |> 
+# --- The rest of your processing logic ---
+known_places <- all_data |> 
+  mutate(x = lon, y = lat) |> 
   #filter out unidentified places
   filter(!(is.na(x) | is.na(y))) |> 
+  # Create the citystlow column from the *original* city/state names
   mutate(citystlow = tolower(
     paste(CITY_DEST_NAME, STATE_DEST_CD, sep = ", "))
     ) |> 
-  mutate(UniqueID = paste("osm-",row_number())) |> 
+  mutate(UniqueID = paste("osm-", row_number())) |> 
   dplyr::select(citystlow, UniqueID, x, y)
 
-here::here("input","data","place names and geolocation")
+# Set working directory to save the final file
+setwd(here::here("input","data","place names and geolocation"))
 known_places <- rbind(geolocs, known_places)
-write.csv(known_places, "city state geolocations.csv")
+write.csv(known_places, "city state geolocations.csv", row.names = FALSE)
 
+# Optional: Clean up the chunk files directory
+# unlink(corrected_chunks_dir, recursive = TRUE)
+
+```
+
+
+
+# testing: ignore below here
+
+```{r}
+
+
+
+
+# to convert using gazetteer as reference table and jw method
+test = head(unknown_destinations,5)
+mapply(correct_city, test$CITY_DEST_NAME, test$STATE_DEST_CD, MoreArgs = list(ref_table = gazetteer, max_dist = .2, ref_city_col = "NAME", ref_state_col = "USPS"))
+
+# to convert using gazetteer as reference table and osa method
+test = head(unknown_destinations,5)
+mapply(correct_city, test$CITY_DEST_NAME, test$STATE_DEST_CD, MoreArgs = list(ref_table = gazetteer, max_dist = 3, method = 'osa', ref_city_col = "NAME", ref_state_col = "USPS"))
+
+
+# to convert using geonames as reference table and jw method
+
+mapply(correct_city, test$CITY_DEST_NAME, test$STATE_DEST_CD, MoreArgs = list(ref_table = geonames, max_dist = .1, method = 'jw', ref_city_col = "V3", ref_state_col = "state"))
+
+# to convert using geonames as reference table and osa method
+
+mapply(correct_city, test$CITY_DEST_NAME, test$STATE_DEST_CD, MoreArgs = list(ref_table = geonames, max_dist = 3, method = 'osa', ref_city_col = "V3", ref_state_col = "state"))
+
+# Apply correction
+# Note: max_dist for OSA represents the number of character edits allowed (insertions, deletions, substitutions)
+# For 'DAN YSIDRO' -> 'San Ysidro', only 1 substitution (D->S) is needed
+# max_dist = 2 allows up to 2 character edits, which should catch most typos
+unknown_destinations$corrected_city <- mapply(correct_city, unknown_destinations$CITY_DEST_NAME, unknown_destinations$STATE_DEST_CD, MoreArgs = list(ref_table = gazetteer, max_dist = 3, method = 'osa', ref_city_col = "NAME", ref_state_col = "USPS"))
+
+unknown_destinations$corrected_city_jw <- mapply(correct_city, unknown_destinations$CITY_DEST_NAME, unknown_destinations$STATE_DEST_CD, MoreArgs = list(ref_table = gazetteer, max_dist = .15, ref_city_col = "NAME", ref_state_col = "USPS"))
+
+
+# # Geocode using corrected names
+# unknown_destinations <- tidygeocoder::geocode(unknown_destinations, city = corrected_city, state = STATE_DEST_CD, method = "osm")
+```
+
+```{r checking geocoding}
+# DAN YSIDRO is not being corrected to San Ysidro
+# I want to check the distances each at a time
+test_correction_func <- function(city, state, ref_table, max_dist) {
+  # Handle NA inputs early
+  if (is.na(city) || is.na(state)) {
+    return(NA_character_)
+  }
+  
+  # Normalize input
+  state_lookup <- toupper(state)
+  city_lookup <- tools::toTitleCase(tolower(city))
+  
+  # Filter candidates by state (using the normalized state_lookup variable)
+  candidates <- ref_table %>%
+    mutate(
+      city_clean = tools::toTitleCase(tolower(NAME)),
+      state_clean = toupper(USPS)
+    ) %>%
+    filter(state_clean == state_lookup)
+
+    # Calculate string distances using Optimal String Alignment (OSA)
+  # OSA is more forgiving for typos like substitutions (D -> S)
+  dists <- stringdist::stringdist(city_lookup, candidates$city_clean, method = "osa")
+
+ return(data.frame(city_name = candidates$city_clean,
+                   distance = dists)
+ )
+}
+
+test = "Dan Ysidro"
+ref <- gazetteer |> filter(grepl("Ysidro|Hanford", NAME))
+
+#It is making 4 comparisons...
+stringdist::stringdist(test, ref$NAME, method = "jw")
+print(ref$NAME)
+
+#But only Hanford shows up as the minimum distance...
+#but this is because the state is given as "CA"
+test_correction_func("Dan Ysidro", "CA", ref_table = ref, max_dist = 1)
+
+#If the state is given as "NM", it finds the 3 San Ysidros ...
+test_correction_func("Dan Ysidro", "NM", ref_table = ref, max_dist = 1)
+
+# And the reason is because the Gazetter US Places list does not include San Ysidro CA!; it is probably listed as San Diego.
+
+
+#Why isn't OSA working well?
+test = "Hidalqgo"
+ref <- gazetteer |> filter(grepl("Ysidro|Hanford|Hidalgo", NAME))
+
+#It is making 4 comparisons...
+stringdist::stringdist(test, ref$NAME, method = "osa")
+print(ref$NAME)
+# Ah - The NAME column in gazetteer includes CDP, city, or village as an ending, making the strings really far apart. Adding in geonames data frame with just city and state may help.
 ```

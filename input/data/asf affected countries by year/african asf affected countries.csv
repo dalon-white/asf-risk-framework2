@@ -1,0 +1,1395 @@
+Year,Disease,Country,ISO3_CODE,continent,status
+2024,FMD,Algeria,DZA,Africa,Present
+2024,ASF,Angola,AGO,Africa,Present
+2024,FMD,Comoros,COM,Africa,Present
+2024,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2024,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2024,ASF,Cote D'Ivoire,CIV,Africa,Present
+2024,FMD,Egypt,EGY,Africa,Present
+2024,FMD,Ethiopia,ETH,Africa,Present
+2024,FMD,Kenya,KEN,Africa,Present
+2024,FMD,Libya,LBY,Africa,Present
+2024,ASF,Madagascar,MDG,Africa,Present
+2024,CSF,Madagascar,MDG,Africa,Present
+2024,ASF,Mozambique,MOZ,Africa,Present
+2024,FMD,Nigeria,NGA,Africa,Present
+2024,ASF,Nigeria,NGA,Africa,Present
+2024,ASF,South Africa,ZAF,Africa,Present
+2024,FMD,South Africa,ZAF,Africa,Present
+2024,ASF,Tanzania,TZA,Africa,Present
+2024,FMD,Tanzania,TZA,Africa,Present
+2024,FMD,Togo,TGO,Africa,Present
+2024,ASF,Togo,TGO,Africa,Present
+2024,FMD,Tunisia,TUN,Africa,Present
+2024,FMD,Zimbabwe,ZWE,Africa,Present
+2024,FMD,Mozambique,MOZ,Africa,Present
+2014,ASF,Cote D'Ivoire,CIV,Africa,Present
+2015,ASF,Cote D'Ivoire,CIV,Africa,Present
+2017,ASF,Cote D'Ivoire,CIV,Africa,Present
+2018,ASF,Cote D'Ivoire,CIV,Africa,Present
+2019,ASF,Cote D'Ivoire,CIV,Africa,Present
+2020,ASF,Cote D'Ivoire,CIV,Africa,Present
+2021,ASF,Cote D'Ivoire,CIV,Africa,Present
+2022,ASF,Cote D'Ivoire,CIV,Africa,Present
+2005,FMD,Cote D'Ivoire,CIV,Africa,Present
+2007,FMD,Cote D'Ivoire,CIV,Africa,Suspected
+2008,FMD,Cote D'Ivoire,CIV,Africa,Present
+2009,FMD,Cote D'Ivoire,CIV,Africa,Present
+2010,FMD,Cote D'Ivoire,CIV,Africa,Present
+2011,FMD,Cote D'Ivoire,CIV,Africa,Present
+2012,FMD,Cote D'Ivoire,CIV,Africa,Present
+2013,FMD,Cote D'Ivoire,CIV,Africa,Present
+2013,FMD,Cote D'Ivoire,CIV,Africa,Suspected
+2014,FMD,Cote D'Ivoire,CIV,Africa,Present
+2015,FMD,Cote D'Ivoire,CIV,Africa,Present
+2016,FMD,Cote D'Ivoire,CIV,Africa,Present
+2017,FMD,Cote D'Ivoire,CIV,Africa,Present
+2018,FMD,Cote D'Ivoire,CIV,Africa,Present
+2019,FMD,Cote D'Ivoire,CIV,Africa,Present
+2020,FMD,Cote D'Ivoire,CIV,Africa,Present
+2021,FMD,Cote D'Ivoire,CIV,Africa,Present
+2022,FMD,Cote D'Ivoire,CIV,Africa,Present
+2023,FMD,Algeria,DZA,Africa,Present
+2024,FMD,Cote D'Ivoire,CIV,Africa,Present
+2005,ASF,Namibia,NAM,Africa,Present
+2008,ASF,Namibia,NAM,Africa,Present
+2009,ASF,Namibia,NAM,Africa,Present
+2010,ASF,Namibia,NAM,Africa,Present
+2011,ASF,Namibia,NAM,Africa,Present
+2012,ASF,Namibia,NAM,Africa,Present
+2012,ASF,Namibia,NAM,Africa,Suspected
+2013,ASF,Namibia,NAM,Africa,Present
+2014,ASF,Namibia,NAM,Africa,Present
+2016,ASF,Namibia,NAM,Africa,Suspected
+2016,ASF,Namibia,NAM,Africa,Present
+2017,ASF,Namibia,NAM,Africa,Suspected
+2017,ASF,Namibia,NAM,Africa,Present
+2018,ASF,Namibia,NAM,Africa,Present
+2018,ASF,Namibia,NAM,Africa,Suspected
+2019,ASF,Namibia,NAM,Africa,Present
+2020,ASF,Namibia,NAM,Africa,Present
+2021,ASF,Namibia,NAM,Africa,Present
+2022,ASF,Namibia,NAM,Africa,Present
+2024,ASF,Namibia,NAM,Africa,Present
+2007,FMD,Namibia,NAM,Africa,Present
+2008,FMD,Namibia,NAM,Africa,Present
+2009,FMD,Namibia,NAM,Africa,Present
+2010,FMD,Namibia,NAM,Africa,Present
+2011,FMD,Namibia,NAM,Africa,Present
+2012,FMD,Namibia,NAM,Africa,Present
+2013,FMD,Namibia,NAM,Africa,Present
+2014,FMD,Namibia,NAM,Africa,Present
+2015,FMD,Namibia,NAM,Africa,Suspected
+2015,FMD,Namibia,NAM,Africa,Present
+2016,FMD,Namibia,NAM,Africa,Present
+2016,FMD,Namibia,NAM,Africa,Suspected
+2017,FMD,Namibia,NAM,Africa,Present
+2018,FMD,Namibia,NAM,Africa,Present
+2019,FMD,Namibia,NAM,Africa,Present
+2020,FMD,Namibia,NAM,Africa,Present
+2021,FMD,Namibia,NAM,Africa,Present
+2022,FMD,Namibia,NAM,Africa,Present
+2024,FMD,Namibia,NAM,Africa,Present
+2005,ASF,Nigeria,NGA,Africa,Present
+2006,ASF,Nigeria,NGA,Africa,Present
+2007,ASF,Nigeria,NGA,Africa,Present
+2007,ASF,Nigeria,NGA,Africa,Suspected
+2008,ASF,Nigeria,NGA,Africa,Present
+2009,ASF,Nigeria,NGA,Africa,Present
+2010,ASF,Nigeria,NGA,Africa,Present
+2011,ASF,Nigeria,NGA,Africa,Present
+2012,ASF,Nigeria,NGA,Africa,Present
+2013,ASF,Nigeria,NGA,Africa,Present
+2014,ASF,Nigeria,NGA,Africa,Present
+2015,ASF,Nigeria,NGA,Africa,Present
+2016,ASF,Nigeria,NGA,Africa,Present
+2017,ASF,Nigeria,NGA,Africa,Present
+2018,ASF,Nigeria,NGA,Africa,Present
+2019,ASF,Nigeria,NGA,Africa,Present
+2020,ASF,Nigeria,NGA,Africa,Present
+2021,ASF,Nigeria,NGA,Africa,Present
+2022,ASF,Nigeria,NGA,Africa,Present
+2023,FMD,Benin,BEN,Africa,Present
+2005,FMD,Nigeria,NGA,Africa,Present
+2006,FMD,Nigeria,NGA,Africa,Present
+2007,FMD,Nigeria,NGA,Africa,Present
+2008,FMD,Nigeria,NGA,Africa,Present
+2009,FMD,Nigeria,NGA,Africa,Present
+2010,FMD,Nigeria,NGA,Africa,Present
+2011,FMD,Nigeria,NGA,Africa,Present
+2012,FMD,Nigeria,NGA,Africa,Present
+2013,FMD,Nigeria,NGA,Africa,Present
+2014,FMD,Nigeria,NGA,Africa,Suspected
+2014,FMD,Nigeria,NGA,Africa,Present
+2015,FMD,Nigeria,NGA,Africa,Present
+2016,FMD,Nigeria,NGA,Africa,Present
+2017,FMD,Nigeria,NGA,Africa,Present
+2018,FMD,Nigeria,NGA,Africa,Present
+2019,FMD,Nigeria,NGA,Africa,Present
+2020,FMD,Nigeria,NGA,Africa,Present
+2021,FMD,Nigeria,NGA,Africa,Present
+2022,FMD,Nigeria,NGA,Africa,Present
+2005,ASF,South Africa,ZAF,Africa,Present
+2006,ASF,South Africa,ZAF,Africa,Present
+2007,ASF,South Africa,ZAF,Africa,Present
+2008,ASF,South Africa,ZAF,Africa,Present
+2009,ASF,South Africa,ZAF,Africa,Present
+2011,ASF,South Africa,ZAF,Africa,Present
+2011,ASF,South Africa,ZAF,Africa,Suspected
+2012,ASF,South Africa,ZAF,Africa,Present
+2013,ASF,South Africa,ZAF,Africa,Present
+2014,ASF,South Africa,ZAF,Africa,Present
+2015,ASF,South Africa,ZAF,Africa,Present
+2016,ASF,South Africa,ZAF,Africa,Present
+2017,ASF,South Africa,ZAF,Africa,Present
+2018,ASF,South Africa,ZAF,Africa,Present
+2019,ASF,South Africa,ZAF,Africa,Present
+2020,ASF,South Africa,ZAF,Africa,Present
+2021,ASF,South Africa,ZAF,Africa,Present
+2022,ASF,South Africa,ZAF,Africa,Present
+2005,CSF,South Africa,ZAF,Africa,Present
+2006,CSF,South Africa,ZAF,Africa,Present
+2007,CSF,South Africa,ZAF,Africa,Present
+2006,FMD,South Africa,ZAF,Africa,Present
+2008,FMD,South Africa,ZAF,Africa,Present
+2009,FMD,South Africa,ZAF,Africa,Present
+2010,FMD,South Africa,ZAF,Africa,Present
+2011,FMD,South Africa,ZAF,Africa,Present
+2012,FMD,South Africa,ZAF,Africa,Present
+2013,FMD,South Africa,ZAF,Africa,Present
+2014,FMD,South Africa,ZAF,Africa,Present
+2015,FMD,South Africa,ZAF,Africa,Present
+2016,FMD,South Africa,ZAF,Africa,Present
+2017,FMD,South Africa,ZAF,Africa,Present
+2018,FMD,South Africa,ZAF,Africa,Present
+2019,FMD,South Africa,ZAF,Africa,Present
+2020,FMD,South Africa,ZAF,Africa,Present
+2021,FMD,South Africa,ZAF,Africa,Present
+2022,FMD,South Africa,ZAF,Africa,Present
+2023,FMD,Botswana,BWA,Africa,Present
+2023,ASF,Burkina Faso,BFA,Africa,Present
+2023,FMD,Burkina Faso,BFA,Africa,Present
+2023,ASF,Burundi,BDI,Africa,Present
+2023,FMD,Burundi,BDI,Africa,Present
+2023,ASF,Cabo verde,CPV,Africa,Present
+2023,ASF,Cameroon,CMR,Africa,Present
+2023,FMD,Cameroon,CMR,Africa,Present
+2023,ASF,Central African Republic,CAF,Africa,Present
+2023,FMD,Central African Republic,CAF,Africa,Present
+2023,FMD,Chad,TCD,Africa,Present
+2023,FMD,Comoros,COM,Africa,Present
+2023,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2023,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2023,ASF,Congo (Rep. of the),COG,Africa,Suspected
+2023,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2023,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2023,ASF,Cote D'Ivoire,CIV,Africa,Present
+2023,FMD,Cote D'Ivoire,CIV,Africa,Present
+2023,FMD,Egypt,EGY,Africa,Present
+2023,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2023,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2023,FMD,Eritrea,ERI,Africa,Present
+2023,FMD,Ethiopia,ETH,Africa,Present
+2023,ASF,Gambia,GMB,Africa,Present
+2023,CSF,Gambia,GMB,Africa,Present
+2023,FMD,Gambia,GMB,Africa,Present
+2023,FMD,Ghana,GHA,Africa,Present
+2023,FMD,Guinea,GIN,Africa,Present
+2023,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2023,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2006,FMD,Egypt,EGY,Africa,Present
+2007,FMD,Egypt,EGY,Africa,Present
+2008,FMD,Egypt,EGY,Africa,Present
+2009,FMD,Egypt,EGY,Africa,Present
+2010,FMD,Egypt,EGY,Africa,Present
+2012,FMD,Egypt,EGY,Africa,Present
+2013,FMD,Egypt,EGY,Africa,Present
+2014,FMD,Egypt,EGY,Africa,Present
+2015,FMD,Egypt,EGY,Africa,Present
+2016,FMD,Egypt,EGY,Africa,Present
+2017,FMD,Egypt,EGY,Africa,Present
+2018,FMD,Egypt,EGY,Africa,Present
+2019,FMD,Egypt,EGY,Africa,Present
+2020,FMD,Egypt,EGY,Africa,Present
+2021,FMD,Egypt,EGY,Africa,Present
+2022,FMD,Egypt,EGY,Africa,Present
+2011,ASF,Ethiopia,ETH,Africa,Suspected
+2012,ASF,Ethiopia,ETH,Africa,Suspected
+2005,FMD,Ethiopia,ETH,Africa,Present
+2006,FMD,Ethiopia,ETH,Africa,Present
+2007,FMD,Ethiopia,ETH,Africa,Present
+2008,FMD,Ethiopia,ETH,Africa,Present
+2009,FMD,Ethiopia,ETH,Africa,Suspected
+2009,FMD,Ethiopia,ETH,Africa,Present
+2010,FMD,Ethiopia,ETH,Africa,Present
+2010,FMD,Ethiopia,ETH,Africa,Suspected
+2011,FMD,Ethiopia,ETH,Africa,Present
+2012,FMD,Ethiopia,ETH,Africa,Present
+2013,FMD,Ethiopia,ETH,Africa,Present
+2014,FMD,Ethiopia,ETH,Africa,Present
+2015,FMD,Ethiopia,ETH,Africa,Present
+2016,FMD,Ethiopia,ETH,Africa,Present
+2017,FMD,Ethiopia,ETH,Africa,Present
+2018,FMD,Ethiopia,ETH,Africa,Present
+2019,FMD,Ethiopia,ETH,Africa,Present
+2020,FMD,Ethiopia,ETH,Africa,Present
+2021,FMD,Ethiopia,ETH,Africa,Present
+2022,FMD,Ethiopia,ETH,Africa,Present
+2008,FMD,Somalia,SOM,Africa,Suspected
+2008,FMD,Somalia,SOM,Africa,Present
+2009,FMD,Somalia,SOM,Africa,Present
+2010,FMD,Somalia,SOM,Africa,Present
+2011,FMD,Somalia,SOM,Africa,Present
+2012,FMD,Somalia,SOM,Africa,Present
+2013,FMD,Somalia,SOM,Africa,Present
+2014,FMD,Somalia,SOM,Africa,Present
+2015,FMD,Somalia,SOM,Africa,Present
+2016,FMD,Somalia,SOM,Africa,Present
+2017,FMD,Somalia,SOM,Africa,Present
+2018,FMD,Somalia,SOM,Africa,Present
+2019,FMD,Somalia,SOM,Africa,Present
+2021,FMD,Somalia,SOM,Africa,Present
+2022,FMD,Somalia,SOM,Africa,Present
+2024,FMD,Somalia,SOM,Africa,Present
+2014,FMD,Algeria,DZA,Africa,Present
+2015,FMD,Algeria,DZA,Africa,Present
+2016,FMD,Algeria,DZA,Africa,Present
+2017,FMD,Algeria,DZA,Africa,Present
+2018,FMD,Algeria,DZA,Africa,Present
+2019,FMD,Algeria,DZA,Africa,Present
+2022,FMD,Algeria,DZA,Africa,Present
+2005,ASF,Benin,BEN,Africa,Present
+2006,ASF,Benin,BEN,Africa,Present
+2007,ASF,Benin,BEN,Africa,Present
+2008,ASF,Benin,BEN,Africa,Present
+2009,ASF,Benin,BEN,Africa,Present
+2010,ASF,Benin,BEN,Africa,Present
+2011,ASF,Benin,BEN,Africa,Present
+2012,ASF,Benin,BEN,Africa,Present
+2013,ASF,Benin,BEN,Africa,Present
+2014,ASF,Benin,BEN,Africa,Present
+2015,ASF,Benin,BEN,Africa,Present
+2016,ASF,Benin,BEN,Africa,Present
+2017,ASF,Benin,BEN,Africa,Present
+2018,ASF,Benin,BEN,Africa,Present
+2019,ASF,Benin,BEN,Africa,Present
+2020,ASF,Benin,BEN,Africa,Present
+2021,ASF,Benin,BEN,Africa,Present
+2022,ASF,Benin,BEN,Africa,Present
+2005,FMD,Benin,BEN,Africa,Present
+2006,FMD,Benin,BEN,Africa,Present
+2007,FMD,Benin,BEN,Africa,Present
+2008,FMD,Benin,BEN,Africa,Present
+2009,FMD,Benin,BEN,Africa,Present
+2010,FMD,Benin,BEN,Africa,Present
+2011,FMD,Benin,BEN,Africa,Present
+2012,FMD,Benin,BEN,Africa,Present
+2013,FMD,Benin,BEN,Africa,Present
+2014,FMD,Benin,BEN,Africa,Present
+2015,FMD,Benin,BEN,Africa,Present
+2016,FMD,Benin,BEN,Africa,Present
+2017,FMD,Benin,BEN,Africa,Present
+2018,FMD,Benin,BEN,Africa,Present
+2019,FMD,Benin,BEN,Africa,Present
+2020,FMD,Benin,BEN,Africa,Present
+2021,FMD,Benin,BEN,Africa,Present
+2022,FMD,Benin,BEN,Africa,Present
+2024,FMD,Benin,BEN,Africa,Present
+2005,ASF,Madagascar,MDG,Africa,Present
+2006,ASF,Madagascar,MDG,Africa,Present
+2007,ASF,Madagascar,MDG,Africa,Present
+2008,ASF,Madagascar,MDG,Africa,Present
+2009,ASF,Madagascar,MDG,Africa,Present
+2010,ASF,Madagascar,MDG,Africa,Present
+2011,ASF,Madagascar,MDG,Africa,Present
+2012,ASF,Madagascar,MDG,Africa,Present
+2013,ASF,Madagascar,MDG,Africa,Present
+2014,ASF,Madagascar,MDG,Africa,Present
+2015,ASF,Madagascar,MDG,Africa,Present
+2016,ASF,Madagascar,MDG,Africa,Present
+2017,ASF,Madagascar,MDG,Africa,Present
+2018,ASF,Madagascar,MDG,Africa,Present
+2019,ASF,Madagascar,MDG,Africa,Present
+2020,ASF,Madagascar,MDG,Africa,Present
+2021,ASF,Madagascar,MDG,Africa,Present
+2022,ASF,Madagascar,MDG,Africa,Present
+2005,CSF,Madagascar,MDG,Africa,Present
+2006,CSF,Madagascar,MDG,Africa,Present
+2007,CSF,Madagascar,MDG,Africa,Present
+2008,CSF,Madagascar,MDG,Africa,Present
+2009,CSF,Madagascar,MDG,Africa,Present
+2010,CSF,Madagascar,MDG,Africa,Present
+2011,CSF,Madagascar,MDG,Africa,Present
+2012,CSF,Madagascar,MDG,Africa,Present
+2013,CSF,Madagascar,MDG,Africa,Present
+2014,CSF,Madagascar,MDG,Africa,Present
+2015,CSF,Madagascar,MDG,Africa,Present
+2016,CSF,Madagascar,MDG,Africa,Present
+2017,CSF,Madagascar,MDG,Africa,Present
+2018,CSF,Madagascar,MDG,Africa,Present
+2019,CSF,Madagascar,MDG,Africa,Present
+2020,CSF,Madagascar,MDG,Africa,Present
+2021,CSF,Madagascar,MDG,Africa,Present
+2022,CSF,Madagascar,MDG,Africa,Present
+2015,FMD,Morocco,MAR,Africa,Present
+2019,FMD,Morocco,MAR,Africa,Present
+2005,ASF,Mozambique,MOZ,Africa,Present
+2006,ASF,Mozambique,MOZ,Africa,Present
+2007,ASF,Mozambique,MOZ,Africa,Present
+2008,ASF,Mozambique,MOZ,Africa,Present
+2009,ASF,Mozambique,MOZ,Africa,Present
+2010,ASF,Mozambique,MOZ,Africa,Present
+2011,ASF,Mozambique,MOZ,Africa,Present
+2012,ASF,Mozambique,MOZ,Africa,Present
+2013,ASF,Mozambique,MOZ,Africa,Present
+2014,ASF,Mozambique,MOZ,Africa,Present
+2015,ASF,Mozambique,MOZ,Africa,Present
+2016,ASF,Mozambique,MOZ,Africa,Present
+2017,ASF,Mozambique,MOZ,Africa,Present
+2018,ASF,Mozambique,MOZ,Africa,Present
+2019,ASF,Mozambique,MOZ,Africa,Present
+2020,ASF,Mozambique,MOZ,Africa,Present
+2021,ASF,Mozambique,MOZ,Africa,Present
+2022,ASF,Mozambique,MOZ,Africa,Present
+2010,FMD,Mozambique,MOZ,Africa,Present
+2011,FMD,Mozambique,MOZ,Africa,Present
+2011,FMD,Mozambique,MOZ,Africa,Suspected
+2014,FMD,Mozambique,MOZ,Africa,Present
+2015,FMD,Mozambique,MOZ,Africa,Present
+2016,FMD,Mozambique,MOZ,Africa,Present
+2017,FMD,Mozambique,MOZ,Africa,Present
+2018,FMD,Mozambique,MOZ,Africa,Present
+2019,FMD,Mozambique,MOZ,Africa,Present
+2020,FMD,Mozambique,MOZ,Africa,Present
+2021,FMD,Mozambique,MOZ,Africa,Present
+2022,FMD,Mozambique,MOZ,Africa,Present
+2005,ASF,Uganda,UGA,Africa,Present
+2006,ASF,Uganda,UGA,Africa,Present
+2007,ASF,Uganda,UGA,Africa,Present
+2008,ASF,Uganda,UGA,Africa,Present
+2009,ASF,Uganda,UGA,Africa,Present
+2010,ASF,Uganda,UGA,Africa,Present
+2011,ASF,Uganda,UGA,Africa,Present
+2012,ASF,Uganda,UGA,Africa,Present
+2013,ASF,Uganda,UGA,Africa,Present
+2014,ASF,Uganda,UGA,Africa,Present
+2015,ASF,Uganda,UGA,Africa,Present
+2016,ASF,Uganda,UGA,Africa,Present
+2017,ASF,Uganda,UGA,Africa,Present
+2018,ASF,Uganda,UGA,Africa,Present
+2019,ASF,Uganda,UGA,Africa,Present
+2020,ASF,Uganda,UGA,Africa,Present
+2021,ASF,Uganda,UGA,Africa,Present
+2022,ASF,Uganda,UGA,Africa,Present
+2023,FMD,Libya,LBY,Africa,Present
+2024,ASF,Uganda,UGA,Africa,Present
+2005,FMD,Uganda,UGA,Africa,Present
+2006,FMD,Uganda,UGA,Africa,Present
+2007,FMD,Uganda,UGA,Africa,Present
+2008,FMD,Uganda,UGA,Africa,Present
+2009,FMD,Uganda,UGA,Africa,Present
+2010,FMD,Uganda,UGA,Africa,Present
+2011,FMD,Uganda,UGA,Africa,Present
+2012,FMD,Uganda,UGA,Africa,Present
+2013,FMD,Uganda,UGA,Africa,Present
+2014,FMD,Uganda,UGA,Africa,Present
+2015,FMD,Uganda,UGA,Africa,Present
+2016,FMD,Uganda,UGA,Africa,Present
+2017,FMD,Uganda,UGA,Africa,Present
+2018,FMD,Uganda,UGA,Africa,Present
+2019,FMD,Uganda,UGA,Africa,Present
+2020,FMD,Uganda,UGA,Africa,Present
+2021,FMD,Uganda,UGA,Africa,Present
+2022,FMD,Uganda,UGA,Africa,Present
+2024,FMD,Uganda,UGA,Africa,Present
+2006,ASF,Zambia,ZMB,Africa,Present
+2007,ASF,Zambia,ZMB,Africa,Present
+2008,ASF,Zambia,ZMB,Africa,Present
+2009,ASF,Zambia,ZMB,Africa,Present
+2010,ASF,Zambia,ZMB,Africa,Present
+2011,ASF,Zambia,ZMB,Africa,Present
+2012,ASF,Zambia,ZMB,Africa,Present
+2013,ASF,Zambia,ZMB,Africa,Present
+2014,ASF,Zambia,ZMB,Africa,Present
+2015,ASF,Zambia,ZMB,Africa,Present
+2016,ASF,Zambia,ZMB,Africa,Present
+2017,ASF,Zambia,ZMB,Africa,Present
+2018,ASF,Zambia,ZMB,Africa,Present
+2019,ASF,Zambia,ZMB,Africa,Present
+2020,ASF,Zambia,ZMB,Africa,Present
+2021,ASF,Zambia,ZMB,Africa,Present
+2022,ASF,Zambia,ZMB,Africa,Present
+2023,ASF,Madagascar,MDG,Africa,Present
+2024,ASF,Zambia,ZMB,Africa,Present
+2005,CSF,Zambia,ZMB,Africa,Present
+2006,FMD,Zambia,ZMB,Africa,Present
+2007,FMD,Zambia,ZMB,Africa,Present
+2008,FMD,Zambia,ZMB,Africa,Present
+2009,FMD,Zambia,ZMB,Africa,Present
+2010,FMD,Zambia,ZMB,Africa,Present
+2012,FMD,Zambia,ZMB,Africa,Present
+2013,FMD,Zambia,ZMB,Africa,Present
+2015,FMD,Zambia,ZMB,Africa,Present
+2016,FMD,Zambia,ZMB,Africa,Present
+2017,FMD,Zambia,ZMB,Africa,Present
+2018,FMD,Zambia,ZMB,Africa,Present
+2019,FMD,Zambia,ZMB,Africa,Present
+2020,FMD,Zambia,ZMB,Africa,Present
+2021,FMD,Zambia,ZMB,Africa,Present
+2022,FMD,Zambia,ZMB,Africa,Present
+2023,CSF,Madagascar,MDG,Africa,Present
+2024,FMD,Zambia,ZMB,Africa,Present
+2015,ASF,Zimbabwe,ZWE,Africa,Present
+2019,ASF,Zimbabwe,ZWE,Africa,Present
+2005,FMD,Zimbabwe,ZWE,Africa,Present
+2007,FMD,Zimbabwe,ZWE,Africa,Present
+2008,FMD,Zimbabwe,ZWE,Africa,Present
+2009,FMD,Zimbabwe,ZWE,Africa,Present
+2010,FMD,Zimbabwe,ZWE,Africa,Present
+2011,FMD,Zimbabwe,ZWE,Africa,Present
+2012,FMD,Zimbabwe,ZWE,Africa,Present
+2013,FMD,Zimbabwe,ZWE,Africa,Present
+2014,FMD,Zimbabwe,ZWE,Africa,Present
+2015,FMD,Zimbabwe,ZWE,Africa,Present
+2016,FMD,Zimbabwe,ZWE,Africa,Present
+2017,FMD,Zimbabwe,ZWE,Africa,Present
+2018,FMD,Zimbabwe,ZWE,Africa,Present
+2018,FMD,Zimbabwe,ZWE,Africa,Suspected
+2019,FMD,Zimbabwe,ZWE,Africa,Suspected
+2019,FMD,Zimbabwe,ZWE,Africa,Present
+2020,FMD,Zimbabwe,ZWE,Africa,Suspected
+2020,FMD,Zimbabwe,ZWE,Africa,Present
+2021,FMD,Zimbabwe,ZWE,Africa,Present
+2021,FMD,Zimbabwe,ZWE,Africa,Suspected
+2022,FMD,Zimbabwe,ZWE,Africa,Suspected
+2022,FMD,Zimbabwe,ZWE,Africa,Present
+2023,ASF,Malawi,MWI,Africa,Suspected
+2023,FMD,Malawi,MWI,Africa,Present
+2023,FMD,Mauritania,MRT,Africa,Present
+2023,FMD,Mauritius,MUS,Africa,Present
+2008,ASF,Cabo verde,CPV,Africa,Present
+2009,ASF,Cabo verde,CPV,Africa,Present
+2010,ASF,Cabo verde,CPV,Africa,Suspected
+2011,ASF,Cabo verde,CPV,Africa,Suspected
+2011,ASF,Cabo verde,CPV,Africa,Present
+2012,ASF,Cabo verde,CPV,Africa,Present
+2013,ASF,Cabo verde,CPV,Africa,Suspected
+2014,ASF,Cabo verde,CPV,Africa,Suspected
+2014,ASF,Cabo verde,CPV,Africa,Present
+2015,ASF,Cabo verde,CPV,Africa,Present
+2016,ASF,Cabo verde,CPV,Africa,Present
+2017,ASF,Cabo verde,CPV,Africa,Present
+2018,ASF,Cabo verde,CPV,Africa,Present
+2019,ASF,Cabo verde,CPV,Africa,Present
+2020,ASF,Cabo verde,CPV,Africa,Present
+2021,ASF,Cabo verde,CPV,Africa,Present
+2022,ASF,Cabo verde,CPV,Africa,Present
+2024,ASF,Cabo verde,CPV,Africa,Present
+2005,CSF,Cabo verde,CPV,Africa,Present
+2006,CSF,Cabo verde,CPV,Africa,Present
+2007,CSF,Cabo verde,CPV,Africa,Present
+2008,CSF,Cabo verde,CPV,Africa,Suspected
+2009,CSF,Cabo verde,CPV,Africa,Suspected
+2010,CSF,Cabo verde,CPV,Africa,Suspected
+2011,CSF,Cabo verde,CPV,Africa,Suspected
+2012,CSF,Cabo verde,CPV,Africa,Suspected
+2013,CSF,Cabo verde,CPV,Africa,Suspected
+2014,CSF,Cabo verde,CPV,Africa,Suspected
+2005,ASF,Guinea-Bissau,GNB,Africa,Present
+2006,ASF,Guinea-Bissau,GNB,Africa,Present
+2007,ASF,Guinea-Bissau,GNB,Africa,Present
+2008,ASF,Guinea-Bissau,GNB,Africa,Present
+2009,ASF,Guinea-Bissau,GNB,Africa,Present
+2009,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2010,ASF,Guinea-Bissau,GNB,Africa,Present
+2010,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2011,ASF,Guinea-Bissau,GNB,Africa,Present
+2011,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2012,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2012,ASF,Guinea-Bissau,GNB,Africa,Present
+2013,ASF,Guinea-Bissau,GNB,Africa,Present
+2013,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2014,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2014,ASF,Guinea-Bissau,GNB,Africa,Present
+2015,ASF,Guinea-Bissau,GNB,Africa,Present
+2015,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2016,ASF,Guinea-Bissau,GNB,Africa,Present
+2016,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2017,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2017,ASF,Guinea-Bissau,GNB,Africa,Present
+2018,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2018,ASF,Guinea-Bissau,GNB,Africa,Present
+2019,ASF,Guinea-Bissau,GNB,Africa,Present
+2019,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2020,ASF,Guinea-Bissau,GNB,Africa,Present
+2020,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2021,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2021,ASF,Guinea-Bissau,GNB,Africa,Present
+2022,ASF,Guinea-Bissau,GNB,Africa,Present
+2022,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2023,ASF,Mozambique,MOZ,Africa,Present
+2024,ASF,Guinea-Bissau,GNB,Africa,Suspected
+2005,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2006,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2007,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2008,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2009,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2010,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2011,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2012,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2013,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2014,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2015,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2016,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2017,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2018,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2019,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2020,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2021,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2022,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2023,FMD,Mozambique,MOZ,Africa,Present
+2024,CSF,Guinea-Bissau,GNB,Africa,Suspected
+2005,FMD,Guinea-Bissau,GNB,Africa,Suspected
+2006,FMD,Guinea-Bissau,GNB,Africa,Suspected
+2007,FMD,Guinea-Bissau,GNB,Africa,Suspected
+2008,FMD,Guinea-Bissau,GNB,Africa,Suspected
+2009,FMD,Guinea-Bissau,GNB,Africa,Suspected
+2014,FMD,Guinea-Bissau,GNB,Africa,Present
+2015,FMD,Guinea-Bissau,GNB,Africa,Suspected
+2016,FMD,Guinea-Bissau,GNB,Africa,Present
+2016,FMD,Guinea-Bissau,GNB,Africa,Suspected
+2017,FMD,Guinea-Bissau,GNB,Africa,Present
+2018,FMD,Guinea-Bissau,GNB,Africa,Present
+2019,FMD,Guinea-Bissau,GNB,Africa,Present
+2020,FMD,Guinea-Bissau,GNB,Africa,Present
+2021,FMD,Guinea-Bissau,GNB,Africa,Present
+2022,FMD,Guinea-Bissau,GNB,Africa,Present
+2006,ASF,Kenya,KEN,Africa,Present
+2006,ASF,Kenya,KEN,Africa,Suspected
+2007,ASF,Kenya,KEN,Africa,Present
+2010,ASF,Kenya,KEN,Africa,Present
+2011,ASF,Kenya,KEN,Africa,Present
+2012,ASF,Kenya,KEN,Africa,Present
+2015,ASF,Kenya,KEN,Africa,Present
+2016,ASF,Kenya,KEN,Africa,Present
+2017,ASF,Kenya,KEN,Africa,Present
+2019,ASF,Kenya,KEN,Africa,Suspected
+2019,ASF,Kenya,KEN,Africa,Present
+2020,ASF,Kenya,KEN,Africa,Present
+2021,ASF,Kenya,KEN,Africa,Present
+2005,FMD,Kenya,KEN,Africa,Present
+2006,FMD,Kenya,KEN,Africa,Present
+2007,FMD,Kenya,KEN,Africa,Present
+2008,FMD,Kenya,KEN,Africa,Present
+2009,FMD,Kenya,KEN,Africa,Present
+2009,FMD,Kenya,KEN,Africa,Suspected
+2010,FMD,Kenya,KEN,Africa,Present
+2011,FMD,Kenya,KEN,Africa,Present
+2012,FMD,Kenya,KEN,Africa,Present
+2013,FMD,Kenya,KEN,Africa,Present
+2014,FMD,Kenya,KEN,Africa,Present
+2015,FMD,Kenya,KEN,Africa,Present
+2016,FMD,Kenya,KEN,Africa,Present
+2017,FMD,Kenya,KEN,Africa,Present
+2018,FMD,Kenya,KEN,Africa,Present
+2019,FMD,Kenya,KEN,Africa,Present
+2020,FMD,Kenya,KEN,Africa,Present
+2021,FMD,Kenya,KEN,Africa,Present
+2022,FMD,Kenya,KEN,Africa,Present
+2005,FMD,Niger,NER,Africa,Present
+2008,FMD,Niger,NER,Africa,Present
+2009,FMD,Niger,NER,Africa,Present
+2010,FMD,Niger,NER,Africa,Present
+2010,FMD,Niger,NER,Africa,Suspected
+2011,FMD,Niger,NER,Africa,Suspected
+2011,FMD,Niger,NER,Africa,Present
+2012,FMD,Niger,NER,Africa,Present
+2012,FMD,Niger,NER,Africa,Suspected
+2013,FMD,Niger,NER,Africa,Present
+2013,FMD,Niger,NER,Africa,Suspected
+2014,FMD,Niger,NER,Africa,Present
+2014,FMD,Niger,NER,Africa,Suspected
+2015,FMD,Niger,NER,Africa,Present
+2015,FMD,Niger,NER,Africa,Suspected
+2016,FMD,Niger,NER,Africa,Suspected
+2016,FMD,Niger,NER,Africa,Present
+2017,FMD,Niger,NER,Africa,Suspected
+2018,FMD,Niger,NER,Africa,Suspected
+2019,FMD,Niger,NER,Africa,Suspected
+2020,FMD,Niger,NER,Africa,Suspected
+2021,FMD,Niger,NER,Africa,Suspected
+2022,FMD,Niger,NER,Africa,Suspected
+2024,FMD,Niger,NER,Africa,Suspected
+2005,FMD,Sudan,SDN,Africa,Suspected
+2006,FMD,Sudan,SDN,Africa,Suspected
+2006,FMD,Sudan,SDN,Africa,Present
+2007,FMD,Sudan,SDN,Africa,Present
+2008,FMD,Sudan,SDN,Africa,Present
+2009,FMD,Sudan,SDN,Africa,Present
+2010,FMD,Sudan,SDN,Africa,Present
+2011,FMD,Sudan,SDN,Africa,Present
+2012,FMD,Sudan,SDN,Africa,Present
+2013,FMD,Sudan,SDN,Africa,Present
+2014,FMD,Sudan,SDN,Africa,Present
+2015,FMD,Sudan,SDN,Africa,Present
+2016,FMD,Sudan,SDN,Africa,Present
+2017,FMD,Sudan,SDN,Africa,Present
+2018,FMD,Sudan,SDN,Africa,Present
+2019,FMD,Sudan,SDN,Africa,Present
+2020,FMD,Sudan,SDN,Africa,Present
+2021,FMD,Sudan,SDN,Africa,Present
+2022,FMD,Sudan,SDN,Africa,Present
+2023,ASF,Namibia,NAM,Africa,Present
+2023,FMD,Namibia,NAM,Africa,Present
+2010,ASF,Chad,TCD,Africa,Present
+2011,ASF,Chad,TCD,Africa,Present
+2012,ASF,Chad,TCD,Africa,Present
+2014,ASF,Chad,TCD,Africa,Present
+2015,ASF,Chad,TCD,Africa,Present
+2016,ASF,Chad,TCD,Africa,Present
+2018,ASF,Chad,TCD,Africa,Present
+2019,ASF,Chad,TCD,Africa,Present
+2005,FMD,Chad,TCD,Africa,Present
+2006,FMD,Chad,TCD,Africa,Present
+2007,FMD,Chad,TCD,Africa,Present
+2008,FMD,Chad,TCD,Africa,Present
+2009,FMD,Chad,TCD,Africa,Present
+2010,FMD,Chad,TCD,Africa,Present
+2010,FMD,Chad,TCD,Africa,Suspected
+2011,FMD,Chad,TCD,Africa,Present
+2012,FMD,Chad,TCD,Africa,Present
+2013,FMD,Chad,TCD,Africa,Present
+2016,FMD,Chad,TCD,Africa,Present
+2017,FMD,Chad,TCD,Africa,Present
+2018,FMD,Chad,TCD,Africa,Present
+2020,FMD,Chad,TCD,Africa,Present
+2021,FMD,Chad,TCD,Africa,Present
+2022,FMD,Chad,TCD,Africa,Present
+2024,FMD,Chad,TCD,Africa,Present
+2005,ASF,Congo (Rep. of the),COG,Africa,Present
+2006,ASF,Congo (Rep. of the),COG,Africa,Present
+2007,ASF,Congo (Rep. of the),COG,Africa,Present
+2008,ASF,Congo (Rep. of the),COG,Africa,Present
+2009,ASF,Congo (Rep. of the),COG,Africa,Present
+2010,ASF,Congo (Rep. of the),COG,Africa,Present
+2011,ASF,Congo (Rep. of the),COG,Africa,Present
+2012,ASF,Congo (Rep. of the),COG,Africa,Present
+2015,ASF,Congo (Rep. of the),COG,Africa,Present
+2016,ASF,Congo (Rep. of the),COG,Africa,Present
+2018,ASF,Congo (Rep. of the),COG,Africa,Present
+2018,ASF,Congo (Rep. of the),COG,Africa,Suspected
+2019,ASF,Congo (Rep. of the),COG,Africa,Present
+2019,ASF,Congo (Rep. of the),COG,Africa,Suspected
+2020,ASF,Congo (Rep. of the),COG,Africa,Suspected
+2020,ASF,Congo (Rep. of the),COG,Africa,Present
+2021,ASF,Congo (Rep. of the),COG,Africa,Suspected
+2022,ASF,Congo (Rep. of the),COG,Africa,Suspected
+2024,ASF,Congo (Rep. of the),COG,Africa,Suspected
+2005,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2006,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2007,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2008,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2009,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2010,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2011,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2012,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2013,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2014,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2015,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2016,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2017,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2018,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2019,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2020,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2021,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2022,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2024,CSF,Congo (Rep. of the),COG,Africa,Suspected
+2005,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2006,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2007,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2008,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2009,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2010,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2011,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2012,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2013,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2014,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2015,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2016,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2017,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2018,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2019,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2020,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2021,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2022,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2023,FMD,Niger,NER,Africa,Suspected
+2024,FMD,Congo (Rep. of the),COG,Africa,Suspected
+2005,FMD,Eritrea,ERI,Africa,Suspected
+2006,FMD,Eritrea,ERI,Africa,Present
+2007,FMD,Eritrea,ERI,Africa,Present
+2008,FMD,Eritrea,ERI,Africa,Present
+2009,FMD,Eritrea,ERI,Africa,Present
+2010,FMD,Eritrea,ERI,Africa,Present
+2011,FMD,Eritrea,ERI,Africa,Present
+2012,FMD,Eritrea,ERI,Africa,Present
+2014,FMD,Eritrea,ERI,Africa,Present
+2015,FMD,Eritrea,ERI,Africa,Present
+2016,FMD,Eritrea,ERI,Africa,Present
+2017,FMD,Eritrea,ERI,Africa,Present
+2018,FMD,Eritrea,ERI,Africa,Present
+2019,FMD,Eritrea,ERI,Africa,Present
+2020,FMD,Eritrea,ERI,Africa,Present
+2021,FMD,Eritrea,ERI,Africa,Present
+2022,FMD,Eritrea,ERI,Africa,Present
+2023,ASF,Nigeria,NGA,Africa,Present
+2024,FMD,Eritrea,ERI,Africa,Present
+2005,ASF,Tanzania,TZA,Africa,Present
+2008,ASF,Tanzania,TZA,Africa,Present
+2009,ASF,Tanzania,TZA,Africa,Present
+2010,ASF,Tanzania,TZA,Africa,Present
+2011,ASF,Tanzania,TZA,Africa,Present
+2012,ASF,Tanzania,TZA,Africa,Present
+2013,ASF,Tanzania,TZA,Africa,Present
+2014,ASF,Tanzania,TZA,Africa,Present
+2015,ASF,Tanzania,TZA,Africa,Present
+2016,ASF,Tanzania,TZA,Africa,Present
+2017,ASF,Tanzania,TZA,Africa,Present
+2018,ASF,Tanzania,TZA,Africa,Present
+2019,ASF,Tanzania,TZA,Africa,Present
+2020,ASF,Tanzania,TZA,Africa,Present
+2021,ASF,Tanzania,TZA,Africa,Present
+2022,ASF,Tanzania,TZA,Africa,Present
+2023,FMD,Nigeria,NGA,Africa,Present
+2005,FMD,Tanzania,TZA,Africa,Present
+2006,FMD,Tanzania,TZA,Africa,Present
+2007,FMD,Tanzania,TZA,Africa,Present
+2008,FMD,Tanzania,TZA,Africa,Present
+2009,FMD,Tanzania,TZA,Africa,Present
+2010,FMD,Tanzania,TZA,Africa,Present
+2011,FMD,Tanzania,TZA,Africa,Present
+2012,FMD,Tanzania,TZA,Africa,Present
+2013,FMD,Tanzania,TZA,Africa,Present
+2014,FMD,Tanzania,TZA,Africa,Present
+2015,FMD,Tanzania,TZA,Africa,Present
+2016,FMD,Tanzania,TZA,Africa,Present
+2017,FMD,Tanzania,TZA,Africa,Present
+2018,FMD,Tanzania,TZA,Africa,Present
+2019,FMD,Tanzania,TZA,Africa,Present
+2020,FMD,Tanzania,TZA,Africa,Present
+2021,FMD,Tanzania,TZA,Africa,Present
+2022,FMD,Tanzania,TZA,Africa,Present
+2005,FMD,Botswana,BWA,Africa,Present
+2006,FMD,Botswana,BWA,Africa,Present
+2007,FMD,Botswana,BWA,Africa,Present
+2008,FMD,Botswana,BWA,Africa,Present
+2009,FMD,Botswana,BWA,Africa,Present
+2010,FMD,Botswana,BWA,Africa,Present
+2011,FMD,Botswana,BWA,Africa,Present
+2012,FMD,Botswana,BWA,Africa,Present
+2013,FMD,Botswana,BWA,Africa,Present
+2014,FMD,Botswana,BWA,Africa,Present
+2015,FMD,Botswana,BWA,Africa,Present
+2016,FMD,Botswana,BWA,Africa,Present
+2017,FMD,Botswana,BWA,Africa,Present
+2018,FMD,Botswana,BWA,Africa,Suspected
+2018,FMD,Botswana,BWA,Africa,Present
+2019,FMD,Botswana,BWA,Africa,Present
+2020,FMD,Botswana,BWA,Africa,Suspected
+2020,FMD,Botswana,BWA,Africa,Present
+2021,FMD,Botswana,BWA,Africa,Present
+2022,FMD,Botswana,BWA,Africa,Present
+2024,FMD,Botswana,BWA,Africa,Present
+2005,ASF,Togo,TGO,Africa,Present
+2006,ASF,Togo,TGO,Africa,Present
+2007,ASF,Togo,TGO,Africa,Present
+2008,ASF,Togo,TGO,Africa,Present
+2009,ASF,Togo,TGO,Africa,Present
+2010,ASF,Togo,TGO,Africa,Present
+2011,ASF,Togo,TGO,Africa,Present
+2012,ASF,Togo,TGO,Africa,Present
+2013,ASF,Togo,TGO,Africa,Present
+2014,ASF,Togo,TGO,Africa,Present
+2015,ASF,Togo,TGO,Africa,Present
+2016,ASF,Togo,TGO,Africa,Present
+2017,ASF,Togo,TGO,Africa,Present
+2018,ASF,Togo,TGO,Africa,Present
+2019,ASF,Togo,TGO,Africa,Present
+2020,ASF,Togo,TGO,Africa,Present
+2021,ASF,Togo,TGO,Africa,Present
+2022,ASF,Togo,TGO,Africa,Present
+2005,FMD,Togo,TGO,Africa,Present
+2006,FMD,Togo,TGO,Africa,Present
+2007,FMD,Togo,TGO,Africa,Present
+2008,FMD,Togo,TGO,Africa,Present
+2009,FMD,Togo,TGO,Africa,Present
+2010,FMD,Togo,TGO,Africa,Present
+2011,FMD,Togo,TGO,Africa,Present
+2012,FMD,Togo,TGO,Africa,Present
+2013,FMD,Togo,TGO,Africa,Present
+2014,FMD,Togo,TGO,Africa,Present
+2015,FMD,Togo,TGO,Africa,Present
+2016,FMD,Togo,TGO,Africa,Present
+2017,FMD,Togo,TGO,Africa,Suspected
+2017,FMD,Togo,TGO,Africa,Present
+2018,FMD,Togo,TGO,Africa,Present
+2018,FMD,Togo,TGO,Africa,Suspected
+2019,FMD,Togo,TGO,Africa,Suspected
+2019,FMD,Togo,TGO,Africa,Present
+2020,FMD,Togo,TGO,Africa,Present
+2021,FMD,Togo,TGO,Africa,Present
+2022,FMD,Togo,TGO,Africa,Present
+2023,FMD,Rwanda,RWA,Africa,Present
+2014,FMD,Tunisia,TUN,Africa,Present
+2017,FMD,Tunisia,TUN,Africa,Present
+2018,FMD,Tunisia,TUN,Africa,Present
+2019,FMD,Tunisia,TUN,Africa,Present
+2022,FMD,Tunisia,TUN,Africa,Present
+2005,ASF,Burkina Faso,BFA,Africa,Present
+2007,ASF,Burkina Faso,BFA,Africa,Present
+2008,ASF,Burkina Faso,BFA,Africa,Present
+2009,ASF,Burkina Faso,BFA,Africa,Present
+2010,ASF,Burkina Faso,BFA,Africa,Present
+2011,ASF,Burkina Faso,BFA,Africa,Present
+2012,ASF,Burkina Faso,BFA,Africa,Present
+2013,ASF,Burkina Faso,BFA,Africa,Present
+2014,ASF,Burkina Faso,BFA,Africa,Present
+2015,ASF,Burkina Faso,BFA,Africa,Present
+2016,ASF,Burkina Faso,BFA,Africa,Present
+2017,ASF,Burkina Faso,BFA,Africa,Present
+2018,ASF,Burkina Faso,BFA,Africa,Present
+2019,ASF,Burkina Faso,BFA,Africa,Present
+2020,ASF,Burkina Faso,BFA,Africa,Present
+2021,ASF,Burkina Faso,BFA,Africa,Present
+2022,ASF,Burkina Faso,BFA,Africa,Present
+2023,ASF,Senegal,SEN,Africa,Present
+2024,ASF,Burkina Faso,BFA,Africa,Present
+2005,CSF,Burkina Faso,BFA,Africa,Present
+2005,FMD,Burkina Faso,BFA,Africa,Present
+2006,FMD,Burkina Faso,BFA,Africa,Present
+2007,FMD,Burkina Faso,BFA,Africa,Present
+2008,FMD,Burkina Faso,BFA,Africa,Present
+2009,FMD,Burkina Faso,BFA,Africa,Present
+2010,FMD,Burkina Faso,BFA,Africa,Present
+2011,FMD,Burkina Faso,BFA,Africa,Present
+2012,FMD,Burkina Faso,BFA,Africa,Present
+2013,FMD,Burkina Faso,BFA,Africa,Present
+2014,FMD,Burkina Faso,BFA,Africa,Present
+2015,FMD,Burkina Faso,BFA,Africa,Present
+2016,FMD,Burkina Faso,BFA,Africa,Present
+2017,FMD,Burkina Faso,BFA,Africa,Present
+2018,FMD,Burkina Faso,BFA,Africa,Present
+2019,FMD,Burkina Faso,BFA,Africa,Present
+2020,FMD,Burkina Faso,BFA,Africa,Present
+2021,FMD,Burkina Faso,BFA,Africa,Present
+2022,FMD,Burkina Faso,BFA,Africa,Present
+2023,FMD,Senegal,SEN,Africa,Present
+2024,FMD,Burkina Faso,BFA,Africa,Present
+2009,ASF,Central African Republic,CAF,Africa,Suspected
+2010,ASF,Central African Republic,CAF,Africa,Present
+2011,ASF,Central African Republic,CAF,Africa,Present
+2012,ASF,Central African Republic,CAF,Africa,Present
+2015,ASF,Central African Republic,CAF,Africa,Suspected
+2015,ASF,Central African Republic,CAF,Africa,Present
+2016,ASF,Central African Republic,CAF,Africa,Present
+2016,ASF,Central African Republic,CAF,Africa,Suspected
+2017,ASF,Central African Republic,CAF,Africa,Suspected
+2017,ASF,Central African Republic,CAF,Africa,Present
+2018,ASF,Central African Republic,CAF,Africa,Present
+2018,ASF,Central African Republic,CAF,Africa,Suspected
+2019,ASF,Central African Republic,CAF,Africa,Suspected
+2019,ASF,Central African Republic,CAF,Africa,Present
+2020,ASF,Central African Republic,CAF,Africa,Present
+2021,ASF,Central African Republic,CAF,Africa,Present
+2022,ASF,Central African Republic,CAF,Africa,Present
+2024,ASF,Central African Republic,CAF,Africa,Present
+2005,FMD,Central African Republic,CAF,Africa,Present
+2006,FMD,Central African Republic,CAF,Africa,Present
+2007,FMD,Central African Republic,CAF,Africa,Present
+2008,FMD,Central African Republic,CAF,Africa,Present
+2009,FMD,Central African Republic,CAF,Africa,Present
+2010,FMD,Central African Republic,CAF,Africa,Present
+2011,FMD,Central African Republic,CAF,Africa,Present
+2012,FMD,Central African Republic,CAF,Africa,Present
+2013,FMD,Central African Republic,CAF,Africa,Present
+2014,FMD,Central African Republic,CAF,Africa,Present
+2015,FMD,Central African Republic,CAF,Africa,Present
+2016,FMD,Central African Republic,CAF,Africa,Present
+2017,FMD,Central African Republic,CAF,Africa,Present
+2018,FMD,Central African Republic,CAF,Africa,Present
+2019,FMD,Central African Republic,CAF,Africa,Present
+2020,FMD,Central African Republic,CAF,Africa,Present
+2021,FMD,Central African Republic,CAF,Africa,Present
+2022,FMD,Central African Republic,CAF,Africa,Present
+2024,FMD,Central African Republic,CAF,Africa,Present
+2005,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2006,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2007,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2008,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2009,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2010,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2011,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2012,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2013,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2014,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2015,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2016,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2017,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2018,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2019,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2020,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2021,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2022,ASF,Congo (Dem. Rep. of the),COD,Africa,Present
+2023,ASF,Sierra Leone,SLE,Africa,Present
+2005,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2006,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2007,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2008,FMD,Congo (Dem. Rep. of the),COD,Africa,Suspected
+2009,FMD,Congo (Dem. Rep. of the),COD,Africa,Suspected
+2009,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2010,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2011,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2012,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2013,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2014,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2015,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2016,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2017,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2018,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2019,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2020,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2021,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2022,FMD,Congo (Dem. Rep. of the),COD,Africa,Present
+2023,FMD,Sierra Leone,SLE,Africa,Present
+2009,FMD,Libya,LBY,Africa,Present
+2010,FMD,Libya,LBY,Africa,Present
+2011,FMD,Libya,LBY,Africa,Present
+2012,FMD,Libya,LBY,Africa,Present
+2013,FMD,Libya,LBY,Africa,Present
+2014,FMD,Libya,LBY,Africa,Present
+2015,FMD,Libya,LBY,Africa,Present
+2019,FMD,Libya,LBY,Africa,Present
+2020,FMD,Libya,LBY,Africa,Present
+2021,FMD,Libya,LBY,Africa,Present
+2022,FMD,Libya,LBY,Africa,Present
+2005,ASF,Malawi,MWI,Africa,Present
+2006,ASF,Malawi,MWI,Africa,Present
+2007,ASF,Malawi,MWI,Africa,Present
+2008,ASF,Malawi,MWI,Africa,Present
+2009,ASF,Malawi,MWI,Africa,Present
+2009,ASF,Malawi,MWI,Africa,Suspected
+2010,ASF,Malawi,MWI,Africa,Present
+2010,ASF,Malawi,MWI,Africa,Suspected
+2011,ASF,Malawi,MWI,Africa,Present
+2011,ASF,Malawi,MWI,Africa,Suspected
+2012,ASF,Malawi,MWI,Africa,Suspected
+2012,ASF,Malawi,MWI,Africa,Present
+2013,ASF,Malawi,MWI,Africa,Suspected
+2013,ASF,Malawi,MWI,Africa,Present
+2014,ASF,Malawi,MWI,Africa,Present
+2015,ASF,Malawi,MWI,Africa,Suspected
+2015,ASF,Malawi,MWI,Africa,Present
+2016,ASF,Malawi,MWI,Africa,Suspected
+2016,ASF,Malawi,MWI,Africa,Present
+2017,ASF,Malawi,MWI,Africa,Present
+2017,ASF,Malawi,MWI,Africa,Suspected
+2018,ASF,Malawi,MWI,Africa,Suspected
+2018,ASF,Malawi,MWI,Africa,Present
+2019,ASF,Malawi,MWI,Africa,Present
+2019,ASF,Malawi,MWI,Africa,Suspected
+2020,ASF,Malawi,MWI,Africa,Suspected
+2021,ASF,Malawi,MWI,Africa,Suspected
+2022,ASF,Malawi,MWI,Africa,Suspected
+2024,ASF,Malawi,MWI,Africa,Suspected
+2005,FMD,Malawi,MWI,Africa,Present
+2006,FMD,Malawi,MWI,Africa,Present
+2007,FMD,Malawi,MWI,Africa,Present
+2008,FMD,Malawi,MWI,Africa,Present
+2009,FMD,Malawi,MWI,Africa,Present
+2010,FMD,Malawi,MWI,Africa,Present
+2011,FMD,Malawi,MWI,Africa,Present
+2015,FMD,Malawi,MWI,Africa,Suspected
+2015,FMD,Malawi,MWI,Africa,Present
+2016,FMD,Malawi,MWI,Africa,Suspected
+2016,FMD,Malawi,MWI,Africa,Present
+2017,FMD,Malawi,MWI,Africa,Suspected
+2017,FMD,Malawi,MWI,Africa,Present
+2018,FMD,Malawi,MWI,Africa,Present
+2018,FMD,Malawi,MWI,Africa,Suspected
+2019,FMD,Malawi,MWI,Africa,Present
+2019,FMD,Malawi,MWI,Africa,Suspected
+2020,FMD,Malawi,MWI,Africa,Present
+2021,FMD,Malawi,MWI,Africa,Present
+2022,FMD,Malawi,MWI,Africa,Present
+2023,FMD,Somalia,SOM,Africa,Present
+2024,FMD,Malawi,MWI,Africa,Present
+2016,ASF,Mali,MLI,Africa,Present
+2017,ASF,Mali,MLI,Africa,Present
+2005,FMD,Mali,MLI,Africa,Present
+2006,FMD,Mali,MLI,Africa,Present
+2007,FMD,Mali,MLI,Africa,Present
+2008,FMD,Mali,MLI,Africa,Present
+2010,FMD,Mali,MLI,Africa,Present
+2011,FMD,Mali,MLI,Africa,Present
+2012,FMD,Mali,MLI,Africa,Present
+2013,FMD,Mali,MLI,Africa,Present
+2014,FMD,Mali,MLI,Africa,Present
+2015,FMD,Mali,MLI,Africa,Present
+2016,FMD,Mali,MLI,Africa,Present
+2017,FMD,Mali,MLI,Africa,Present
+2018,FMD,Mali,MLI,Africa,Present
+2019,FMD,Mali,MLI,Africa,Present
+2006,FMD,Mauritania,MRT,Africa,Present
+2014,FMD,Mauritania,MRT,Africa,Present
+2015,FMD,Mauritania,MRT,Africa,Present
+2016,FMD,Mauritania,MRT,Africa,Suspected
+2017,FMD,Mauritania,MRT,Africa,Suspected
+2017,FMD,Mauritania,MRT,Africa,Present
+2018,FMD,Mauritania,MRT,Africa,Present
+2019,FMD,Mauritania,MRT,Africa,Present
+2019,FMD,Mauritania,MRT,Africa,Suspected
+2020,FMD,Mauritania,MRT,Africa,Present
+2021,FMD,Mauritania,MRT,Africa,Present
+2022,FMD,Mauritania,MRT,Africa,Present
+2023,ASF,South Africa,ZAF,Africa,Present
+2024,FMD,Mauritania,MRT,Africa,Present
+2007,ASF,Mauritius,MUS,Africa,Present
+2008,ASF,Mauritius,MUS,Africa,Present
+2016,FMD,Mauritius,MUS,Africa,Present
+2021,FMD,Mauritius,MUS,Africa,Present
+2022,FMD,Mauritius,MUS,Africa,Present
+2023,FMD,South Africa,ZAF,Africa,Present
+2024,FMD,Mauritius,MUS,Africa,Present
+2016,CSF,Sao Tome and Principe,STP,Africa,Suspected
+2017,CSF,Sao Tome and Principe,STP,Africa,Suspected
+2018,CSF,Sao Tome and Principe,STP,Africa,Suspected
+2019,CSF,Sao Tome and Principe,STP,Africa,Suspected
+2005,ASF,Senegal,SEN,Africa,Present
+2006,ASF,Senegal,SEN,Africa,Present
+2007,ASF,Senegal,SEN,Africa,Present
+2009,ASF,Senegal,SEN,Africa,Present
+2016,ASF,Senegal,SEN,Africa,Present
+2017,ASF,Senegal,SEN,Africa,Present
+2018,ASF,Senegal,SEN,Africa,Present
+2019,ASF,Senegal,SEN,Africa,Present
+2020,ASF,Senegal,SEN,Africa,Present
+2021,ASF,Senegal,SEN,Africa,Present
+2022,ASF,Senegal,SEN,Africa,Present
+2023,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2024,ASF,Senegal,SEN,Africa,Present
+2005,FMD,Senegal,SEN,Africa,Present
+2006,FMD,Senegal,SEN,Africa,Present
+2007,FMD,Senegal,SEN,Africa,Present
+2008,FMD,Senegal,SEN,Africa,Present
+2009,FMD,Senegal,SEN,Africa,Present
+2010,FMD,Senegal,SEN,Africa,Present
+2011,FMD,Senegal,SEN,Africa,Present
+2012,FMD,Senegal,SEN,Africa,Present
+2014,FMD,Senegal,SEN,Africa,Present
+2015,FMD,Senegal,SEN,Africa,Present
+2016,FMD,Senegal,SEN,Africa,Present
+2017,FMD,Senegal,SEN,Africa,Suspected
+2018,FMD,Senegal,SEN,Africa,Present
+2019,FMD,Senegal,SEN,Africa,Present
+2020,FMD,Senegal,SEN,Africa,Present
+2021,FMD,Senegal,SEN,Africa,Present
+2022,FMD,Senegal,SEN,Africa,Present
+2024,FMD,Senegal,SEN,Africa,Present
+2017,ASF,Sierra Leone,SLE,Africa,Present
+2018,ASF,Sierra Leone,SLE,Africa,Present
+2019,ASF,Sierra Leone,SLE,Africa,Present
+2020,ASF,Sierra Leone,SLE,Africa,Present
+2021,ASF,Sierra Leone,SLE,Africa,Present
+2022,ASF,Sierra Leone,SLE,Africa,Present
+2024,ASF,Sierra Leone,SLE,Africa,Present
+2005,CSF,Sierra Leone,SLE,Africa,Present
+2006,CSF,Sierra Leone,SLE,Africa,Present
+2007,CSF,Sierra Leone,SLE,Africa,Present
+2008,CSF,Sierra Leone,SLE,Africa,Present
+2018,FMD,Sierra Leone,SLE,Africa,Present
+2019,FMD,Sierra Leone,SLE,Africa,Present
+2020,FMD,Sierra Leone,SLE,Africa,Present
+2021,FMD,Sierra Leone,SLE,Africa,Present
+2022,FMD,Sierra Leone,SLE,Africa,Present
+2024,FMD,Sierra Leone,SLE,Africa,Present
+2023,ASF,Tanzania,TZA,Africa,Present
+2023,FMD,Tanzania,TZA,Africa,Present
+2005,ASF,Angola,AGO,Africa,Present
+2006,ASF,Angola,AGO,Africa,Present
+2007,ASF,Angola,AGO,Africa,Present
+2008,ASF,Angola,AGO,Africa,Present
+2009,ASF,Angola,AGO,Africa,Present
+2010,ASF,Angola,AGO,Africa,Present
+2011,ASF,Angola,AGO,Africa,Suspected
+2011,ASF,Angola,AGO,Africa,Present
+2012,ASF,Angola,AGO,Africa,Present
+2013,ASF,Angola,AGO,Africa,Present
+2014,ASF,Angola,AGO,Africa,Present
+2015,ASF,Angola,AGO,Africa,Present
+2017,ASF,Angola,AGO,Africa,Present
+2009,FMD,Angola,AGO,Africa,Present
+2009,FMD,Angola,AGO,Africa,Suspected
+2010,FMD,Angola,AGO,Africa,Suspected
+2010,FMD,Angola,AGO,Africa,Present
+2011,FMD,Angola,AGO,Africa,Suspected
+2012,FMD,Angola,AGO,Africa,Suspected
+2015,FMD,Angola,AGO,Africa,Present
+2016,FMD,Angola,AGO,Africa,Present
+2017,FMD,Angola,AGO,Africa,Present
+2005,ASF,Ghana,GHA,Africa,Present
+2006,ASF,Ghana,GHA,Africa,Present
+2007,ASF,Ghana,GHA,Africa,Present
+2008,ASF,Ghana,GHA,Africa,Present
+2009,ASF,Ghana,GHA,Africa,Present
+2010,ASF,Ghana,GHA,Africa,Present
+2011,ASF,Ghana,GHA,Africa,Present
+2012,ASF,Ghana,GHA,Africa,Present
+2013,ASF,Ghana,GHA,Africa,Present
+2014,ASF,Ghana,GHA,Africa,Present
+2015,ASF,Ghana,GHA,Africa,Present
+2016,ASF,Ghana,GHA,Africa,Present
+2017,ASF,Ghana,GHA,Africa,Present
+2018,ASF,Ghana,GHA,Africa,Present
+2019,ASF,Ghana,GHA,Africa,Present
+2005,FMD,Ghana,GHA,Africa,Present
+2006,FMD,Ghana,GHA,Africa,Present
+2007,FMD,Ghana,GHA,Africa,Present
+2008,FMD,Ghana,GHA,Africa,Present
+2009,FMD,Ghana,GHA,Africa,Present
+2010,FMD,Ghana,GHA,Africa,Present
+2011,FMD,Ghana,GHA,Africa,Present
+2012,FMD,Ghana,GHA,Africa,Present
+2013,FMD,Ghana,GHA,Africa,Present
+2014,FMD,Ghana,GHA,Africa,Present
+2015,FMD,Ghana,GHA,Africa,Present
+2016,FMD,Ghana,GHA,Africa,Present
+2017,FMD,Ghana,GHA,Africa,Present
+2018,FMD,Ghana,GHA,Africa,Present
+2019,FMD,Ghana,GHA,Africa,Present
+2020,FMD,Ghana,GHA,Africa,Present
+2021,FMD,Ghana,GHA,Africa,Present
+2022,FMD,Ghana,GHA,Africa,Present
+2024,FMD,Ghana,GHA,Africa,Present
+2006,FMD,Guinea,GIN,Africa,Present
+2014,FMD,Guinea,GIN,Africa,Present
+2018,FMD,Guinea,GIN,Africa,Present
+2019,FMD,Guinea,GIN,Africa,Present
+2020,FMD,Guinea,GIN,Africa,Present
+2021,FMD,Guinea,GIN,Africa,Present
+2022,FMD,Guinea,GIN,Africa,Present
+2024,FMD,Guinea,GIN,Africa,Present
+2005,ASF,Burundi,BDI,Africa,Present
+2008,ASF,Burundi,BDI,Africa,Present
+2009,ASF,Burundi,BDI,Africa,Present
+2010,ASF,Burundi,BDI,Africa,Present
+2011,ASF,Burundi,BDI,Africa,Present
+2012,ASF,Burundi,BDI,Africa,Present
+2013,ASF,Burundi,BDI,Africa,Present
+2014,ASF,Burundi,BDI,Africa,Present
+2015,ASF,Burundi,BDI,Africa,Present
+2016,ASF,Burundi,BDI,Africa,Present
+2017,ASF,Burundi,BDI,Africa,Present
+2018,ASF,Burundi,BDI,Africa,Present
+2019,ASF,Burundi,BDI,Africa,Present
+2020,ASF,Burundi,BDI,Africa,Present
+2021,ASF,Burundi,BDI,Africa,Present
+2022,ASF,Burundi,BDI,Africa,Present
+2024,ASF,Burundi,BDI,Africa,Present
+2005,FMD,Burundi,BDI,Africa,Present
+2006,FMD,Burundi,BDI,Africa,Present
+2007,FMD,Burundi,BDI,Africa,Present
+2008,FMD,Burundi,BDI,Africa,Present
+2009,FMD,Burundi,BDI,Africa,Present
+2010,FMD,Burundi,BDI,Africa,Present
+2011,FMD,Burundi,BDI,Africa,Present
+2012,FMD,Burundi,BDI,Africa,Present
+2013,FMD,Burundi,BDI,Africa,Present
+2014,FMD,Burundi,BDI,Africa,Present
+2015,FMD,Burundi,BDI,Africa,Present
+2015,FMD,Burundi,BDI,Africa,Suspected
+2016,FMD,Burundi,BDI,Africa,Present
+2017,FMD,Burundi,BDI,Africa,Present
+2018,FMD,Burundi,BDI,Africa,Present
+2019,FMD,Burundi,BDI,Africa,Present
+2020,FMD,Burundi,BDI,Africa,Present
+2021,FMD,Burundi,BDI,Africa,Present
+2022,FMD,Burundi,BDI,Africa,Present
+2023,ASF,Togo,TGO,Africa,Present
+2024,FMD,Burundi,BDI,Africa,Present
+2016,ASF,Gambia,GMB,Africa,Present
+2017,ASF,Gambia,GMB,Africa,Present
+2018,ASF,Gambia,GMB,Africa,Present
+2019,ASF,Gambia,GMB,Africa,Present
+2020,ASF,Gambia,GMB,Africa,Present
+2021,ASF,Gambia,GMB,Africa,Present
+2022,ASF,Gambia,GMB,Africa,Present
+2023,FMD,Togo,TGO,Africa,Present
+2024,ASF,Gambia,GMB,Africa,Present
+2005,CSF,Gambia,GMB,Africa,Present
+2006,CSF,Gambia,GMB,Africa,Present
+2007,CSF,Gambia,GMB,Africa,Present
+2008,CSF,Gambia,GMB,Africa,Present
+2009,CSF,Gambia,GMB,Africa,Present
+2010,CSF,Gambia,GMB,Africa,Present
+2011,CSF,Gambia,GMB,Africa,Present
+2012,CSF,Gambia,GMB,Africa,Present
+2013,CSF,Gambia,GMB,Africa,Present
+2014,CSF,Gambia,GMB,Africa,Present
+2015,CSF,Gambia,GMB,Africa,Present
+2016,CSF,Gambia,GMB,Africa,Present
+2017,CSF,Gambia,GMB,Africa,Present
+2018,CSF,Gambia,GMB,Africa,Present
+2019,CSF,Gambia,GMB,Africa,Present
+2020,CSF,Gambia,GMB,Africa,Present
+2021,CSF,Gambia,GMB,Africa,Present
+2022,CSF,Gambia,GMB,Africa,Present
+2023,FMD,Tunisia,TUN,Africa,Present
+2024,CSF,Gambia,GMB,Africa,Present
+2005,FMD,Gambia,GMB,Africa,Present
+2006,FMD,Gambia,GMB,Africa,Present
+2007,FMD,Gambia,GMB,Africa,Present
+2008,FMD,Gambia,GMB,Africa,Present
+2018,FMD,Gambia,GMB,Africa,Present
+2019,FMD,Gambia,GMB,Africa,Present
+2020,FMD,Gambia,GMB,Africa,Present
+2021,FMD,Gambia,GMB,Africa,Present
+2022,FMD,Gambia,GMB,Africa,Present
+2023,ASF,Uganda,UGA,Africa,Present
+2024,FMD,Gambia,GMB,Africa,Present
+2006,ASF,Rwanda,RWA,Africa,Present
+2007,ASF,Rwanda,RWA,Africa,Present
+2008,ASF,Rwanda,RWA,Africa,Present
+2009,ASF,Rwanda,RWA,Africa,Present
+2010,ASF,Rwanda,RWA,Africa,Suspected
+2010,ASF,Rwanda,RWA,Africa,Present
+2011,ASF,Rwanda,RWA,Africa,Suspected
+2011,ASF,Rwanda,RWA,Africa,Present
+2012,ASF,Rwanda,RWA,Africa,Suspected
+2012,ASF,Rwanda,RWA,Africa,Present
+2013,ASF,Rwanda,RWA,Africa,Suspected
+2013,ASF,Rwanda,RWA,Africa,Present
+2014,ASF,Rwanda,RWA,Africa,Present
+2014,ASF,Rwanda,RWA,Africa,Suspected
+2015,ASF,Rwanda,RWA,Africa,Suspected
+2016,ASF,Rwanda,RWA,Africa,Suspected
+2017,ASF,Rwanda,RWA,Africa,Suspected
+2017,ASF,Rwanda,RWA,Africa,Present
+2018,ASF,Rwanda,RWA,Africa,Suspected
+2006,FMD,Rwanda,RWA,Africa,Present
+2007,FMD,Rwanda,RWA,Africa,Present
+2008,FMD,Rwanda,RWA,Africa,Present
+2009,FMD,Rwanda,RWA,Africa,Present
+2010,FMD,Rwanda,RWA,Africa,Suspected
+2010,FMD,Rwanda,RWA,Africa,Present
+2011,FMD,Rwanda,RWA,Africa,Suspected
+2012,FMD,Rwanda,RWA,Africa,Present
+2012,FMD,Rwanda,RWA,Africa,Suspected
+2013,FMD,Rwanda,RWA,Africa,Suspected
+2013,FMD,Rwanda,RWA,Africa,Present
+2014,FMD,Rwanda,RWA,Africa,Suspected
+2016,FMD,Rwanda,RWA,Africa,Suspected
+2017,FMD,Rwanda,RWA,Africa,Suspected
+2017,FMD,Rwanda,RWA,Africa,Present
+2020,FMD,Rwanda,RWA,Africa,Present
+2021,FMD,Rwanda,RWA,Africa,Present
+2022,FMD,Rwanda,RWA,Africa,Present
+2023,FMD,Uganda,UGA,Africa,Present
+2024,FMD,Rwanda,RWA,Africa,Present
+2010,FMD,Comoros,COM,Africa,Present
+2011,FMD,Comoros,COM,Africa,Suspected
+2012,FMD,Comoros,COM,Africa,Suspected
+2013,FMD,Comoros,COM,Africa,Suspected
+2014,FMD,Comoros,COM,Africa,Suspected
+2015,FMD,Comoros,COM,Africa,Suspected
+2016,FMD,Comoros,COM,Africa,Suspected
+2017,FMD,Comoros,COM,Africa,Suspected
+2018,FMD,Comoros,COM,Africa,Suspected
+2019,FMD,Comoros,COM,Africa,Present
+2020,FMD,Comoros,COM,Africa,Present
+2021,FMD,Comoros,COM,Africa,Present
+2022,FMD,Comoros,COM,Africa,Present
+2014,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2015,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2016,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2017,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2018,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2019,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2020,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2021,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2022,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2024,FMD,South Sudan (Rep. of),SSD,Africa,Present
+2005,ASF,Cameroon,CMR,Africa,Present
+2006,ASF,Cameroon,CMR,Africa,Present
+2007,ASF,Cameroon,CMR,Africa,Present
+2008,ASF,Cameroon,CMR,Africa,Present
+2009,ASF,Cameroon,CMR,Africa,Present
+2010,ASF,Cameroon,CMR,Africa,Present
+2011,ASF,Cameroon,CMR,Africa,Present
+2012,ASF,Cameroon,CMR,Africa,Present
+2013,ASF,Cameroon,CMR,Africa,Present
+2014,ASF,Cameroon,CMR,Africa,Present
+2015,ASF,Cameroon,CMR,Africa,Present
+2016,ASF,Cameroon,CMR,Africa,Present
+2017,ASF,Cameroon,CMR,Africa,Present
+2018,ASF,Cameroon,CMR,Africa,Present
+2019,ASF,Cameroon,CMR,Africa,Present
+2020,ASF,Cameroon,CMR,Africa,Present
+2021,ASF,Cameroon,CMR,Africa,Present
+2022,ASF,Cameroon,CMR,Africa,Present
+2024,ASF,Cameroon,CMR,Africa,Present
+2005,FMD,Cameroon,CMR,Africa,Present
+2006,FMD,Cameroon,CMR,Africa,Present
+2007,FMD,Cameroon,CMR,Africa,Present
+2008,FMD,Cameroon,CMR,Africa,Present
+2009,FMD,Cameroon,CMR,Africa,Suspected
+2009,FMD,Cameroon,CMR,Africa,Present
+2010,FMD,Cameroon,CMR,Africa,Present
+2011,FMD,Cameroon,CMR,Africa,Present
+2012,FMD,Cameroon,CMR,Africa,Present
+2013,FMD,Cameroon,CMR,Africa,Present
+2014,FMD,Cameroon,CMR,Africa,Present
+2015,FMD,Cameroon,CMR,Africa,Present
+2016,FMD,Cameroon,CMR,Africa,Present
+2017,FMD,Cameroon,CMR,Africa,Present
+2018,FMD,Cameroon,CMR,Africa,Present
+2019,FMD,Cameroon,CMR,Africa,Present
+2020,FMD,Cameroon,CMR,Africa,Present
+2021,FMD,Cameroon,CMR,Africa,Present
+2022,FMD,Cameroon,CMR,Africa,Present
+2024,FMD,Cameroon,CMR,Africa,Present
+2009,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2010,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2011,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2012,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2013,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2014,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2015,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2016,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2017,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2018,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2019,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2020,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2021,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2022,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2024,CSF,Equatorial Guinea,GNQ,Africa,Suspected
+2005,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2006,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2007,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2008,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2009,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2010,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2011,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2012,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2013,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2014,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2015,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2016,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2017,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2018,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2019,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2020,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2021,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2022,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2023,ASF,Zambia,ZMB,Africa,Present
+2024,FMD,Equatorial Guinea,GNQ,Africa,Suspected
+2023,FMD,Zambia,ZMB,Africa,Present
+2023,FMD,Zimbabwe,ZWE,Africa,Present

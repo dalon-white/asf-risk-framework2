@@ -290,7 +290,7 @@ aqim_data <- aqim_data |> left_join(geolocs, by = c("destination" = "citystlow")
 # aqim_data <- aqim_data |> left_join(geolocs, by = c("STATE_DEST_CD", "CITY_DEST_NAME"), relationship = "many-to-one")
 ```
 
-Make a list of unknown locations. Once these locations are saved in the below chunk, they can be attempted to be identified using `geolocate place names.Rmd`
+## Make a list of unknown locations. Once these locations are saved in the below chunk, they can be attempted to be identified using `geolocate place names.Rmd`
 
 ```{r make a list of unknown locations}
 #find unknown locations

@@ -102,23 +102,10 @@ ui <- navbarPage(
           sliderInput("point_size", "Base Marker Size:", min = 5, max = 30, value = 15),
           helpText("Marker sizes and transparency scale with risk values."),
           helpText("Higher risk = larger, more opaque markers."),
-          # Blur control for heatmap
-          sliderInput("blur_size", "Heat Blur:", min = 5, max = 30, value = 15),          # Minimum opacity for the heatmap
-          sliderInput("min_opacity", "Heat Minimum Opacity:", min = 0.1, max = 1.0, value = 0.5, step = 0.1),
           # Color scheme selection
           selectInput("color_scheme", "Color Scheme:", 
                       choices = c("viridis", "magma", "plasma", "inferno", "cividis"),
-                      selected = "viridis"),          # Toggle heatmap visibility
-          checkboxInput("show_heatmap", "Show Heatmap", value = TRUE),
-          # Toggle visible markers when heatmap is off
-          conditionalPanel(
-            condition = "!input.show_heatmap",
-            checkboxInput("show_markers", "Show Visible Markers", value = TRUE),
-            sliderInput("marker_size", "Marker Size:", min = 3, max = 15, value = 8),
-            selectInput("marker_color_scheme", "Marker Color Scheme:", 
-                      choices = c("viridis", "magma", "plasma", "inferno", "cividis", "YlOrRd", "RdYlBu", "BuPu"),
-                      selected = "viridis")
-          ),
+                      selected = "viridis"),
           hr(),
           # Risk threshold slider
           checkboxInput("enable_risk_threshold", "Enable Risk Threshold Filter", value = FALSE),
@@ -201,7 +188,7 @@ server <- function(input, output, session) {
   
   # Load pathway reference table for enriching layer metadata
   pathway_reference <- reactive({
-    ref_path <- here("input", "data", "PATHWAY name reference", "pathway to entry type reference table.csv")
+    ref_path <- here::here("input", "data", "PATHWAY name reference", "pathway to entry type reference table.csv")
     if (file.exists(ref_path)) {
       read.csv(ref_path, stringsAsFactors = FALSE)
     } else {
@@ -272,50 +259,58 @@ server <- function(input, output, session) {
     # Return the combined catalog
     return(layer_catalog)
   })
-  
-  # Helper function to create readable layer names for destination risk
+    # Helper function to create readable layer names for destination risk
   create_dest_readable_name <- function(pathway, container, product_pathway, product_subpathway, 
-                                        entry_type = NA, port_type = NA, conv_pathway = NA, conv_subpathway = NA) {
+                                        entry_type = NA, port_type = NA, conveyance_pathway = NA, conveyance_subpathway = NA) {
     parts <- c()
     
+    # Helper function to check if a value is valid (not NA, not empty, not "NA" string)
+    is_valid <- function(x) {
+      if (length(x) == 0) return(FALSE)
+      if (is.na(x[1])) return(FALSE)
+      if (x[1] == "") return(FALSE)
+      if (x[1] == "NA") return(FALSE)
+      return(TRUE)
+    }
+    
     # Add port type if available
-    if (!is.na(port_type) && port_type != "" && port_type != "NA") {
+    if (is_valid(port_type)) {
       parts <- c(parts, paste0("Port: ", port_type))
     }
     
     # Add conveyance pathway if available
-    if (!is.na(conv_pathway) && conv_pathway != "" && conv_pathway != "NA") {
-      parts <- c(parts, paste0("Conveyance: ", conv_pathway))
+    if (is_valid(conveyance_pathway)) {
+      parts <- c(parts, paste0("Conveyance: ", conveyance_pathway))
     }
     
     # Add conveyance subpathway if available
-    if (!is.na(conv_subpathway) && conv_subpathway != "" && conv_subpathway != "NA") {
-      parts <- c(parts, paste0("Vehicle: ", conv_subpathway))
+    if (is_valid(conveyance_subpathway)) {
+      parts <- c(parts, paste0("Vehicle: ", conveyance_subpathway))
     }
     
     # Add entry type if available
-    if (!is.na(entry_type) && entry_type != "" && entry_type != "NA") {
+    if (is_valid(entry_type)) {
       parts <- c(parts, paste0("Type: ", entry_type))
     }
     
     # Add container if available
-    if (!is.na(container) && container != "") {
+    if (is_valid(container)) {
       parts <- c(parts, paste0("Container: ", container))
     }
     
     # Add product pathway if available
-    if (!is.na(product_pathway) && product_pathway != "") {
+    if (is_valid(product_pathway)) {
       parts <- c(parts, paste0("Product: ", product_pathway))
     }
     
     # Add product subpathway if available
-    if (!is.na(product_subpathway) && product_subpathway != "") {
+    if (is_valid(product_subpathway)) {
       parts <- c(parts, paste0("Use: ", product_subpathway))
     }
     
     # If no parts, return pathway
     if (length(parts) == 0) {
-      return(ifelse(!is.na(pathway) && pathway != "", pathway, "Unknown"))
+      return(ifelse(is_valid(pathway), pathway, "Unknown"))
     }
     
     # Join all parts with " | "
@@ -761,15 +756,25 @@ server <- function(input, output, session) {
           
           return(port_catalog)
         }
-        
-        # Fallback: scan files if no mapping exists
+          # Fallback: scan files if no mapping exists
         scenario_pattern <- paste0("_", scenario, "\\.gpkg$")
         port_files <- all_port_files[grepl(scenario_pattern, all_port_files)]
         
-        # If no files match the scenario, fall back to all files
+        # If no files match the scenario, return empty catalog
         if (length(port_files) == 0) {
-          message("No files found for scenario: ", scenario, ". Using all files.")
-          port_files <- all_port_files
+          message("No files found for scenario: ", scenario)
+          return(data.frame(
+            filename = character(0),
+            layer_name = character(0),
+            scenario = character(0),
+            point_count = numeric(0),
+            total_risk = numeric(0),
+            pathway = character(0),
+            container = character(0),
+            product_pathway = character(0),
+            product_subpathway = character(0),
+            stringsAsFactors = FALSE
+          ))
         }
         
         # Create a catalog dataframe
@@ -880,18 +885,35 @@ server <- function(input, output, session) {
       port_catalog <- port_catalog %>%
         mutate(display_name = paste0(display_name, " (", scenario, ")"))
     }
+      # Check if catalog is empty
+    if (nrow(port_catalog) == 0) {
+      # Show message when no layers are found
+      return(tagList(
+        h4(paste0("Available Layers (", scenario, " scenario)")),
+        div(
+          style = "padding: 20px; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; color: #721c24;",
+          icon("exclamation-triangle"),
+          strong(" No files found for this scenario."),
+          p(style = "margin-top: 10px; margin-bottom: 0;",
+            "Please check that the data files exist in the 'output/spatial layers/risk at ports' directory ",
+            "with the naming pattern: layername_", scenario, ".gpkg")
+        ),
+        hr(),
+        actionButton("refresh_port_layers", "Refresh Layers List", 
+                     icon = icon("refresh"), class = "btn-sm")
+      ))
+    }
     
     # Create choices list
     choices_list <- setNames(port_catalog$layer_name, port_catalog$display_name)
-    
-    # Show some info about the available layers
+      # Show some info about the available layers
     tagList(
       h4(paste0("Available Layers (", scenario, " scenario)")),
       p(paste0("Found ", nrow(port_catalog), " layer(s) matching your criteria")),
       # Add sorting dropdown
       selectInput("port_sort_by", "Sort layers by:",
                  choices = sort_options,
-                 selected = "pathway"),
+                 selected = sort_by),
       checkboxGroupInput(
         "selected_port_layers",
         "Select Port Risk Layers:",
@@ -947,8 +969,7 @@ server <- function(input, output, session) {
       on.exit(progress$close())
       
       # Set up step size for progress bar
-      step_size <- 1 / length(selected)
-        # Load the port risk layers
+      step_size <- 1 / length(selected)      # Load the port risk layers
       port_layers <- lapply(seq_along(selected), function(i) {
         layer_name <- selected[i]
         progress$set(value = i * step_size, detail = paste("Loading", layer_name))
@@ -957,22 +978,20 @@ server <- function(input, output, session) {
         if (scenario == "all") {
           # Look for all possible scenario files for this layer
           scenario_options <- c("current", "mex_can", "other", "EAN", "IBL")
-          found_files <- FALSE
+          all_scenario_layers <- list()
           
-          # Try each possible scenario suffix
+          # Try each possible scenario suffix and collect ALL matching files
           for (scenario_option in scenario_options) {
             scenario_file_path <- here("output", "spatial layers", "risk at ports", 
                                       paste0(layer_name, "_", scenario_option, ".gpkg"))
             if (file.exists(scenario_file_path)) {
-              file_path <- scenario_file_path
-              found_files <- TRUE
-              # Once we find a file, read it and add to our list
+              # Read this scenario's file
               layer <- tryCatch({
-                layer <- st_read(file_path, quiet = TRUE)
+                layer <- st_read(scenario_file_path, quiet = TRUE)
                 
                 # Verify it has geometry
                 if (nrow(layer) == 0 || !st_geometry_type(layer)[1] %in% c("POINT", "MULTIPOINT")) {
-                  warning("Layer has no point geometries: ", layer_name)
+                  warning("Layer has no point geometries: ", layer_name, " for scenario ", scenario_option)
                   NULL
                 } else {
                   # Transform to WGS84 for Leaflet compatibility
@@ -985,12 +1004,13 @@ server <- function(input, output, session) {
                   layer
                 }
               }, error = function(e) {
-                warning("Error reading ", file_path, ": ", e$message)
+                warning("Error reading ", scenario_file_path, ": ", e$message)
                 NULL
               })
               
+              # Add to list if successfully loaded
               if (!is.null(layer)) {
-                return(layer)
+                all_scenario_layers[[scenario_option]] <- layer
               }
             }
           }
@@ -999,15 +1019,35 @@ server <- function(input, output, session) {
           alt_file_path <- here("output", "spatial layers", "risk at ports", 
                                paste0(layer_name, ".gpkg"))
           if (file.exists(alt_file_path)) {
-            file_path <- alt_file_path
-            found_files <- TRUE
+            layer <- tryCatch({
+              layer <- st_read(alt_file_path, quiet = TRUE)
+              
+              if (nrow(layer) > 0 && st_geometry_type(layer)[1] %in% c("POINT", "MULTIPOINT")) {
+                layer <- st_transform(layer, 4326)
+                layer$layer_name <- layer_name
+                layer$scenario <- "unknown"
+                layer
+              } else {
+                NULL
+              }
+            }, error = function(e) {
+              NULL
+            })
+            
+            if (!is.null(layer)) {
+              all_scenario_layers[["unknown"]] <- layer
+            }
           }
           
-          # If no files found, return NULL
-          if (!found_files) {
+          # Return all layers found for this layer_name (will be combined later)
+          if (length(all_scenario_layers) == 0) {
             warning("No files found for layer: ", layer_name)
             return(NULL)
           }
+          
+          # Return the list of all scenario layers for this layer_name
+          return(all_scenario_layers)
+          
         } else {
           # For specific scenarios, use the selected scenario
           file_path <- here("output", "spatial layers", "risk at ports", 
@@ -1025,31 +1065,7 @@ server <- function(input, output, session) {
               file_path <- alt_file_path
             }
           }
-        }        
-        # If we get here for the "all" scenario, we need to read the file
-        if (scenario == "all" && found_files) {
-          tryCatch({
-            layer <- st_read(file_path, quiet = TRUE)
-            
-            # Verify it has geometry
-            if (nrow(layer) == 0 || !st_geometry_type(layer)[1] %in% c("POINT", "MULTIPOINT")) {
-              warning("Layer has no point geometries: ", layer_name)
-              return(NULL)
-            }
-            
-            # Transform to WGS84 for Leaflet compatibility
-            layer <- st_transform(layer, 4326)
-            
-            # Add layer name attribute for identification
-            layer$layer_name <- layer_name
-            layer$scenario <- "all"  # Mark as "all" since we're merging scenarios
-            
-            return(layer)
-          }, error = function(e) {
-            warning("Error reading ", file_path, ": ", e$message)
-            return(NULL)
-          })
-        } else if (scenario != "all") {
+          
           # Handle regular scenario case - read the file we found
           tryCatch({
             layer <- st_read(file_path, quiet = TRUE)
@@ -1077,8 +1093,7 @@ server <- function(input, output, session) {
         # If we reach here with "all" scenario and no files found, return NULL
         return(NULL)
       })
-      
-      # Remove any NULL layers
+        # Remove any NULL layers
       port_layers <- port_layers[!sapply(port_layers, is.null)]
       
       if (length(port_layers) == 0) {
@@ -1086,8 +1101,29 @@ server <- function(input, output, session) {
                         type = "warning", duration = 5)
         return(NULL)
       }
-        # Combine layers and summarize total_mean_kg for the same geometry
-      combined_ports <- bind_rows(port_layers)
+      
+      # Flatten the list structure: when scenario = "all", each element may be a list of layers
+      # from different scenarios, so we need to flatten it to a simple list of layers
+      flat_layers <- list()
+      for (item in port_layers) {
+        if (is.list(item) && !inherits(item, "sf")) {
+          # This is a nested list (from "all" scenario), add all its elements
+          flat_layers <- c(flat_layers, item)
+        } else if (inherits(item, "sf")) {
+          # This is a single sf object, add it directly
+          flat_layers <- c(flat_layers, list(item))
+        }
+      }
+      
+      # Combine layers and summarize total_mean_kg for the same geometry
+      combined_ports <- bind_rows(flat_layers)
+
+      # Standardize LOCATION_ID to double type to handle mixed types from different scenarios
+      # IBL uses CBP_CODE (double), while other scenarios may use numeric IDs
+      if ("LOCATION_ID" %in% names(combined_ports)) {
+        combined_ports <- combined_ports %>%
+          mutate(LOCATION_ID = as.double(LOCATION_ID))
+      }
       
       # Find risk value column - might be total_mean_kg or another column with "risk" in the name
       risk_col <- names(combined_ports)[grep("risk|total_mean_kg", names(combined_ports), ignore.case = TRUE)]

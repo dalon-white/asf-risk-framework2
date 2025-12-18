@@ -33,8 +33,13 @@ The parameters defined here are used by all the scripts in the ASF risk framewor
 # Create the master params list that will be used by all scripts
 asf_params <- list(
   # Date ranges
+
+  # Overall date ranges controls the dates that info is being extract from AQIM data; this is better to have broader to capture more data
   begin_date = "2021-01-01",
   end_date = "2024-12-31",
+
+  # WADS data date ranges controls the dates that info is being extracted from WADS data; AQIM estimates are used against these volumes to predict volume within these date ranges.
+  #EAN and IBL data scripts also use these dates to filter their data
   wads_volume_begin_date = "2023-01-01",
   wads_volume_end_date = "2024-12-31",
   
@@ -42,18 +47,21 @@ asf_params <- list(
   affected_countries = "current", # "current" or "mex_can" or "other"
   other_affected_countries = c("Country1 ISO-3 Code", "Country2 ISO-3 Code"),
   years = 2023:2024, # Years to include for ASF affected countries
-  affected_country_file = "asf affected countries.csv",
+
+  affected_country_file = "african european asf affected countries.csv",
   
   # Product settings
   affected_product_file = "asf affected product name reference table.csv",
   quantity_units_to_kg = "quantity units to kilograms reference table.csv",
   pathway_volume_smuggling_reference_table_filename = "product pathway by volume reference table",
+  #Risk quantification settings for how to handle relative risk of products. In the case of 0-1, any risk is set to 1; the range may be used to explore the impact of low/medium/high risk products in future analyses.
   risk_quantification = "0_1", # "0_1" or "range"
   
   # WADS volume settings
   wads_volume_reference_filename = "wads volume reference table.csv",
   wads_volume_filename = "wads_passenger_volume_by_port_pathway_month_year",
-  wads_ECO_volume = (mean(1066000000+1400000000)/12), # Total express courier volume to supplement WADS data if needed (2023 + 2024); this is applied to monthly WADS data, so it needs to be divided by 12 so that it does not overestimate how many come in per month
+  #WADS express courier data is not provided directly, so we supplement with external data; This data is taken from CBP's reports on express courier volumes - references can be found within the ASFv risk framework documentation as well as the endnote library
+  wads_ECO_volume = (mean(1066000000+1400000000)/12), # Total express courier volume to supplement WADS data if needed (2023 + 2024 in this case); this is applied to monthly WADS data, so it needs to be divided by 12 so that it does not overestimate how many come in per month
 
   # Output file names
   glm_results_filename = "glmm_results_aqim fraction at risk by pathway and location",
@@ -71,7 +79,7 @@ asf_params <- list(
   # Spatial settings
   # Default is 30000 for production, can be increased for testing
   # 30000 is used for high-resolution final output
-  US_grid_cell_size = 60000
+  US_grid_cell_size = 20000
 )
 
 # Save the params object for use by other scripts

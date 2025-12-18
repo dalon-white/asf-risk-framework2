@@ -1,0 +1,73 @@
+some places are being geocoded incorrectly
+This is script explores the reason
+
+For example, AirportAircraftPersonCBP_bag_swi_per_current.gpkg has trenton/mercer airport showing up in Alaska. Many scripts have locations showing up in Alaska. They appear to be different actual places depending on the script, and yet they are consistently around Unalakleet, AK.
+
+# Read the file and see the coding
+
+AirportAircraftPersonCBP_bag_swi_per_current.gpkg
+
+```{r}
+library(sf)
+test_file <- here::here("output", "spatial layers", "risk at ports", "AirportAircraftPersonCBP_bag_swi_per_current.gpkg")
+test_data <- st_read(test_file)
+head(test_data)
+summary(test_data$geocode_method)
+table(test_data$geocode_method)
+plot(st_geometry(test_data))
+# Look for Alaska points
+ak_points <- test_data[test_data$LOCATION_STATE_CODE == "AK", ]
+plot(st_geometry(ak_points), col = 'red', add = TRUE)
+ak_points
+# There are only the original AK ones showing up here.
+
+# Trenton Mercer airport is in Pennsylvania, so check for that
+trenton_points <- test_data[grepl("TRENTON/MERCER", test_data$LOCATION_NAME, ignore.case = TRUE), ]
+trenton_points$geom
+plot(st_geometry(trenton_points), col = 'blue', add = TRUE)
+#Yeah.. it's geolocated to Alaska... I need to check if it either came in like that, or if I have an error in my script.
+
+```
+
+# check how ports were geolocated
+
+I accessed port data from the geolocation data set in ARM
+But some were missing geolocations, so I geolocated them
+Maybe these are getting put in AK because of a CRS issue?
+
+```{r}
+geo_conn <- dbConnect(odbc::odbc(),.connection_string = 
+                     "Driver=SQL Server;
+                      Server=AAP00VA3PPQSQL0\\MSSQLSERVER,1433;
+                      Database=GeoLocations;
+                      trusted_connection=yes")
+
+# Define columns to extract from each table
+cbp_poe_cols <- c("CBP_NAME", "CBP_CODE", "LAT", "LON", "Port of Entry Name")
+
+cbp_poe <- tbl(geo_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_CBP_POEs]")) %>% 
+           dplyr::select(all_of(cbp_poe_cols)) %>% 
+           collect()
+
+cbp_poe %>% filter(grepl("TRENTON/MERCER", `CBP_NAME`, ignore.case = TRUE))
+cbp_poe %>% filter(grepl("TRENTON|MERCER", `Port of Entry Name`, ignore.case = TRUE))
+cbp_poe %>% filter(grepl("1183", `CBP_CODE`, ignore.case = TRUE))
+
+#not a CBP POE perhaps?
+
+```
+
+# check ppq facility
+
+```{r}
+ppq_facilities <- tbl(geo_conn, sql("SELECT * FROM [GeoLocations].[dbo].[tbl_PPQ_Facilities]")) %>% 
+                 dplyr::select(all_of(ppq_facilities_cols)) %>% 
+                 collect()
+ppq_facilities %>% filter(grepl("TRENTON/MERCER", `LocationName`, ignore.case = TRUE))
+ppq_facilities %>% filter(grepl("Trenton", `LocationName`, ignore.case = TRUE))
+#Theres a trenton PPQ factility.. but this is an airport because its in the name.
+
+
+```
+
+# Ok, so TTN is not in either of those tables. Where did it come from?

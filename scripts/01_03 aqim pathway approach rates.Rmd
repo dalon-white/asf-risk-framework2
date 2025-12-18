@@ -50,23 +50,23 @@ load_shared_params <- function() {
 # Try to load shared params
 shared_params <- load_shared_params()
 
-# Use shared params if available, otherwise use script-specific params
-if (!exists("params")) {
-  if (!is.null(shared_params)) {
-    params <- shared_params
-  } else {
-    # Default params specific to this script
-    params <- list(
-      risk_quantification = "0_1", # 0_1 or "range"
-      affected_countries = "current", # "current" or "mex_can" or "other" 
-      years = 2024:2024, #The years to include which countries have ASF
-      other_affected_countries = c("Country1", "Country2"), 
-      glm_results_filename = "glmm_results_aqim fraction at risk by pathway and location",
-      bootstrap_results_filename = "bootstrap_results_aqim fraction at risk by pathway and location",
-      group_size_filename = "aqim_mean_pathway_group_size"
-    )
-  }
-}
+# # Use shared params if available, otherwise use script-specific params
+# if (!exists("params")) {
+#   if (!is.null(shared_params)) {
+#     params <- shared_params
+#   } else {
+#     # Default params specific to this script
+#     params <- list(
+#       risk_quantification = "0_1", # 0_1 or "range"
+#       affected_countries = "current", # "current" or "mex_can" or "other" 
+#       years = 2024:2024, #The years to include which countries have ASF
+#       other_affected_countries = c("Country1", "Country2"), 
+#       glm_results_filename = "glmm_results_aqim fraction at risk by pathway and location",
+#       bootstrap_results_filename = "bootstrap_results_aqim fraction at risk by pathway and location",
+#       group_size_filename = "aqim_mean_pathway_group_size"
+#     )
+#   }
+# }
 ```
 
 # Call AQIM data
@@ -110,7 +110,7 @@ If only interested in the last year, then set params$years to the last year of i
 ```{r identify countries of risk}
 setwd(here::here("input","data","asf affected countries by year"))
 if(params$affected_countries == "current") {
-  affected_countries <- read.csv("asf affected countries.csv") |> 
+  affected_countries <- read.csv(params$affected_country_file) |> 
     mutate(Year = as.numeric(Year)) |> 
     filter(Year %in% params$years) |> 
     filter(Disease == "ASF") |>

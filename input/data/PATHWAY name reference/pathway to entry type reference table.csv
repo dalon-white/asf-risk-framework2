@@ -1,4 +1,4 @@
-PATHWAY,how_many,entry_type,aqim_based,port,conveyance pathway,conveyance subpathway
+PATHWAY,how_many,entry_type,aqim_based,port,conveyance_pathway,conveyance_subpathway
 Post Entry Quarantine,,post_entry_quarantine,,NA,,NA
 Pedestrian,,passenger,1,Land,Person,Person
 Non-Port - Non-Transport - Express Carrier - SITC,,eco,,Non-port,Aircraft,Unknown

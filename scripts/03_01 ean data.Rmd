@@ -51,23 +51,23 @@ load_shared_params <- function() {
 # Try to load shared params
 shared_params <- load_shared_params()
 
-# Use shared params if available, otherwise use script-specific params
-if (!exists("params")) {
-  if (!is.null(shared_params)) {
-    params <- shared_params
-  } else {
-    # Default params specific to this script
-    params <- list(
-      affected_countries = "current", # "current" or "mex_can" or "other" 
-      years = 2023:2024, #The years to include which countries have ASF
-      other_affected_countries = c("Country1", "Country2"),
-      affected_product_file = "asf affected product name reference table.csv",
-      affected_country_file = "asf affected countries.csv",
-      pathway_volume_smuggling_reference_table_filename = "product pathway by volume reference table",
-      quantity_units_to_kg = "quantity units to kilograms reference table.csv"
-    )
-  }
-}
+# # Use shared params if available, otherwise use script-specific params
+# if (!exists("params")) {
+#   if (!is.null(shared_params)) {
+#     params <- shared_params
+#   } else {
+#     # Default params specific to this script
+#     params <- list(
+#       affected_countries = "current", # "current" or "mex_can" or "other" 
+#       years = 2023:2024, #The years to include which countries have ASF
+#       other_affected_countries = c("Country1", "Country2"),
+#       affected_product_file = "asf affected product name reference table.csv",
+#       affected_country_file = "asf affected countries.csv",
+#       pathway_volume_smuggling_reference_table_filename = "product pathway by volume reference table",
+#       quantity_units_to_kg = "quantity units to kilograms reference table.csv"
+#     )
+#   }
+# }
 ```
 
 ```{r}
@@ -352,6 +352,7 @@ ean_records <- ean_records |> mutate(country_code = countrycode::countrycode(COU
 
 ean_records <- ean_records |> filter(country_code %in% affected_countries |
                                     product_origin_code %in% affected_countries)
+
 ```
 
 

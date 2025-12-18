@@ -138,6 +138,9 @@ ibl_data_with_poe <- ibl_data_with_poe %>%
 spatial_layers_summary <- ibl_data_with_poe %>% 
   dplyr::rename(LOCATION_ID = CBP_CODE,
                 LOCATION_NAME = CBP_NAME) %>%
+  # Convert LOCATION_ID to character to match other scenarios (EAN, current, etc.)
+  # CBP_CODE can be character (e.g., "0101") and needs consistent type across all port layers
+  mutate(LOCATION_ID = as.character(LOCATION_ID)) %>%
   group_by(LOCATION_ID, LOCATION_NAME, LOCATION_STATE_CODE, PATHWAY, 
            container, product_pathway, product_subpathway) %>%
   summarize(
@@ -193,7 +196,7 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
     
     # Create clean name for layer using abbreviations (short name)
     layer_name <- paste(
-      substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 27),
+      substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 31),
       substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3),
       substr(gsub("[^[:alnum:]]", "", combo$product_pathway), 1, 3),
       substr(gsub("[^[:alnum:]]", "", combo$product_subpathway), 1, 3),
@@ -260,7 +263,7 @@ create_spatial_layers <- function(summarized_data, save_files = FALSE, output_di
     ) %>%
     mutate(
       layer_name = paste(
-        substr(gsub("[^[:alnum:]]", "", PATHWAY), 1, 27),
+        substr(gsub("[^[:alnum:]]", "", PATHWAY), 1, 31),
         substr(gsub("[^[:alnum:]]", "", container), 1, 3),
         substr(gsub("[^[:alnum:]]", "", product_pathway), 1, 3),
         substr(gsub("[^[:alnum:]]", "", product_subpathway), 1, 3),
@@ -424,7 +427,7 @@ distribute_pathway_risks <- function(pathway_summary, aggregated_grid_data) {
     cat(sprintf("Processing combination %d/%d: %s\n", i, nrow(pathway_summary), combo$PATHWAY))
     
     # Create abbreviated name components for file naming
-    pathway_abbr <- substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 27)
+    pathway_abbr <- substr(gsub("[^[:alnum:]]", "", combo$PATHWAY), 1, 31)
     container_abbr <- substr(gsub("[^[:alnum:]]", "", combo$container), 1, 3)
     prod_path_abbr <- substr(gsub("[^[:alnum:]]", "", combo$product_pathway), 1, 3)
     prod_subpath_abbr <- substr(gsub("[^[:alnum:]]", "", combo$product_subpathway), 1, 3)

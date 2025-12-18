@@ -1,25 +1,14 @@
 "pathway","container","product_pathway","product_subpathway","avg_adjusted_prob","avg_adjusted_lower","avg_adjusted_upper","product_proportion","n_locations"
-"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",0.00398431653223942,0.003149611330292,0.168865856505818,0.94949494949495,29
-"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",0.000201335143916354,0.000159155891690287,0.00853311508938972,0.047979797979798,29
-"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",1.05965865219134e-05,8.37662587843618e-06,0.000449111320494196,0.00252525252525253,29
-"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",0.00461228971597516,NA,NA,0.873817034700315,6
-"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",0.000666034616025293,NA,NA,0.126182965299685,6
-"Express_courier","package","swine products/by-products","personal use or consumption",0.000191055349262288,9.74309583642908e-05,0.296078671880736,0.739130434782609,5
-"Express_courier","package","other products","plasma",2.24770999132103e-05,1.14624656899166e-05,0.0348327849271454,0.0869565217391304,5
-"Express_courier","package","other products","unspecified feed",2.24770999132103e-05,1.14624656899166e-05,0.0348327849271454,0.0869565217391304,5
-"Express_courier","package","fomite","personal effects",1.12385499566052e-05,5.73123284495828e-06,0.0174163924635727,0.0434782608695652,5
-"Express_courier","package","other products","smuggled commercial products",1.12385499566052e-05,5.73123284495828e-06,0.0174163924635727,0.0434782608695652,5
-"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",0.003990891244177,0.00298165648621412,0.140166632621015,0.672185430463576,25
-"Land Border - Truck - Conveyance - CBP NB","baggage","other products","animal-based feed",0.00184144571365146,0.00137577253304789,0.0646745874655256,0.310154525386313,25
-"Land Border - Truck - Conveyance - CBP NB","baggage","other products","smuggled commercial products",5.89786883375912e-05,4.40638889588293e-05,0.00207142806829086,0.00993377483443709,25
-"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","smuggled commercial products",4.58723131514598e-05,3.4271913634645e-05,0.00161111071978178,0.00772626931567329,25
-"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","personal use or consumption",0.0168634457606649,0.0143710213165154,0.0198636055476943,0.912013536379019,18
-"Land Border - Truck - Conveyance - CBP SB","baggage","other products","animal-based feed",0.00128721769919732,0.00109696637666484,0.00151622539033553,0.069615663524293,18
-"Land Border - Truck - Conveyance - CBP SB","baggage","swine products/by-products","smuggled commercial products",0.000294987389399386,0.000251388127985692,0.000347468318618559,0.0159535895576505,18
-"Land Border - Truck - Conveyance - CBP SB","baggage","other products","smuggled commercial products",4.02255530999163e-05,3.42801992707762e-05,4.73820434479853e-05,0.00217548948513416,18
-"Land Border - Truck - Conveyance - CBP SB","conveyance","fomite","plant based feed",4.4695058999907e-06,3.80891103008624e-06,5.26467149422059e-06,0.000241721053903795,18
-"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption",0.000906762909094192,0.000554136744996004,0.534838680277036,0.8,6
-"Maritime Port - Vessel - Mail - CBP","package","other products","animal-based feed",0.000226690727273548,0.000138534186249001,0.133709670069259,0.2,6
-"Pedestrian SB","baggage","swine products/by-products","personal use or consumption",0.00162810272411753,0.00124680446826378,0.0773717039341837,0.976950354609929,13
-"Pedestrian SB","baggage","other products","unspecified feed",2.65933294320468e-05,2.03652272493177e-05,0.00126378463776344,0.0159574468085106,13
-"Pedestrian SB","baggage","swine products/by-products","smuggled commercial products",1.18192575253541e-05,9.05121211080785e-06,0.000561682061228194,0.00709219858156028,13
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","personal use or consumption",0.00735929564935777,0.0057399777688093,0.112866174783586,0.977167182662539,29
+"Airport - Aircraft - Person - CBP","baggage","other products","animal-based feed",0.000157386916857552,0.000122755960204238,0.00241377165873807,0.0208978328173375,29
+"Airport - Aircraft - Person - CBP","baggage","swine products/by-products","smuggled commercial products",1.45728626719956e-05,1.13662926115036e-05,0.000223497375809081,0.00193498452012384,29
+"Airport - Aircraft - Person - Pre-Clearance","baggage","swine products/by-products","personal use or consumption",0.000354866571030204,0.000188587082793433,0.305190528492737,0.91304347826087,6
+"Airport - Aircraft - Person - Pre-Clearance","baggage","other products","animal-based feed",3.37968162885909e-05,1.79606745517555e-05,0.0290657646183559,0.0869565217391304,6
+"Express_courier","package","swine products/by-products","personal use or consumption",0.000511541401608097,0.000366690737613436,0.553697392527995,0.92156862745098,5
+"Express_courier","package","other products","unspecified feed",3.26515788260487e-05,2.34057917625598e-05,0.0353423867571061,0.0588235294117647,5
+"Express_courier","package","swine products/by-products","smuggled commercial products",1.08838596086829e-05,7.80193058751992e-06,0.011780795585702,0.0196078431372549,5
+"Land Border - Truck - Conveyance - CBP NB","baggage","swine products/by-products","personal use or consumption",6.63910933281482e-05,1.94440184252567e-05,0.760261576513196,1,25
+"Maritime Port - Vessel - Cargo - CBP","container","swine products/by-products","commercial",0.000325491093758018,6.32529165612679e-05,0.649522691928839,0.75,22
+"Maritime Port - Vessel - Cargo - CBP","container","other products","animal-based feed",0.000108497031252673,2.10843055204226e-05,0.21650756397628,0.25,22
+"Maritime Port - Vessel - Mail - CBP","package","swine products/by-products","personal use or consumption",0.00278406852109489,0.00205017547665359,0.00403011414489904,0.973404255319149,6
+"Maritime Port - Vessel - Mail - CBP","package","other products","animal-based feed",7.60674459315544e-05,5.60157234058358e-05,0.000110112408330575,0.0265957446808511,6
